@@ -14,6 +14,7 @@ use App\Services\IpoFeeds\IpoAlertsFeed;
 use App\Services\IpoFeeds\IpoSync;
 use App\Services\IpoFeeds\IpoSyncResult;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Http;
 use Livewire\Livewire;
 use Tests\TestCase;
@@ -30,6 +31,20 @@ class IpoAlertsSyncTest extends TestCase
 
         $this->user = User::factory()->create();
         Http::preventStrayRequests();
+
+        // Fixture payloads below use fixed 2026-08/09 dates so every assertion
+        // reads as a plain literal. IpoSync derives status from those dates
+        // against "today" (see statusFromDates()), so "today" has to stay
+        // pinned safely before all of them — otherwise the suite starts
+        // failing the moment the wall clock catches up to the fixtures.
+        Carbon::setTestNow('2026-08-20');
+    }
+
+    protected function tearDown(): void
+    {
+        Carbon::setTestNow();
+
+        parent::tearDown();
     }
 
     /** One IPO shaped exactly as ipoalerts.in returns it. */

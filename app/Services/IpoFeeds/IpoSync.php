@@ -213,10 +213,22 @@ class IpoSync
                 ?? $byName->get($this->nameKey($row['name']));
 
             if ($ipo === null) {
+                $status = $row['status'] ?? 'upcoming';
+                $implied = $this->statusFromDates(
+                    $this->toDateString($row['open_date'] ?? null),
+                    $this->toDateString($row['close_date'] ?? null),
+                    $this->toDateString($row['allotment_date'] ?? null),
+                    $this->toDateString($row['listing_date'] ?? null),
+                );
+
+                if ($implied !== null && $this->isAhead($implied, $status)) {
+                    $status = $implied;
+                }
+
                 $ipo = Ipo::create([
                     'user_id' => $user->id,
                     ...$row,
-                    'status' => $row['status'] ?? 'upcoming',
+                    'status' => $status,
                     'synced_at' => now(),
                 ]);
 
@@ -303,11 +315,68 @@ class IpoSync
             $changes['status'] = $row['status'];
         }
 
+        // No feed ever says "allotted" outright (ipoalerts.in has no such
+        // status value, chittorgarh's live list skips straight from "closed"
+        // to "listed"), and a feed's own per-run snapshot can leave a date
+        // blank the moment an IPO drops off its "current" list — without that
+        // date having stopped being true. So this looks at the union of every
+        // date already on file plus whatever's changing this run, not just
+        // this run's row in isolation, and lets isAhead() below keep it a
+        // forward-only nudge on top of whatever the feed itself said.
+        $implied = $this->statusFromDates(
+            $this->toDateString($changes['open_date'] ?? $ipo->open_date),
+            $this->toDateString($changes['close_date'] ?? $ipo->close_date),
+            $this->toDateString($changes['allotment_date'] ?? $ipo->allotment_date),
+            $this->toDateString($changes['listing_date'] ?? $ipo->listing_date),
+        );
+
+        if ($implied !== null && $this->isAhead($implied, $changes['status'] ?? $ipo->status)) {
+            $changes['status'] = $implied;
+        }
+
         if ($changes !== []) {
             $changes['synced_at'] = now();
         }
 
         return $changes;
+    }
+
+    /**
+     * The status a set of dates alone implies — open until it closes, closed
+     * until allotment, allotted until it lists. Shared by both new-IPO
+     * creation and updates to existing ones so "when is this actually
+     * allotted/listed" is answered the same way everywhere, regardless of
+     * which feed (if any) happened to say so explicitly.
+     */
+    private function statusFromDates(?string $open, ?string $close, ?string $allotment, ?string $listing): ?string
+    {
+        $today = Carbon::today()->toDateString();
+
+        return match (true) {
+            $listing !== null && $listing <= $today => 'listed',
+            $allotment !== null && $allotment <= $today => 'allotted',
+            $close !== null && $close < $today => 'closed',
+            $open !== null && $open <= $today => 'open',
+            default => null,
+        };
+    }
+
+    /** A date, whichever shape it arrives in (Carbon from the model, string from a feed row), as "Y-m-d" — or null if it's neither. */
+    private function toDateString(mixed $value): ?string
+    {
+        if ($value === null) {
+            return null;
+        }
+
+        if ($value instanceof Carbon) {
+            return $value->toDateString();
+        }
+
+        try {
+            return Carbon::parse((string) $value)->toDateString();
+        } catch (\Throwable) {
+            return null;
+        }
     }
 
     /** @return array<int, mixed> */
