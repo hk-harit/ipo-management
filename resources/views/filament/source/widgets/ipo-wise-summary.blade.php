@@ -19,7 +19,80 @@
             of those applications were allotted.
         </x-slot>
 
-        <div class="overflow-x-auto">
+        {{-- Mobile IPO Cards --}}
+        <div class="block md:hidden space-y-3">
+            @forelse ($rows as $row)
+                <div class="rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-gray-900 p-4 shadow-sm">
+                    <div class="flex items-start justify-between gap-2 pb-2.5 border-b border-gray-100 dark:border-white/5">
+                        <div>
+                            <div class="font-semibold text-gray-950 dark:text-white text-base">
+                                {{ $row['ipo'] }}
+                            </div>
+                            <div class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                                {{ $row['applied_date'] ? \Illuminate\Support\Carbon::parse($row['applied_date'])->format('d M Y') : '—' }}
+                                @if ($row['applicants'])
+                                    • {{ $row['applicants'] }}
+                                @endif
+                            </div>
+                        </div>
+                        @if ($row['status'])
+                            <x-filament::badge
+                                :color="$statusColours[$row['status']] ?? 'gray'"
+                                size="xs"
+                                class="shrink-0"
+                            >
+                                {{ str($row['status'])->headline() }}
+                            </x-filament::badge>
+                        @endif
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-2 pt-2.5 text-xs">
+                        <div class="bg-gray-50 dark:bg-white/5 rounded-lg p-2">
+                            <div class="text-[11px] text-gray-500 dark:text-gray-400">Applied</div>
+                            <div class="font-bold text-gray-950 dark:text-white mt-0.5">
+                                ₹{{ number_format($row['applied'], 2) }}
+                            </div>
+                            <div class="text-[10px] text-gray-400">({{ $row['applications'] }} apps)</div>
+                        </div>
+                        <div class="bg-gray-50 dark:bg-white/5 rounded-lg p-2">
+                            <div class="text-[11px] text-gray-500 dark:text-gray-400">Got Shares</div>
+                            <div class="font-bold mt-0.5 {{ $row['allotted_apps'] > 0 ? 'text-success-600 dark:text-success-400' : 'text-gray-400' }}">
+                                {{ $row['allotted_apps'] }} / {{ $row['applications'] }}
+                            </div>
+                            @if ($row['shares_allotted'])
+                                <div class="text-[10px] text-gray-400">({{ $row['shares_allotted'] }} shares)</div>
+                            @endif
+                        </div>
+                        <div class="bg-gray-50 dark:bg-white/5 rounded-lg p-2">
+                            <div class="text-[11px] text-gray-500 dark:text-gray-400">Came Back</div>
+                            <div class="font-semibold text-gray-800 dark:text-gray-200 mt-0.5">
+                                {{ $row['returned'] > 0 ? '₹'.number_format($row['returned'], 2) : '—' }}
+                            </div>
+                        </div>
+                        <div class="bg-gray-50 dark:bg-white/5 rounded-lg p-2">
+                            <div class="text-[11px] text-gray-500 dark:text-gray-400">Your Profit Share</div>
+                            <div class="font-bold mt-0.5 {{ $row['my_share'] > 0 ? 'text-info-600 dark:text-info-400' : 'text-gray-400' }}">
+                                {{ $row['my_share'] != 0 ? '₹'.number_format($row['my_share'], 2) : '—' }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            @empty
+                <div class="py-6 text-center text-gray-500 dark:text-gray-400">
+                    Nothing has been applied with your money yet.
+                </div>
+            @endforelse
+
+            @if ($rows->isNotEmpty())
+                <div class="rounded-xl border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-white/5 p-3 flex justify-between items-center text-xs font-semibold">
+                    <span>Total Applied: ₹{{ number_format($totals['applied'], 2) }}</span>
+                    <span class="text-info-600 dark:text-info-400">Your Share: ₹{{ number_format($totals['my_share'], 2) }}</span>
+                </div>
+            @endif
+        </div>
+
+        {{-- Desktop Table --}}
+        <div class="hidden md:block overflow-x-auto">
             <table class="w-full text-sm">
                 <thead>
                     <tr class="border-b border-gray-200 text-left text-xs font-medium uppercase text-gray-500 dark:border-white/10 dark:text-gray-400">
