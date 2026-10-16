@@ -67,14 +67,16 @@ class Account extends Model
         $fundsOut = (float) $this->fundTransactions()->where('type', 'returned')->sum('amount');
         $applied = (float) $this->ipoApplications()->sum('amount');
         $returned = (float) $this->ipoApplications()->sum('return_amount');
-        $expenses = (float) $this->expenses()->sum('amount');
+        $expensesOut = (float) $this->expenses()->whereIn('type', ['expense', 'udhar_given'])->sum('amount');
+        $expensesIn = (float) $this->expenses()->where('type', 'udhar_received')->sum('amount');
+        $netExpenses = $expensesOut - $expensesIn;
         $transfersOut = (float) $this->transfersOut()->sum('amount');
         $transfersIn = (float) $this->transfersIn()->sum('amount');
 
         return (float) $this->opening_balance
             + $fundsIn - $fundsOut
             - $applied + $returned
-            - $expenses
+            - $netExpenses
             - $transfersOut + $transfersIn;
     }
 
@@ -122,12 +124,13 @@ class Account extends Model
         }
 
         foreach ($this->expenses()->get() as $expense) {
+            $isIncome = ($expense->type === 'udhar_received');
             $entries->push([
                 'date' => $expense->expense_date,
                 'created_at' => $expense->created_at,
-                'description' => 'Expense: '.($expense->category ?: 'General'),
-                'debit' => (float) $expense->amount,
-                'credit' => 0.0,
+                'description' => $expense->display_description,
+                'debit' => $isIncome ? 0.0 : (float) $expense->amount,
+                'credit' => $isIncome ? (float) $expense->amount : 0.0,
             ]);
         }
 

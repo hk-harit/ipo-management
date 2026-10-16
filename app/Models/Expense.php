@@ -15,9 +15,13 @@ class Expense extends Model
     protected $fillable = [
         'user_id',
         'account_id',
+        'type',
         'category',
+        'person_name',
+        'status',
         'amount',
         'expense_date',
+        'due_date',
         'notes',
     ];
 
@@ -26,11 +30,41 @@ class Expense extends Model
         return [
             'amount' => 'decimal:2',
             'expense_date' => 'date',
+            'due_date' => 'date',
         ];
     }
 
     public function account(): BelongsTo
     {
         return $this->belongsTo(Account::class);
+    }
+
+    public function scopeRegularExpense($query)
+    {
+        return $query->where('type', 'expense');
+    }
+
+    public function scopeUdharGiven($query)
+    {
+        return $query->where('type', 'udhar_given');
+    }
+
+    public function scopeUdharReceived($query)
+    {
+        return $query->where('type', 'udhar_received');
+    }
+
+    public function scopePendingUdhar($query)
+    {
+        return $query->where('type', 'udhar_given')->where('status', 'pending');
+    }
+
+    public function getDisplayDescriptionAttribute(): string
+    {
+        return match ($this->type) {
+            'udhar_given' => 'Udhar Given to ' . ($this->person_name ?: 'Person'),
+            'udhar_received' => 'Udhar Received from ' . ($this->person_name ?: 'Person'),
+            default => 'Expense: ' . ($this->category ?: 'General'),
+        };
     }
 }

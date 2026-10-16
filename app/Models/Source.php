@@ -233,7 +233,6 @@ class Source extends Model implements AuthenticatableContract, FilamentUser
                     ->where('account_id', $account->id)->where('type', 'returned')->sum('amount'),
                 'applied_from' => (float) $this->ipoApplications()
                     ->where('account_id', $account->id)->sum('amount'),
-                'current_balance' => $account->current_balance,
             ]);
     }
 }

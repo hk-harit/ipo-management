@@ -29,7 +29,7 @@ class MyAccounts extends Page
 
     public function getSubheading(): ?string
     {
-        return 'The accounts your money went into, and what each one holds today.';
+        return 'The accounts where your money was received and used for applications.';
     }
 
     public function accounts(): Collection

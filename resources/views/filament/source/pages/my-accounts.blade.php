@@ -1,9 +1,8 @@
 <x-filament-panels::page>
     <x-filament::section>
-        <x-slot name="heading">Where your money sits</x-slot>
+        <x-slot name="heading">Accounts</x-slot>
         <x-slot name="description">
-            "Balance" is the account's full balance — accounts usually pool money from more than
-            one person, so it is not your share alone.
+            Accounts where your funds were received and applied towards IPOs.
         </x-slot>
 
         <div class="overflow-x-auto">
@@ -16,7 +15,6 @@
                         <th class="py-2 pr-4 text-right">You Gave</th>
                         <th class="py-2 pr-4 text-right">Paid Back</th>
                         <th class="py-2 pr-4 text-right">Applied From Here</th>
-                        <th class="py-2 pr-4 text-right">Balance</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-100 dark:divide-white/5">
@@ -42,13 +40,10 @@
                             <td class="py-2 pr-4 text-right text-gray-600 dark:text-gray-300">
                                 {{ $row['applied_from'] > 0 ? '₹'.number_format($row['applied_from'], 2) : '—' }}
                             </td>
-                            <td class="py-2 pr-4 text-right font-semibold {{ $row['current_balance'] < 0 ? 'text-danger-600 dark:text-danger-400' : 'text-gray-950 dark:text-white' }}">
-                                ₹{{ number_format($row['current_balance'], 2) }}
-                            </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="7" class="py-6 text-center text-gray-500 dark:text-gray-400">
+                            <td colspan="6" class="py-6 text-center text-gray-500 dark:text-gray-400">
                                 Your money has not been placed into any account yet.
                             </td>
                         </tr>
