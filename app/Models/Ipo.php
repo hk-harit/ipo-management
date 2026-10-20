@@ -93,6 +93,36 @@ class Ipo extends Model
         return $query->whereIn('status', ['open', 'upcoming']);
     }
 
+    /** Issues closing today — urgent action required. */
+    public function scopeClosingToday(Builder $query): Builder
+    {
+        return $query->whereDate('close_date', today());
+    }
+
+    /** Issues opening today. */
+    public function scopeOpeningToday(Builder $query): Builder
+    {
+        return $query->whereDate('open_date', today());
+    }
+
+    /** Issues closing tomorrow. */
+    public function scopeClosingTomorrow(Builder $query): Builder
+    {
+        return $query->whereDate('close_date', today()->addDay());
+    }
+
+    /** Issues opening tomorrow. */
+    public function scopeOpeningTomorrow(Builder $query): Builder
+    {
+        return $query->whereDate('open_date', today()->addDay());
+    }
+
+    /** Issues that have application subscription figures recorded. */
+    public function scopeWithApplications(Builder $query): Builder
+    {
+        return $query->whereNotNull('subscription_applications')->where('subscription_applications', '>', 0);
+    }
+
     /**
      * Most urgent first: open issues (closing soonest first — those need a
      * decision today), then upcoming (opening soonest first), then everything

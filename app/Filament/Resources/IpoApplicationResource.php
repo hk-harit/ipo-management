@@ -7,13 +7,16 @@ use App\Filament\Support\AllotmentCheckBulkAction;
 use App\Filament\Support\IpoApplicationFormFields;
 use App\Filament\Support\IpoPicker;
 use App\Models\IpoApplication;
+use App\Services\AllotmentCheck\AllotmentCheckService;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Section;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Form;
+use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
+use Filament\Tables\Actions\Action;
 use Filament\Tables\Actions\BulkActionGroup;
 use Filament\Tables\Actions\DeleteBulkAction;
 use Filament\Tables\Actions\EditAction;
@@ -111,6 +114,46 @@ class IpoApplicationResource extends Resource
                 ]),
             ])
             ->actions([
+                Action::make('checkAllotment')
+                    ->label('Check')
+                    ->icon('heroicon-o-magnifying-glass')
+                    ->color('info')
+                    ->tooltip('Check allotment status with registrar')
+                    ->visible(fn (IpoApplication $record) => $record->ipo?->canAutoCheckAllotment() && $record->status === 'applied')
+                    ->action(function (IpoApplication $record, AllotmentCheckService $service) {
+                        $outcome = $service->checkForApplication($record);
+
+                        if ($outcome->status === 'updated') {
+                            $record->refresh();
+                            $isAllotted = in_array($record->status, ['allotted', 'partial_allotted'], true);
+
+                            Notification::make()
+                                ->title($isAllotted ? 'Shares Allotted!' : 'Application Refunded')
+                                ->body($isAllotted 
+                                    ? "Allotted {$record->shares_allotted} shares for {$record->applicant?->name}!"
+                                    : "Not allotted. Marked as refunded.")
+                                ->color($isAllotted ? 'success' : 'gray')
+                                ->send();
+                        } elseif ($outcome->status === 'not_found') {
+                            Notification::make()
+                                ->title('Not Found on Registrar')
+                                ->body('No allotment record found for this PAN yet on registrar website.')
+                                ->warning()
+                                ->send();
+                        } elseif ($outcome->status === 'skipped') {
+                            Notification::make()
+                                ->title('Skipped')
+                                ->body($outcome->message ?? 'Skipped allotment check.')
+                                ->warning()
+                                ->send();
+                        } else {
+                            Notification::make()
+                                ->title('Registrar Error')
+                                ->body($outcome->message ?? 'Error checking allotment.')
+                                ->danger()
+                                ->send();
+                        }
+                    }),
                 EditAction::make(),
             ])
             ->bulkActions([

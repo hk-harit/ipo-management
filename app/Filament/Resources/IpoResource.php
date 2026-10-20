@@ -13,7 +13,9 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Form;
+use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
+use Filament\Tables\Actions\Action;
 use Filament\Tables\Actions\BulkActionGroup;
 use Filament\Tables\Actions\DeleteBulkAction;
 use Filament\Tables\Actions\EditAction;
@@ -130,25 +132,36 @@ class IpoResource extends Resource
                     ->searchable()
                     ->sortable()
                     ->weight('semibold')
-                    ->description(fn (Ipo $record) => collect([$record->symbol, $record->issue_type])
-                        ->filter()->implode(' · ') ?: null)
+                    ->wrap()
+                    ->description(fn (Ipo $record) => collect([
+                        $record->symbol,
+                        $record->issue_type,
+                        $record->close_date ? 'Closes '.$record->close_date->format('d M') : null,
+                    ])->filter()->implode(' · ') ?: null)
                     ->icon(fn (Ipo $record) => $record->isSynced() ? 'heroicon-m-arrow-path' : null)
                     ->iconColor('gray')
                     ->tooltip(fn (Ipo $record) => $record->isSynced()
                         ? 'From ipoalerts.in, last synced '.$record->synced_at?->diffForHumans()
                         : 'Added by hand'),
-                TextColumn::make('open_date')->date()->sortable(),
-                TextColumn::make('close_date')->date()->sortable(),
+                TextColumn::make('open_date')
+                    ->date('M d, Y')
+                    ->sortable()
+                    ->visibleFrom('md'),
+                TextColumn::make('close_date')
+                    ->date('M d, Y')
+                    ->sortable(),
                 TextColumn::make('price_band')
                     ->label('Price')
                     ->state(fn (Ipo $record) => $record->price_band)
-                    ->placeholder('—'),
+                    ->placeholder('—')
+                    ->visibleFrom('sm'),
                 TextColumn::make('lot_amount')
                     ->label('1 Lot')
                     ->state(fn (Ipo $record) => $record->lot_amount)
                     ->money('INR')
                     ->description(fn (Ipo $record) => $record->lot_size ? $record->lot_size.' shares' : null)
-                    ->placeholder('—'),
+                    ->placeholder('—')
+                    ->visibleFrom('md'),
                 TextColumn::make('gmp')
                     ->label('GMP')
                     ->state(fn (Ipo $record) => $record->gmp !== null
@@ -174,9 +187,6 @@ class IpoResource extends Resource
                     ->state(fn (Ipo $record) => $record->subscription_retail !== null
                         ? number_format((float) $record->subscription_retail, 2).'x'
                         : null)
-                    ->description(fn (Ipo $record) => $record->subscription_applications
-                        ? number_format($record->subscription_applications).' applications'
-                        : null)
                     ->weight('semibold')
                     ->color(fn (Ipo $record) => match (true) {
                         $record->subscription_retail === null => 'gray',
@@ -189,6 +199,15 @@ class IpoResource extends Resource
                         : null)
                     ->placeholder('—')
                     ->sortable(),
+                TextColumn::make('subscription_applications')
+                    ->label('Applications')
+                    ->state(fn (Ipo $record) => $record->subscription_applications
+                        ? number_format($record->subscription_applications)
+                        : null)
+                    ->icon('heroicon-m-user-group')
+                    ->iconColor('gray')
+                    ->sortable()
+                    ->placeholder('—'),
                 TextColumn::make('subscription_total')
                     ->label('Total Sub.')
                     ->state(fn (Ipo $record) => $record->subscription_total !== null
@@ -206,7 +225,10 @@ class IpoResource extends Resource
                     ->color(fn (?string $state) => $state === 'SME' ? 'warning' : 'info')
                     ->placeholder('—')
                     ->toggleable(isToggledHiddenByDefault: true),
-                TextColumn::make('listing_date')->date()->sortable()->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('listing_date')
+                    ->date('M d, Y')
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('status')->badge()
                     ->color(fn (string $state) => match ($state) {
                         'upcoming' => 'gray',
@@ -217,14 +239,19 @@ class IpoResource extends Resource
                         default => 'gray',
                     }),
                 TextColumn::make('total_applied')
-                    ->label('Total Applied')
+                    ->label('My Applied')
                     ->state(fn (Ipo $record) => $record->total_applied)
-                    ->money('INR'),
+                    ->money('INR')
+                    ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('total_returned')
-                    ->label('Total Returned')
+                    ->label('My Returned')
                     ->state(fn (Ipo $record) => $record->total_returned)
-                    ->money('INR'),
-                TextColumn::make('applications_count')->counts('applications')->label('Applications'),
+                    ->money('INR')
+                    ->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('applications_count')
+                    ->counts('applications')
+                    ->label('My Applications')
+                    ->toggleable(isToggledHiddenByDefault: true),
             ])
             // Open issues first — those are the ones you can still act on today —
             // then upcoming, each ordered by how soon it needs a decision (open
@@ -233,6 +260,23 @@ class IpoResource extends Resource
             // applies until the user clicks a column header to sort by hand.
             ->defaultSort(fn (Builder $query) => $query->orderByUrgency())
             ->filters([
+                SelectFilter::make('timeline')
+                    ->label('Timeline')
+                    ->options([
+                        'closing_today' => 'Closing Today',
+                        'opening_today' => 'Opening Today',
+                        'closing_tomorrow' => 'Closing Tomorrow',
+                        'opening_tomorrow' => 'Opening Tomorrow',
+                    ])
+                    ->query(function (Builder $query, array $data) {
+                        return match ($data['value'] ?? null) {
+                            'closing_today' => $query->closingToday(),
+                            'opening_today' => $query->openingToday(),
+                            'closing_tomorrow' => $query->closingTomorrow(),
+                            'opening_tomorrow' => $query->openingTomorrow(),
+                            default => $query,
+                        };
+                    }),
                 SelectFilter::make('issue_type')
                     ->label('Board')
                     ->options(['EQ' => 'Mainboard', 'SME' => 'SME'])
@@ -252,6 +296,52 @@ class IpoResource extends Resource
                     ->toggle(),
             ])
             ->actions([
+                Action::make('checkAllotment')
+                    ->label('Check Allotment')
+                    ->icon('heroicon-o-magnifying-glass-circle')
+                    ->color('success')
+                    ->tooltip('Check allotment with registrar')
+                    ->visible(fn (Ipo $record) => $record->applications()->exists())
+                    ->requiresConfirmation()
+                    ->modalHeading(fn (Ipo $record) => "Check Allotment: {$record->name}")
+                    ->modalDescription(fn (Ipo $record) => "This will look up allotment for all pending applications of {$record->name} directly with the registrar and update their status.")
+                    ->action(function (Ipo $record, AllotmentCheckService $service) {
+                        if (! $record->canAutoCheckAllotment()) {
+                            Notification::make()
+                                ->title('Registrar Not Configured')
+                                ->body('Please edit this IPO and set Registrar & Registrar Client ID first.')
+                                ->warning()
+                                ->send();
+                            return;
+                        }
+
+                        $pending = $record->applications()->where('status', 'applied')->get();
+
+                        if ($pending->isEmpty()) {
+                            Notification::make()
+                                ->title('No Pending Applications')
+                                ->body('All applications for this IPO have already been checked or updated.')
+                                ->info()
+                                ->send();
+                            return;
+                        }
+
+                        $counts = $service->checkManyDirect($pending);
+
+                        $summary = "Checked {$counts['total']} application(s): "
+                            ."{$counts['allotted']} Allotted · "
+                            ."{$counts['refunded']} Refunded";
+
+                        if ($counts['not_found'] > 0) $summary .= " · {$counts['not_found']} Not Found";
+                        if ($counts['skipped'] > 0) $summary .= " · {$counts['skipped']} Skipped";
+                        if ($counts['error'] > 0) $summary .= " · {$counts['error']} Errors";
+
+                        Notification::make()
+                            ->title('Allotment Check Completed')
+                            ->body($summary)
+                            ->color($counts['allotted'] > 0 ? 'success' : ($counts['error'] > 0 ? 'warning' : 'info'))
+                            ->send();
+                    }),
                 EditAction::make(),
             ])
             ->bulkActions([

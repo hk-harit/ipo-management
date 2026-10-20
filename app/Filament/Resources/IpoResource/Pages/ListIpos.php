@@ -29,6 +29,36 @@ class ListIpos extends ListRecords
                 ->badge(Ipo::query()->live()->count())
                 ->modifyQueryUsing(fn ($query) => $query->live()),
 
+            'closing_today' => Tab::make('Closing Today')
+                ->icon('heroicon-m-clock')
+                ->badge(Ipo::query()->closingToday()->count())
+                ->badgeColor('danger')
+                ->modifyQueryUsing(fn ($query) => $query->closingToday()),
+
+            'opening_today' => Tab::make('Opening Today')
+                ->icon('heroicon-m-arrow-right-circle')
+                ->badge(Ipo::query()->openingToday()->count())
+                ->badgeColor('success')
+                ->modifyQueryUsing(fn ($query) => $query->openingToday()),
+
+            'closing_tomorrow' => Tab::make('Closing Tomorrow')
+                ->icon('heroicon-m-exclamation-circle')
+                ->badge(Ipo::query()->closingTomorrow()->count())
+                ->badgeColor('warning')
+                ->modifyQueryUsing(fn ($query) => $query->closingTomorrow()),
+
+            'opening_tomorrow' => Tab::make('Opening Tomorrow')
+                ->icon('heroicon-m-calendar-days')
+                ->badge(Ipo::query()->openingTomorrow()->count())
+                ->badgeColor('info')
+                ->modifyQueryUsing(fn ($query) => $query->openingTomorrow()),
+
+            'application_wise' => Tab::make('Application Wise')
+                ->icon('heroicon-m-user-group')
+                ->badge(Ipo::query()->withApplications()->count())
+                ->badgeColor('primary')
+                ->modifyQueryUsing(fn ($query) => $query->withApplications()->orderByDesc('subscription_applications')),
+
             'mainboard' => Tab::make('Mainboard')
                 ->badge(Ipo::query()->live()->mainboard()->count())
                 ->modifyQueryUsing(fn ($query) => $query->live()->mainboard()),

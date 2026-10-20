@@ -2,28 +2,16 @@
 
 namespace App\Filament\Support;
 
-use App\Jobs\CheckAllotmentJob;
-use App\Models\User;
+use App\Services\AllotmentCheck\AllotmentCheckService;
 use Filament\Notifications\Notification;
 use Filament\Tables\Actions\BulkAction;
-use Illuminate\Bus\Batch;
 use Illuminate\Database\Eloquent\Collection;
-use Illuminate\Support\Facades\Bus;
-use Illuminate\Support\Facades\Cache;
 
 /**
  * "Check Allotment" bulk action — shared by the top-level Applications list
- * and the per-IPO relation manager, so selecting a batch of applications and
- * running them through their IPO's configured registrar works the same
- * everywhere. Skips (rather than fails) anything not set up for it, so it's
- * always safe to select a mixed batch.
- *
- * Each application's check runs in its own queued CheckAllotmentJob rather
- * than inline: a registrar lookup involves OCR + a few HTTP round trips, and
- * running that in a loop inside the request that handled the click would
- * block the panel (and risk a timeout) for anything more than a couple of
- * applications. The jobs run as one Bus::batch so a single notification can
- * report the combined outcome once they've all finished.
+ * and the per-IPO relation manager.
+ * Runs directly so it works seamlessly on environments without background
+ * queue daemons (like Hostinger Business Web Hosting).
  */
 class AllotmentCheckBulkAction
 {
@@ -34,37 +22,29 @@ class AllotmentCheckBulkAction
             ->icon('heroicon-o-magnifying-glass-circle')
             ->color('info')
             ->requiresConfirmation()
-            ->modalDescription("Looks up each selected application's allotment status with its IPO's configured registrar, and updates status / shares allotted / amount returned automatically. Runs in the background — you'll get a notification when it's done. Applications whose IPO has no registrar configured, or whose applicant has no PAN on file, are skipped.")
-            ->action(function (Collection $records) {
-                $ids = $records->pluck('id')->all();
-                $userId = auth()->id();
+            ->modalHeading('Check Allotment for Selected Applications')
+            ->modalDescription("Looks up each selected application's allotment status with its IPO's configured registrar, and immediately updates status, shares allotted, and refund amount. Applications whose IPO has no registrar configured, or whose applicant has no PAN on file, will be skipped.")
+            ->action(function (Collection $records, AllotmentCheckService $service) {
+                $counts = $service->checkManyDirect($records);
 
-                Bus::batch(
-                    array_map(fn (int $id) => new CheckAllotmentJob($id), $ids)
-                )
-                    ->name('Check allotment: '.count($ids).' application(s)')
-                    ->then(function (Batch $batch) use ($userId) {
-                        $counts = collect(['updated', 'not_found', 'skipped', 'error'])
-                            ->mapWithKeys(fn (string $status) => [
-                                $status => (int) Cache::pull("allotment-check:{$batch->id}:{$status}", 0),
-                            ]);
+                $summary = "Checked {$counts['total']} application(s): "
+                    ."{$counts['allotted']} Allotted · "
+                    ."{$counts['refunded']} Refunded";
 
-                        $summary = "Updated {$counts['updated']} · Not found {$counts['not_found']} · Skipped {$counts['skipped']}"
-                            .($counts['error'] > 0 ? " · Errors {$counts['error']}" : '');
-
-                        if ($userId && $user = User::find($userId)) {
-                            Notification::make()
-                                ->title('Allotment check complete')
-                                ->body($summary)
-                                ->color($counts['error'] > 0 ? 'warning' : 'success')
-                                ->sendToDatabase($user);
-                        }
-                    })
-                    ->dispatch();
+                if ($counts['not_found'] > 0) {
+                    $summary .= " · {$counts['not_found']} Not Found";
+                }
+                if ($counts['skipped'] > 0) {
+                    $summary .= " · {$counts['skipped']} Skipped";
+                }
+                if ($counts['error'] > 0) {
+                    $summary .= " · {$counts['error']} Errors";
+                }
 
                 Notification::make()
-                    ->title('Allotment check queued')
-                    ->body(count($ids)." application(s) queued for background checking — you'll get a notification here when it's done.")
+                    ->title('Allotment check completed')
+                    ->body($summary)
+                    ->color($counts['allotted'] > 0 ? 'success' : ($counts['error'] > 0 ? 'warning' : 'info'))
                     ->send();
             })
             ->deselectRecordsAfterCompletion();

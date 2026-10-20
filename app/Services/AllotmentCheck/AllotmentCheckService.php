@@ -157,6 +157,62 @@ class AllotmentCheckService
         ];
     }
 
+    /**
+     * Run allotment checks directly/synchronously for multiple applications.
+     * Ideal for environments without background queue workers (e.g. Hostinger shared hosting).
+     *
+     * @param iterable<IpoApplication> $applications
+     * @return array{
+     *     total: int,
+     *     allotted: int,
+     *     refunded: int,
+     *     not_found: int,
+     *     skipped: int,
+     *     error: int,
+     *     errors: array<string>
+     * }
+     */
+    public function checkManyDirect(iterable $applications): array
+    {
+        @set_time_limit(300);
+
+        $counts = [
+            'total' => 0,
+            'allotted' => 0,
+            'refunded' => 0,
+            'not_found' => 0,
+            'skipped' => 0,
+            'error' => 0,
+            'errors' => [],
+        ];
+
+        foreach ($applications as $application) {
+            $counts['total']++;
+            $outcome = $this->checkForApplication($application);
+
+            if ($outcome->status === 'updated') {
+                $fresh = $application->fresh();
+                if (in_array($fresh?->status, ['allotted', 'partial_allotted'], true)) {
+                    $counts['allotted']++;
+                } else {
+                    $counts['refunded']++;
+                }
+            } elseif ($outcome->status === 'not_found') {
+                $counts['not_found']++;
+            } elseif ($outcome->status === 'skipped') {
+                $counts['skipped']++;
+            } elseif ($outcome->status === 'error') {
+                $counts['error']++;
+                if ($outcome->message) {
+                    $applicantName = $application->applicant?->name ?? "App #{$application->id}";
+                    $counts['errors'][] = "{$applicantName}: {$outcome->message}";
+                }
+            }
+        }
+
+        return $counts;
+    }
+
     public function checkForApplication(IpoApplication $application): AllotmentCheckOutcome
     {
         $ipo = $application->ipo;
