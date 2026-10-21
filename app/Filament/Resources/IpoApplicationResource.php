@@ -21,8 +21,11 @@ use Filament\Tables\Actions\BulkActionGroup;
 use Filament\Tables\Actions\DeleteBulkAction;
 use Filament\Tables\Actions\EditAction;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Enums\FiltersLayout;
 use Filament\Tables\Filters\SelectFilter;
+use Filament\Tables\Grouping\Group;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 
 class IpoApplicationResource extends Resource
 {
@@ -100,18 +103,46 @@ class IpoApplicationResource extends Resource
                     ->placeholder('—'),
             ])
             ->defaultSort('applied_date', 'desc')
+            ->groups([
+                Group::make('ipo.name')
+                    ->label('IPO')
+                    ->collapsible(),
+            ])
+            ->defaultGroup('ipo.name')
             ->filters([
-                SelectFilter::make('ipo_id')->label('IPO')->relationship('ipo', 'name'),
-                SelectFilter::make('applicant_id')->label('Applicant')->relationship('applicant', 'name'),
-                SelectFilter::make('account_id')->label('Account')->relationship('account', 'name'),
-                SelectFilter::make('source_id')->label('Source')->relationship('source', 'name'),
-                SelectFilter::make('status')->options([
-                    'applied' => 'Applied',
-                    'refunded' => 'Refunded',
-                    'allotted' => 'Allotted',
-                    'partial_allotted' => 'Partially Allotted',
-                    'sold' => 'Sold',
-                ]),
+                SelectFilter::make('ipo_id')
+                    ->label('Select IPO (IPO પસંદ કરો)')
+                    ->relationship('ipo', 'name', fn (Builder $query) => $query->whereHas('applications')->orderByDesc('id'))
+                    ->searchable()
+                    ->preload()
+                    ->placeholder('All IPOs (બધા જ IPO)'),
+                SelectFilter::make('status')
+                    ->label('Status')
+                    ->options([
+                        'applied' => 'Applied',
+                        'refunded' => 'Refunded',
+                        'allotted' => 'Allotted',
+                        'partial_allotted' => 'Partially Allotted',
+                        'sold' => 'Sold',
+                    ])
+                    ->placeholder('All Status'),
+                SelectFilter::make('applicant_id')
+                    ->label('Applicant')
+                    ->relationship('applicant', 'name')
+                    ->searchable()
+                    ->preload()
+                    ->placeholder('All Applicants'),
+                SelectFilter::make('account_id')
+                    ->label('Account')
+                    ->relationship('account', 'name')
+                    ->searchable()
+                    ->preload()
+                    ->placeholder('All Accounts'),
+            ], layout: FiltersLayout::AboveContent)
+            ->filtersFormColumns([
+                'sm' => 1,
+                'md' => 2,
+                'lg' => 4,
             ])
             ->actions([
                 Action::make('checkAllotment')
