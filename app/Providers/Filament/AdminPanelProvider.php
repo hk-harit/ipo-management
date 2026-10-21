@@ -41,10 +41,13 @@ class AdminPanelProvider extends PanelProvider
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament\\Widgets')
             ->widgets([
                 \App\Filament\Widgets\OverviewStats::class,
-                \App\Filament\Widgets\AccountBalancesTable::class,
+                \App\Filament\Widgets\IpoInvestmentsWidget::class,
+                \App\Filament\Widgets\IpoCapitalDistributionChart::class,
+                \App\Filament\Widgets\AllotmentOutcomeChart::class,
                 \App\Filament\Widgets\AllottedAwaitingSaleWidget::class,
-                \App\Filament\Widgets\NeedsAttentionWidget::class,
+                \App\Filament\Widgets\AccountBalancesTable::class,
                 \App\Filament\Widgets\SourceDueChart::class,
+                \App\Filament\Widgets\NeedsAttentionWidget::class,
             ])
             ->middleware([
                 EncryptCookies::class,
