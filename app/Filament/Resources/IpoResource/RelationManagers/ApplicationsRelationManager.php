@@ -11,6 +11,8 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Form;
+use Filament\Forms\Get;
+use Filament\Forms\Set;
 use Filament\Notifications\Notification;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables\Actions\Action;
@@ -95,17 +97,55 @@ class ApplicationsRelationManager extends RelationManager
                     ->icon('heroicon-o-magnifying-glass-circle')
                     ->color('success')
                     ->requiresConfirmation()
-                    ->modalHeading('Check Allotment for All Pending Applications')
-                    ->modalDescription('Directly looks up allotment results with the registrar for all pending applications and updates their status immediately.')
-                    ->action(function (RelationManager $livewire, AllotmentCheckService $service) {
+                    ->modalHeading(fn (RelationManager $livewire) => "Check Allotment: " . ($livewire->getOwnerRecord()->name ?? 'All Applications'))
+                    ->modalDescription(fn (RelationManager $livewire) => $livewire->getOwnerRecord()->canAutoCheckAllotment()
+                        ? 'Directly looks up allotment results with the registrar for all pending applications and updates their status immediately.'
+                        : 'Registrar is not configured for this IPO yet. Please select the Registrar and Company below to save and check immediately:'
+                    )
+                    ->form(fn (RelationManager $livewire, AllotmentCheckService $service) => ! $livewire->getOwnerRecord()->canAutoCheckAllotment() ? [
+                        Select::make('registrar')
+                            ->label('Registrar')
+                            ->options(AllotmentCheckService::registrarOptions())
+                            ->required()
+                            ->live()
+                            ->native(false)
+                            ->afterStateUpdated(function (Set $set, ?string $state) use ($service, $livewire) {
+                                if ($state) {
+                                    $matchedId = $service->matchCompanyId($state, $livewire->getOwnerRecord()->name);
+                                    if ($matchedId) {
+                                        $set('registrar_client_id', $matchedId);
+                                    }
+                                }
+                            }),
+                        Select::make('registrar_client_id')
+                            ->label('Company on Registrar')
+                            ->placeholder('Select Company...')
+                            ->searchable()
+                            ->preload()
+                            ->required()
+                            ->options(function (Get $get) use ($service) {
+                                $reg = $get('registrar');
+                                return $reg ? $service->getRegistrarCompanies($reg) : [];
+                            })
+                            ->default(fn (Get $get) => $get('registrar') ? $service->matchCompanyId($get('registrar'), $livewire->getOwnerRecord()->name) : null)
+                            ->helperText('Select this company from the registrar\'s live list.'),
+                    ] : [])
+                    ->action(function (RelationManager $livewire, array $data, AllotmentCheckService $service) {
                         $ipo = $livewire->getOwnerRecord();
                         if (! $ipo->canAutoCheckAllotment()) {
-                            Notification::make()
-                                ->title('Registrar Not Configured')
-                                ->body('Please set Registrar and Registrar Client ID in the IPO edit form first.')
-                                ->warning()
-                                ->send();
-                            return;
+                            if (! empty($data['registrar']) && ! empty($data['registrar_client_id'])) {
+                                $ipo->update([
+                                    'registrar' => $data['registrar'],
+                                    'registrar_client_id' => $data['registrar_client_id'],
+                                ]);
+                            } else {
+                                Notification::make()
+                                    ->title('Registrar Not Configured')
+                                    ->body('Please select Registrar and Company first.')
+                                    ->warning()
+                                    ->send();
+                                return;
+                            }
                         }
 
                         $pending = $ipo->applications()->where('status', 'applied')->get();

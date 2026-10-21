@@ -13,6 +13,8 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Form;
+use Filament\Forms\Get;
+use Filament\Forms\Set;
 use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Tables\Actions\Action;
@@ -67,17 +69,45 @@ class IpoResource extends Resource
             ])->columns(2),
 
             Section::make('Auto Allotment Check')
-                ->description("Optional — set these so the \"Check Allotment\" button on this IPO's applications can look up status automatically instead of checking each applicant by hand.")
+                ->description("Set Registrar and select the Company to enable automatic allotment status checking.")
                 ->icon('heroicon-o-magnifying-glass-circle')
-                ->collapsed(fn (?Ipo $record) => ! $record?->canAutoCheckAllotment())
+                ->collapsible()
+                ->collapsed(false)
                 ->schema([
                     Select::make('registrar')
                         ->options(AllotmentCheckService::registrarOptions())
                         ->native(false)
+                        ->live()
+                        ->afterStateUpdated(function (Get $get, Set $set, AllotmentCheckService $service, ?string $state) {
+                            if (! $state) {
+                                $set('registrar_client_id', null);
+                                return;
+                            }
+                            $matchedId = $service->matchCompanyId($state, $get('name'));
+                            if ($matchedId) {
+                                $set('registrar_client_id', $matchedId);
+                            }
+                        })
                         ->helperText('Which registrar is handling this issue\'s allotment.'),
-                    TextInput::make('registrar_client_id')
-                        ->label('Registrar Client ID')
-                        ->helperText("This IPO's own id on the registrar's site — e.g. on MUFG Intime's status checker (in.mpms.mufg.com), pick the company from the dropdown and check the network request for its \"clientid\"; on Bigshare's checker (ipo.bigshareonline.com) it's the numeric \"Company\" value for that issue."),
+
+                    Select::make('registrar_client_id')
+                        ->label('Company on Registrar')
+                        ->placeholder('Select Company...')
+                        ->searchable()
+                        ->preload()
+                        ->options(function (Get $get, AllotmentCheckService $service, ?Ipo $record) {
+                            $reg = $get('registrar');
+                            if (! $reg) {
+                                return [];
+                            }
+                            $companies = $service->getRegistrarCompanies($reg);
+                            if ($record?->registrar_client_id && ! isset($companies[$record->registrar_client_id])) {
+                                $companies[$record->registrar_client_id] = "Current ID: {$record->registrar_client_id}";
+                            }
+                            return $companies;
+                        })
+                        ->helperText('Select the company from the registrar\'s live list. The Company ID is mapped automatically.')
+                        ->visible(fn (Get $get) => filled($get('registrar'))),
                 ])->columns(2),
 
             Section::make('Issue Details')
@@ -304,15 +334,53 @@ class IpoResource extends Resource
                     ->visible(fn (Ipo $record) => $record->applications()->exists())
                     ->requiresConfirmation()
                     ->modalHeading(fn (Ipo $record) => "Check Allotment: {$record->name}")
-                    ->modalDescription(fn (Ipo $record) => "This will look up allotment for all pending applications of {$record->name} directly with the registrar and update their status.")
-                    ->action(function (Ipo $record, AllotmentCheckService $service) {
+                    ->modalDescription(fn (Ipo $record) => $record->canAutoCheckAllotment()
+                        ? "This will look up allotment for all pending applications of {$record->name} directly with the registrar and update their status."
+                        : "Registrar is not configured for this IPO yet. Please select the Registrar and Company below to save and check immediately:"
+                    )
+                    ->form(fn (Ipo $record, AllotmentCheckService $service) => ! $record->canAutoCheckAllotment() ? [
+                        Select::make('registrar')
+                            ->label('Registrar')
+                            ->options(AllotmentCheckService::registrarOptions())
+                            ->required()
+                            ->live()
+                            ->native(false)
+                            ->afterStateUpdated(function (Set $set, ?string $state) use ($service, $record) {
+                                if ($state) {
+                                    $matchedId = $service->matchCompanyId($state, $record->name);
+                                    if ($matchedId) {
+                                        $set('registrar_client_id', $matchedId);
+                                    }
+                                }
+                            }),
+                        Select::make('registrar_client_id')
+                            ->label('Company on Registrar')
+                            ->placeholder('Select Company...')
+                            ->searchable()
+                            ->preload()
+                            ->required()
+                            ->options(function (Get $get) use ($service) {
+                                $reg = $get('registrar');
+                                return $reg ? $service->getRegistrarCompanies($reg) : [];
+                            })
+                            ->default(fn (Get $get) => $get('registrar') ? $service->matchCompanyId($get('registrar'), $record->name) : null)
+                            ->helperText('Select this company from the registrar\'s live list.'),
+                    ] : [])
+                    ->action(function (Ipo $record, array $data, AllotmentCheckService $service) {
                         if (! $record->canAutoCheckAllotment()) {
-                            Notification::make()
-                                ->title('Registrar Not Configured')
-                                ->body('Please edit this IPO and set Registrar & Registrar Client ID first.')
-                                ->warning()
-                                ->send();
-                            return;
+                            if (! empty($data['registrar']) && ! empty($data['registrar_client_id'])) {
+                                $record->update([
+                                    'registrar' => $data['registrar'],
+                                    'registrar_client_id' => $data['registrar_client_id'],
+                                ]);
+                            } else {
+                                Notification::make()
+                                    ->title('Registrar Not Configured')
+                                    ->body('Please select Registrar and Company first.')
+                                    ->warning()
+                                    ->send();
+                                return;
+                            }
                         }
 
                         $pending = $record->applications()->where('status', 'applied')->get();

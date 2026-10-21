@@ -3,6 +3,8 @@
 namespace App\Services\AllotmentCheck;
 
 use App\Models\IpoApplication;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Http;
 use Throwable;
 
 /**
@@ -26,6 +28,126 @@ class AllotmentCheckService
             'mufg_intime' => 'MUFG Intime (Link Intime)',
             'bigshare' => 'Bigshare Services',
         ];
+    }
+
+    /**
+     * Fetch active company list from registrar with caching (15 minutes).
+     * Returns array [company_client_id => company_name].
+     *
+     * @return array<string, string>
+     */
+    public function getRegistrarCompanies(string $registrar): array
+    {
+        return Cache::remember("registrar_companies:{$registrar}", 900, function () use ($registrar) {
+            try {
+                return match ($registrar) {
+                    'mufg_intime' => $this->fetchMufgCompanies(),
+                    'bigshare' => $this->fetchBigshareCompanies(),
+                    default => [],
+                };
+            } catch (Throwable $e) {
+                report($e);
+                return [];
+            }
+        });
+    }
+
+    /**
+     * Try to find matching company ID from registrar's live company list based on IPO name.
+     */
+    public function matchCompanyId(string $registrar, ?string $ipoName): ?string
+    {
+        if (! $ipoName) {
+            return null;
+        }
+
+        $companies = $this->getRegistrarCompanies($registrar);
+        $cleanIpo = preg_replace('/[^a-z0-9]/', '', strtolower($ipoName));
+
+        if (empty($cleanIpo)) {
+            return null;
+        }
+
+        foreach ($companies as $id => $name) {
+            $cleanComp = preg_replace('/[^a-z0-9]/', '', strtolower($name));
+            if (str_contains($cleanComp, $cleanIpo) || str_contains($cleanIpo, $cleanComp)) {
+                return (string) $id;
+            }
+        }
+
+        // Try matching first 2 significant words (e.g. "HD Fire" matching "HD Fire Protect Limited - IPO")
+        $words = array_filter(explode(' ', strtolower(preg_replace('/[^a-z0-9\s]/', '', $ipoName))));
+        $significant = array_slice(array_diff($words, ['ipo', 'limited', 'ltd', 'sme']), 0, 2);
+        if (! empty($significant)) {
+            $searchPhrase = implode('', $significant);
+            foreach ($companies as $id => $name) {
+                $cleanComp = preg_replace('/[^a-z0-9]/', '', strtolower($name));
+                if (str_contains($cleanComp, $searchPhrase)) {
+                    return (string) $id;
+                }
+            }
+        }
+
+        return null;
+    }
+
+    private function fetchMufgCompanies(): array
+    {
+        $response = Http::withHeaders([
+            'accept' => 'application/json, text/javascript, */*; q=0.01',
+            'content-type' => 'application/json; charset=UTF-8',
+            'origin' => 'https://in.mpms.mufg.com',
+            'referer' => 'https://in.mpms.mufg.com/Initial_Offer/public-issues.html',
+            'x-requested-with' => 'XMLHttpRequest',
+            'user-agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36',
+        ])
+            ->timeout(10)
+            ->send('POST', 'https://in.mpms.mufg.com/Initial_Offer/IPO.aspx/GetDetails', ['body' => '']);
+
+        $xml = $response->json('d');
+        if (! $xml || ! str_contains($xml, '<Table>')) {
+            return [];
+        }
+
+        $out = [];
+        $doc = @simplexml_load_string($xml);
+        if ($doc && isset($doc->Table)) {
+            foreach ($doc->Table as $row) {
+                $id = trim((string) $row->company_id);
+                $name = trim((string) $row->companyname);
+                if ($id !== '' && $name !== '') {
+                    $out[$id] = $name;
+                }
+            }
+        }
+
+        return $out;
+    }
+
+    private function fetchBigshareCompanies(): array
+    {
+        $response = Http::withHeaders([
+            'accept' => 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+            'user-agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36',
+        ])
+            ->timeout(10)
+            ->get('https://ipo.bigshareonline.com/ipo_status.aspx');
+
+        $body = $response->body();
+        if (! preg_match('/<select[^>]*ddlCompany[^>]*>(.*?)<\/select>/is', $body, $m)) {
+            return [];
+        }
+
+        $out = [];
+        preg_match_all('/<option[^>]*value=["\']?([^"\' >]+)["\']?[^>]*>(.*?)<\/option>/is', $m[1], $opts);
+        foreach ($opts[1] as $idx => $id) {
+            $name = trim(html_entity_decode($opts[2][$idx]));
+            if ($id !== '' && $id !== '0' && ! str_contains($name, '--Select')) {
+                $out[$id] = $name;
+            }
+        }
+
+        return $out;
     }
 
     /**

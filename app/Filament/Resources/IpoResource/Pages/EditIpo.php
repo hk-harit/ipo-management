@@ -5,6 +5,9 @@ namespace App\Filament\Resources\IpoResource\Pages;
 use App\Filament\Resources\IpoResource;
 use App\Services\AllotmentCheck\AllotmentCheckService;
 use Filament\Actions;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Get;
+use Filament\Forms\Set;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\EditRecord;
 
@@ -21,16 +24,55 @@ class EditIpo extends EditRecord
                 ->color('success')
                 ->requiresConfirmation()
                 ->modalHeading(fn () => "Check Allotment: {$this->record->name}")
-                ->modalDescription('Looks up allotment for all pending applications of this IPO directly with the registrar and updates their status.')
+                ->modalDescription(fn () => $this->record->canAutoCheckAllotment()
+                    ? "Looks up allotment for all pending applications of this IPO directly with the registrar and updates their status."
+                    : "Registrar is not configured for this IPO yet. Please select the Registrar and Company below to save and check immediately:"
+                )
+                ->form(fn (AllotmentCheckService $service) => ! $this->record->canAutoCheckAllotment() ? [
+                    Select::make('registrar')
+                        ->label('Registrar')
+                        ->options(AllotmentCheckService::registrarOptions())
+                        ->required()
+                        ->live()
+                        ->native(false)
+                        ->afterStateUpdated(function (Set $set, ?string $state) use ($service) {
+                            if ($state) {
+                                $matchedId = $service->matchCompanyId($state, $this->record->name);
+                                if ($matchedId) {
+                                    $set('registrar_client_id', $matchedId);
+                                }
+                            }
+                        }),
+                    Select::make('registrar_client_id')
+                        ->label('Company on Registrar')
+                        ->placeholder('Select Company...')
+                        ->searchable()
+                        ->preload()
+                        ->required()
+                        ->options(function (Get $get) use ($service) {
+                            $reg = $get('registrar');
+                            return $reg ? $service->getRegistrarCompanies($reg) : [];
+                        })
+                        ->default(fn (Get $get) => $get('registrar') ? $service->matchCompanyId($get('registrar'), $this->record->name) : null)
+                        ->helperText('Select this company from the registrar\'s live list.'),
+                ] : [])
                 ->visible(fn () => $this->record->applications()->exists())
-                ->action(function (AllotmentCheckService $service) {
+                ->action(function (array $data, AllotmentCheckService $service) {
                     if (! $this->record->canAutoCheckAllotment()) {
-                        Notification::make()
-                            ->title('Registrar Not Configured')
-                            ->body('Please set Registrar and Registrar Client ID in the "Auto Allotment Check" section below.')
-                            ->warning()
-                            ->send();
-                        return;
+                        if (! empty($data['registrar']) && ! empty($data['registrar_client_id'])) {
+                            $this->record->update([
+                                'registrar' => $data['registrar'],
+                                'registrar_client_id' => $data['registrar_client_id'],
+                            ]);
+                            $this->fillForm();
+                        } else {
+                            Notification::make()
+                                ->title('Registrar Not Configured')
+                                ->body('Please select Registrar and Company first.')
+                                ->warning()
+                                ->send();
+                            return;
+                        }
                     }
 
                     $pending = $this->record->applications()->where('status', 'applied')->get();
