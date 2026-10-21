@@ -83,9 +83,9 @@ class MufgIntimeChecker implements AllotmentChecker
         }
 
         return new AllotmentCheckResult(
-            sharesApplied: isset($row->SHARES) && (string) $row->SHARES !== '' ? (int) $row->SHARES : null,
-            sharesAllotted: isset($row->ALLOT) ? (int) $row->ALLOT : 0,
-            refundAmount: isset($row->RFNDAMT) && (string) $row->RFNDAMT !== '' ? (float) $row->RFNDAMT : null,
+            sharesApplied: isset($row->SHARES) && (string) $row->SHARES !== '' ? (int) (string) $row->SHARES : null,
+            sharesAllotted: isset($row->ALLOT) && (string) $row->ALLOT !== '' ? (int) (string) $row->ALLOT : 0,
+            refundAmount: isset($row->RFNDAMT) && (string) $row->RFNDAMT !== '' ? (float) (string) $row->RFNDAMT : null,
             refundReference: isset($row->RFNDNO) && (string) $row->RFNDNO !== '' ? (string) $row->RFNDNO : null,
             companyName: isset($row->companyname) ? (string) $row->companyname : null,
         );

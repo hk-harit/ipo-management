@@ -261,6 +261,12 @@ class AllotmentCheckService
 
         if ($result->refundAmount !== null && in_array($application->status, ['refunded', 'partial_allotted'], true)) {
             $application->return_amount = $result->refundAmount;
+        } elseif ($application->status === 'refunded' && $application->return_amount === null) {
+            $application->return_amount = $application->amount;
+        }
+
+        if (in_array($application->status, ['refunded', 'partial_allotted'], true) && ! $application->return_date) {
+            $application->return_date = now()->toDateString();
         }
 
         $note = '['.now()->toDateString().'] Auto allotment check: '

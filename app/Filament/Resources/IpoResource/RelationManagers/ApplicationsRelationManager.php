@@ -133,6 +133,9 @@ class ApplicationsRelationManager extends RelationManager
                         }
                         if ($counts['error'] > 0) {
                             $summary .= " · {$counts['error']} Errors";
+                            if (! empty($counts['errors'])) {
+                                $summary .= ' ('.implode(', ', array_slice($counts['errors'], 0, 2)).')';
+                            }
                         }
 
                         Notification::make()
@@ -148,7 +151,7 @@ class ApplicationsRelationManager extends RelationManager
                     ->icon('heroicon-o-magnifying-glass')
                     ->color('info')
                     ->tooltip('Check allotment for this applicant directly with registrar')
-                    ->visible(fn (IpoApplication $record) => $record->ipo?->canAutoCheckAllotment() && $record->status === 'applied')
+                    ->visible(fn (IpoApplication $record, RelationManager $livewire) => ($record->ipo ?? $livewire->getOwnerRecord())?->canAutoCheckAllotment() && $record->status === 'applied')
                     ->action(function (IpoApplication $record, AllotmentCheckService $service) {
                         $outcome = $service->checkForApplication($record);
 

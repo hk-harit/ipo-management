@@ -334,7 +334,12 @@ class IpoResource extends Resource
 
                         if ($counts['not_found'] > 0) $summary .= " · {$counts['not_found']} Not Found";
                         if ($counts['skipped'] > 0) $summary .= " · {$counts['skipped']} Skipped";
-                        if ($counts['error'] > 0) $summary .= " · {$counts['error']} Errors";
+                        if ($counts['error'] > 0) {
+                            $summary .= " · {$counts['error']} Errors";
+                            if (! empty($counts['errors'])) {
+                                $summary .= ' ('.implode(', ', array_slice($counts['errors'], 0, 2)).')';
+                            }
+                        }
 
                         Notification::make()
                             ->title('Allotment Check Completed')

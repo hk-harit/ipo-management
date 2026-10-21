@@ -58,6 +58,9 @@ class EditIpo extends EditRecord
                     }
                     if ($counts['error'] > 0) {
                         $summary .= " · {$counts['error']} Errors";
+                        if (! empty($counts['errors'])) {
+                            $summary .= ' ('.implode(', ', array_slice($counts['errors'], 0, 2)).')';
+                        }
                     }
 
                     Notification::make()

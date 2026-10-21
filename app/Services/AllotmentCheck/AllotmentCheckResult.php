@@ -20,6 +20,10 @@ final class AllotmentCheckResult
 
     public function isFullyAllotted(): bool
     {
-        return $this->sharesApplied !== null && $this->sharesAllotted >= $this->sharesApplied;
+        if ($this->sharesApplied === null) {
+            return $this->sharesAllotted > 0;
+        }
+
+        return $this->sharesAllotted >= $this->sharesApplied;
     }
 }
