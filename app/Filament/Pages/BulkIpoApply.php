@@ -103,13 +103,21 @@ class BulkIpoApply extends Page implements HasForms
                             ->prefix('₹')
                             ->required(),
                     ])
-                    ->columns(7)
-                    ->addActionLabel('Add another applicant')
+                    ->columns([
+                        'default' => 1,
+                        'sm' => 2,
+                        'md' => 3,
+                        'xl' => 7,
+                    ])
+                    ->addActionLabel('Add another applicant (+)')
                     ->defaultItems(1)
                     ->reorderable(false)
                     ->columnSpanFull(),
             ])
-            ->columns(2)
+            ->columns([
+                'default' => 1,
+                'md' => 2,
+            ])
             ->statePath('data');
     }
 

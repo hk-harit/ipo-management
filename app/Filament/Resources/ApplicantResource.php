@@ -50,7 +50,10 @@ class ApplicantResource extends Resource
                 TextInput::make('demat_account')->label('Demat Account')->maxLength(255),
                 Textarea::make('notes')->columnSpanFull(),
                 Toggle::make('is_active')->default(true),
-            ])->columns(2),
+            ])->columns([
+                'default' => 1,
+                'md' => 2,
+            ]),
         ]);
     }
 

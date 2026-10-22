@@ -112,7 +112,10 @@ class IpoApplicationResource extends Resource
                     ->default(now()),
                 ...IpoApplicationFormFields::statusAndSaleSchema(),
                 Textarea::make('notes')->columnSpanFull(),
-            ])->columns(2),
+            ])->columns([
+                'default' => 1,
+                'md' => 2,
+            ]),
         ]);
     }
 

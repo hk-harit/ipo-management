@@ -27,10 +27,27 @@ class AdminPanelProvider extends PanelProvider
             ->id('admin')
             ->path('admin')
             ->login()
-            ->brandName('IPO Management')
+            ->brandName('IPO Manage PRO')
+            ->brandLogo(fn () => view('filament.components.brand-logo'))
+            ->font('Outfit')
             ->colors([
-                'primary' => Color::Indigo,
+                'primary' => Color::Emerald,
+                'gray' => Color::Slate,
+                'info' => Color::Sky,
+                'success' => Color::Emerald,
+                'warning' => Color::Amber,
+                'danger' => Color::Rose,
             ])
+            ->maxContentWidth(\Filament\Support\Enums\MaxWidth::Full)
+            ->sidebarCollapsibleOnDesktop()
+            ->sidebarWidth('16.5rem')
+            ->collapsedSidebarWidth('4.5rem')
+            ->renderHook(
+                'panels::head.done',
+                fn (): \Illuminate\Support\HtmlString => new \Illuminate\Support\HtmlString(
+                    '<link rel="stylesheet" href="' . asset('css/filament-theme.css') . '?v=' . filemtime(public_path('css/filament-theme.css')) . '">'
+                )
+            )
             ->databaseNotifications()
             ->databaseNotificationsPolling('30s')
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')
@@ -38,7 +55,6 @@ class AdminPanelProvider extends PanelProvider
             ->pages([
                 Pages\Dashboard::class,
             ])
-            ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament\\Widgets')
             ->widgets([
                 \App\Filament\Widgets\OverviewStats::class,
                 \App\Filament\Widgets\AccountSettlementHisabWidget::class,

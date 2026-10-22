@@ -102,7 +102,10 @@ class ApplicationsRelationManager extends RelationManager
             ...IpoApplicationFormFields::statusAndSaleSchema(),
             Textarea::make('notes')
                 ->columnSpanFull(),
-        ])->columns(2);
+        ])->columns([
+            'default' => 1,
+            'md' => 2,
+        ]);
     }
 
     public function table(Table $table): Table

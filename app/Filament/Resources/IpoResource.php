@@ -66,7 +66,10 @@ class IpoResource extends Resource
                     ->native(false)
                     ->default('upcoming'),
                 Textarea::make('notes')->columnSpanFull(),
-            ])->columns(2),
+            ])->columns([
+                'default' => 1,
+                'md' => 2,
+            ]),
 
             Section::make('Auto Allotment Check')
                 ->description("Set Registrar and select the Company to enable automatic allotment status checking.")
@@ -108,7 +111,10 @@ class IpoResource extends Resource
                         })
                         ->helperText('Select the company from the registrar\'s live list. The Company ID is mapped automatically.')
                         ->visible(fn (Get $get) => filled($get('registrar'))),
-                ])->columns(2),
+                ])->columns([
+                    'default' => 1,
+                    'md' => 2,
+                ]),
 
             Section::make('Issue Details')
                 ->description('Filled in automatically when the IPO is synced from ipoalerts.in.')
@@ -150,7 +156,10 @@ class IpoResource extends Resource
                     TextInput::make('info_url')->label('Info Link')->url()->columnSpanFull(),
                     TextInput::make('prospectus_url')->label('Prospectus')->url()->columnSpanFull(),
                     Textarea::make('about')->label('About the Company')->rows(4)->columnSpanFull(),
-                ])->columns(2),
+                ])->columns([
+                    'default' => 1,
+                    'md' => 2,
+                ]),
         ]);
     }
 

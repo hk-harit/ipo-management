@@ -1,0 +1,259 @@
+/* ==========================================================================
+   IPO Management PRO — Ultra-Modern Fintech Design Theme
+   Glassmorphism, High-Contrast Sleek Slate & Emerald Accents, Fully Responsive
+   ========================================================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+
+:root {
+    --font-sans: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
+}
+
+body, html, .fi-body {
+    font-family: var(--font-sans) !important;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* Tabular numbers for all financial figures, dates, and amounts */
+.fi-ta-text,
+.font-mono,
+[class*="text-emerald-"],
+[class*="text-amber-"],
+[class*="text-rose-"],
+[class*="text-danger-"],
+[class*="text-success-"] {
+    font-feature-settings: "tnum" 1;
+}
+
+/* ==========================================================================
+   Sidebar & Navigation Styling
+   ========================================================================== */
+.fi-sidebar {
+    border-right-width: 1px;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.fi-sidebar-item-btn {
+    border-radius: 0.75rem !important;
+    transition: all 0.15s ease-in-out !important;
+    font-weight: 500;
+}
+
+.fi-sidebar-item-btn:hover {
+    transform: translateX(2px);
+}
+
+.fi-sidebar-item-active .fi-sidebar-item-btn {
+    font-weight: 700 !important;
+    box-shadow: 0 4px 12px -2px rgba(16, 185, 129, 0.18);
+}
+
+/* ==========================================================================
+   Cards & Widgets — Glassmorphism & Elevation
+   ========================================================================== */
+.fi-wi-stats-overview-stat,
+.fi-section,
+.fi-ta-ctn {
+    border-radius: 1.125rem !important;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+/* Hover elevation on desktop */
+@media (min-width: 768px) {
+    .fi-wi-stats-overview-stat:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.08), 0 8px 10px -6px rgba(0, 0, 0, 0.04);
+    }
+}
+
+/* Stats Overview Cards */
+.fi-wi-stats-overview-stat {
+    position: relative;
+    overflow: hidden;
+    padding: 1.25rem !important;
+}
+
+.fi-wi-stats-overview-stat::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #10b981, #06b6d4);
+    opacity: 0.85;
+}
+
+/* ==========================================================================
+   Tables — Crisp Data Grid & Touch Scroll
+   ========================================================================== */
+.fi-ta-ctn {
+    overflow: hidden;
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px -1px rgba(0, 0, 0, 0.05);
+}
+
+.fi-ta-table {
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+.fi-ta-row {
+    transition: background-color 0.12s ease;
+}
+
+.fi-ta-header-cell {
+    font-size: 0.75rem !important;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight: 700 !important;
+    padding-top: 0.875rem !important;
+    padding-bottom: 0.875rem !important;
+}
+
+.fi-ta-cell {
+    padding-top: 0.875rem !important;
+    padding-bottom: 0.875rem !important;
+}
+
+/* Responsive Table Wrapper with smooth scroll */
+.fi-ta-content {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+}
+
+.fi-ta-content::-webkit-scrollbar {
+    height: 6px;
+    width: 6px;
+}
+
+.fi-ta-content::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.fi-ta-content::-webkit-scrollbar-thumb {
+    background: rgba(156, 163, 175, 0.4);
+    border-radius: 9999px;
+}
+
+.fi-ta-content::-webkit-scrollbar-thumb:hover {
+    background: rgba(156, 163, 175, 0.7);
+}
+
+/* ==========================================================================
+   Badges & Status Pills
+   ========================================================================== */
+.fi-badge {
+    border-radius: 9999px !important;
+    padding: 0.25rem 0.65rem !important;
+    font-weight: 600 !important;
+    font-size: 0.75rem !important;
+    letter-spacing: 0.025em;
+}
+
+/* ==========================================================================
+   Buttons & Form Inputs
+   ========================================================================== */
+.fi-btn {
+    border-radius: 0.75rem !important;
+    font-weight: 600 !important;
+    letter-spacing: 0.015em;
+    transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.fi-btn:active {
+    transform: scale(0.97);
+}
+
+.fi-input,
+.fi-select-input,
+.fi-fo-text-input input {
+    border-radius: 0.75rem !important;
+    font-size: 0.9375rem !important;
+}
+
+/* ==========================================================================
+   Mobile-First Responsiveness (max-width: 768px)
+   ========================================================================== */
+@media (max-width: 768px) {
+    /* Compact Topbar & Padding on mobile */
+    .fi-topbar {
+        padding-left: 0.75rem !important;
+        padding-right: 0.75rem !important;
+    }
+
+    .fi-page-header {
+        margin-bottom: 1rem !important;
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 0.75rem !important;
+    }
+
+    .fi-page-header .fi-page-header-actions {
+        width: 100% !important;
+        justify-content: flex-start !important;
+        flex-wrap: wrap !important;
+        gap: 0.5rem !important;
+    }
+
+    .fi-page-header .fi-page-header-actions .fi-btn {
+        flex: 1 1 auto;
+        justify-content: center;
+        min-height: 2.625rem;
+    }
+
+    /* Full width content padding on small devices */
+    .fi-main-ctn {
+        padding-left: 0.5rem !important;
+        padding-right: 0.5rem !important;
+    }
+
+    /* Stats Overview on mobile: 1 column clean cards */
+    .fi-wi-stats-overview {
+        grid-template-columns: repeat(1, minmax(0, 1fr)) !important;
+        gap: 0.75rem !important;
+    }
+
+    .fi-wi-stats-overview-stat {
+        padding: 1rem !important;
+    }
+
+    /* Better mobile modal display */
+    .fi-modal-window {
+        margin: 0.5rem !important;
+        max-width: calc(100vw - 1rem) !important;
+        border-radius: 1rem !important;
+    }
+
+    /* Table adjustments on mobile */
+    .fi-ta-header {
+        padding: 0.75rem !important;
+        flex-direction: column !important;
+        gap: 0.5rem !important;
+    }
+
+    .fi-ta-header-toolbar {
+        width: 100% !important;
+        justify-content: space-between !important;
+    }
+
+    .fi-ta-search-field {
+        width: 100% !important;
+    }
+}
+
+/* Tablet Responsiveness (769px to 1024px) */
+@media (min-width: 769px) and (max-width: 1024px) {
+    .fi-wi-stats-overview {
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    }
+}
+
+/* Large Screens (1280px+) */
+@media (min-width: 1280px) {
+    .fi-wi-stats-overview {
+        grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+    }
+}

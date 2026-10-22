@@ -45,7 +45,10 @@ class UserResource extends Resource
                         ->dehydrateStateUsing(fn ($state) => Hash::make($state))
                         ->dehydrated(fn ($state) => filled($state))
                         ->helperText(fn (string $context) => $context === 'edit' ? 'Leave blank to keep the current password' : null),
-                ])->columns(2),
+                ])->columns([
+                    'default' => 1,
+                    'md' => 2,
+                ]),
         ]);
     }
 

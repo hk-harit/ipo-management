@@ -41,9 +41,68 @@
             @endif
         </div>
 
-        {{-- Main Settlement Table --}}
+        {{-- Main Settlement Table / Mobile Cards --}}
         @if ($settlements->isNotEmpty())
-            <div class="overflow-x-auto rounded-2xl border border-gray-200/80 dark:border-white/10 bg-white dark:bg-gray-900 shadow-xs">
+            {{-- Mobile Card View (sm:hidden) --}}
+            <div class="block sm:hidden space-y-3">
+                @foreach ($settlements as $row)
+                    <div class="rounded-2xl border border-gray-200/80 dark:border-white/10 bg-white dark:bg-gray-900 p-4 shadow-xs {{ ! $row['is_settled'] ? 'ring-1 ring-amber-400/40 bg-amber-50/10 dark:bg-amber-950/10' : '' }}">
+                        <div class="flex items-center justify-between gap-2 pb-2.5 border-b border-gray-100 dark:border-white/5">
+                            <div class="flex items-center gap-1.5 min-w-0">
+                                <span class="font-bold text-gray-900 dark:text-white truncate text-sm">
+                                    {{ $row['giver']->name }}
+                                </span>
+                                <x-heroicon-m-arrow-right class="w-3.5 h-3.5 text-gray-400 shrink-0" />
+                                <span class="font-bold text-gray-900 dark:text-white truncate text-sm">
+                                    {{ $row['receiver']->name }}
+                                </span>
+                            </div>
+                            @if ($row['is_settled'])
+                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300">
+                                    <x-heroicon-m-check-circle class="w-3.5 h-3.5 text-emerald-500" />
+                                    Settled
+                                </span>
+                            @else
+                                <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-extrabold bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 font-mono">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
+                                    ₹{{ number_format($row['due_amount'], 2) }}
+                                </span>
+                            @endif
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-2 py-2.5 text-xs">
+                            <div class="bg-gray-50 dark:bg-white/[0.02] p-2 rounded-xl">
+                                <div class="text-[10px] uppercase font-medium text-gray-400">Total Sent</div>
+                                <div class="font-mono font-bold text-gray-800 dark:text-gray-200 mt-0.5">
+                                    ₹{{ number_format($row['total_given'], 2) }}
+                                </div>
+                            </div>
+                            <div class="bg-gray-50 dark:bg-white/[0.02] p-2 rounded-xl">
+                                <div class="text-[10px] uppercase font-medium text-gray-400">Total Returned</div>
+                                <div class="font-mono font-bold text-emerald-600 dark:text-emerald-400 mt-0.5">
+                                    ₹{{ number_format($row['total_returned'], 2) }}
+                                </div>
+                            </div>
+                        </div>
+
+                        @if (! $row['is_settled'])
+                            <div class="pt-1">
+                                <button
+                                    type="button"
+                                    wire:click="openSettleModal({{ $row['receiver']->id }}, {{ $row['giver']->id }}, {{ $row['due_amount'] }})"
+                                    class="w-full inline-flex items-center justify-center gap-2 py-2 px-3 rounded-xl text-xs font-bold bg-amber-500 text-white hover:bg-amber-600 active:scale-95 transition shadow-xs cursor-pointer"
+                                >
+                                    <x-heroicon-m-arrow-uturn-left class="w-4 h-4" />
+                                    <span>{{ $row['receiver']->name }} માંથી પાછા નાખો (Settle)</span>
+                                </button>
+                            </div>
+                        @endif
+                    </div>
+                @endforeach
+            </div>
+
+            {{-- Desktop Table View (hidden sm:block) --}}
+            <div class="hidden sm:block overflow-x-auto rounded-2xl border border-gray-200/80 dark:border-white/10 bg-white dark:bg-gray-900 shadow-xs">
                 <table class="w-full text-left text-sm divide-y divide-gray-200 dark:divide-white/10">
                     <thead class="bg-gray-50/80 dark:bg-white/[0.02] text-gray-600 dark:text-gray-400 font-semibold uppercase text-[11px] tracking-wider">
                         <tr>

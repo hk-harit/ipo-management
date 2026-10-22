@@ -96,7 +96,10 @@ class ExpenseResource extends Resource
                 Textarea::make('notes')
                     ->label('Notes / Description')
                     ->columnSpanFull(),
-            ])->columns(2),
+            ])->columns([
+                'default' => 1,
+                'md' => 2,
+            ]),
         ]);
     }
 

@@ -61,7 +61,10 @@ class SourceResource extends Resource
                 Toggle::make('is_active')
                     ->label('Active')
                     ->default(true),
-            ])->columns(2),
+            ])->columns([
+                'default' => 1,
+                'md' => 2,
+            ]),
 
             Section::make('Portal Login')
                 ->description('Let this source sign in at /source to see their own applications, allotments and dues. Read-only — they cannot change anything.')
@@ -100,7 +103,10 @@ class SourceResource extends Resource
                         ->label('Last signed in')
                         ->content(fn (?Source $record) => $record?->last_login_at?->diffForHumans() ?? 'Never')
                         ->visible(fn (?Source $record) => (bool) $record),
-                ])->columns(2),
+                ])->columns([
+                    'default' => 1,
+                    'md' => 2,
+                ]),
         ]);
     }
 

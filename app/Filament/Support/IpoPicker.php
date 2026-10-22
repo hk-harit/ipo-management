@@ -133,19 +133,23 @@ class IpoPicker
             return 'No market data for this IPO yet — run "Sync IPO list" on the IPOs page.';
         }
 
-        $html = '<div class="grid gap-1 text-sm">';
+        $html = '<div class="p-3.5 sm:p-4 rounded-2xl bg-emerald-50/50 dark:bg-emerald-950/20 border border-emerald-200/60 dark:border-emerald-800/40 text-sm">';
+        $html .= '<div class="grid gap-2">';
 
         foreach ($rows as [$label, $value]) {
-            $html .= '<div class="flex gap-2"><span class="w-44 shrink-0 text-gray-500 dark:text-gray-400">'
-                .e($label).'</span><span class="text-gray-950 dark:text-white">'.$value.'</span></div>';
+            $html .= '<div class="flex flex-col sm:flex-row sm:items-center sm:gap-2">'
+                .'<span class="w-full sm:w-44 shrink-0 text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400">'.e($label).'</span>'
+                .'<span class="text-xs sm:text-sm text-gray-950 dark:text-white font-medium">'.$value.'</span></div>';
         }
 
         $html .= '</div>';
 
         if ($ipo->gmp !== null) {
-            $html .= '<p class="mt-2 text-xs text-gray-400">Grey market premium is an unofficial, '
+            $html .= '<p class="mt-2 text-[11px] text-gray-400 dark:text-gray-500">Grey market premium is an unofficial, '
                 .'unregulated quote — a signal about listing gains, not a promise.</p>';
         }
+
+        $html .= '</div>';
 
         return new HtmlString($html);
     }

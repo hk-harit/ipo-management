@@ -31,9 +31,9 @@ class AllottedAwaitingSaleWidget extends BaseWidget
                     ->with(['ipo', 'applicant', 'account'])
             )
             ->columns([
-                TextColumn::make('ipo.name')->label('IPO'),
+                TextColumn::make('ipo.name')->label('IPO')->weight('bold'),
                 TextColumn::make('applicant.name')->label('Applicant'),
-                TextColumn::make('account.name')->label('Account'),
+                TextColumn::make('account.name')->label('Account')->visibleFrom('sm'),
                 TextColumn::make('amount')->label('Applied')->money('INR'),
                 TextColumn::make('shares_allotted')->label('Shares Allotted'),
                 TextColumn::make('status')->badge()->color('success'),

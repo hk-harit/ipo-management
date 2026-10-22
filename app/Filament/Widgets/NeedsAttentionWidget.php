@@ -35,14 +35,14 @@ class NeedsAttentionWidget extends BaseWidget
                     ->with(['ipo', 'applicant', 'account'])
             )
             ->columns([
-                TextColumn::make('applied_date')->date()->label('Applied On')->sortable(),
-                TextColumn::make('ipo.name')->label('IPO'),
+                TextColumn::make('applied_date')->date()->label('Applied On')->sortable()->visibleFrom('sm'),
+                TextColumn::make('ipo.name')->label('IPO')->weight('bold'),
                 TextColumn::make('applicant.name')->label('Applicant'),
-                TextColumn::make('account.name')->label('Account'),
+                TextColumn::make('account.name')->label('Account')->visibleFrom('md'),
                 TextColumn::make('amount')->money('INR'),
                 TextColumn::make('days_pending')
-                    ->label('Days Pending')
-                    ->state(fn (IpoApplication $record) => now()->diffInDays($record->applied_date))
+                    ->label('Pending')
+                    ->state(fn (IpoApplication $record) => now()->diffInDays($record->applied_date).'d')
                     ->badge()
                     ->color('danger'),
             ])

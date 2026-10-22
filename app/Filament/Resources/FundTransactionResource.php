@@ -61,7 +61,10 @@ class FundTransactionResource extends Resource
                     ->required()
                     ->default(now()),
                 Textarea::make('notes')->columnSpanFull(),
-            ])->columns(2),
+            ])->columns([
+                'default' => 1,
+                'md' => 2,
+            ]),
         ]);
     }
 

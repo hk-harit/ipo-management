@@ -40,7 +40,8 @@ class AccountBalancesTable extends BaseWidget
                 TextColumn::make('type')
                     ->label('Type')
                     ->badge()
-                    ->color(fn (string $state) => $state === 'bank' ? 'info' : 'gray'),
+                    ->color(fn (string $state) => $state === 'bank' ? 'info' : 'gray')
+                    ->visibleFrom('sm'),
 
                 TextColumn::make('total_balance')
                     ->label('Total Balance (કુલ રકમ)')

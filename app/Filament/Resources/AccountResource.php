@@ -79,7 +79,10 @@ class AccountResource extends Resource
                     ->columnSpanFull(),
                 Toggle::make('is_active')
                     ->default(true),
-            ])->columns(2),
+            ])->columns([
+                'default' => 1,
+                'md' => 2,
+            ]),
         ]);
     }
 
