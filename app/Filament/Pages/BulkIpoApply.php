@@ -62,8 +62,20 @@ class BulkIpoApply extends Page implements HasForms
                             ->searchable(),
                         Select::make('account_id')
                             ->label('Payment Account (બ્લોક)')
-                            ->options(fn () => Account::query()->orderBy('name')->pluck('name', 'id'))
+                            ->options(fn () => Account::query()->where('is_sub_account', false)->orderBy('name')->pluck('name', 'id'))
                             ->required()
+                            ->searchable()
+                            ->live(),
+                        Select::make('sub_account_id')
+                            ->label('Sub-Account')
+                            ->options(function (\Filament\Forms\Get $get) {
+                                $accId = $get('account_id');
+                                if (! $accId) {
+                                    return Account::where('is_sub_account', true)->pluck('name', 'id');
+                                }
+                                return Account::where('is_sub_account', true)->where('parent_id', $accId)->pluck('name', 'id');
+                            })
+                            ->placeholder('Direct')
                             ->searchable(),
                         Select::make('funding_type')
                             ->label('Funding')
@@ -87,7 +99,7 @@ class BulkIpoApply extends Page implements HasForms
                             ->prefix('₹')
                             ->required(),
                     ])
-                    ->columns(6)
+                    ->columns(7)
                     ->addActionLabel('Add another applicant')
                     ->defaultItems(1)
                     ->reorderable(false)
@@ -119,6 +131,7 @@ class BulkIpoApply extends Page implements HasForms
                 'ipo_id' => $state['ipo_id'],
                 'applicant_id' => $row['applicant_id'],
                 'account_id' => $row['account_id'],
+                'sub_account_id' => $row['sub_account_id'] ?? null,
                 'funding_type' => $row['funding_type'] ?? 'direct',
                 'funding_account_id' => ($row['funding_type'] ?? 'direct') === 'transferred' ? ($row['funding_account_id'] ?? null) : null,
                 'source_id' => $row['source_id'] ?? null,

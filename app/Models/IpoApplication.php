@@ -17,6 +17,7 @@ class IpoApplication extends Model
         'ipo_id',
         'applicant_id',
         'account_id',
+        'sub_account_id',
         'funding_type',
         'funding_account_id',
         'auto_transfer_id',
@@ -110,6 +111,11 @@ class IpoApplication extends Model
     public function account(): BelongsTo
     {
         return $this->belongsTo(Account::class);
+    }
+
+    public function subAccount(): BelongsTo
+    {
+        return $this->belongsTo(Account::class, 'sub_account_id');
     }
 
     public function fundingAccount(): BelongsTo

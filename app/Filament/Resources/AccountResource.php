@@ -63,6 +63,17 @@ class AccountResource extends Resource
                     ->prefix('₹')
                     ->required()
                     ->default(0),
+                Toggle::make('is_sub_account')
+                    ->label('This is a Sub-Account (આ સબ એકાઉન્ટ છે)')
+                    ->helperText('જો આ કોઈ મુખ્ય ખાતાનું સબ એકાઉન્ટ હોય તો ઓન કરો')
+                    ->live(),
+                Select::make('parent_id')
+                    ->label('Parent / Main Account (કયા મુખ્ય ખાતા નીચે છે)')
+                    ->relationship('parent', 'name', fn ($query) => $query->where('is_sub_account', false))
+                    ->searchable()
+                    ->preload()
+                    ->visible(fn ($get) => (bool) $get('is_sub_account'))
+                    ->required(fn ($get) => (bool) $get('is_sub_account')),
                 Textarea::make('notes')
                     ->columnSpanFull(),
                 Toggle::make('is_active')
@@ -75,7 +86,20 @@ class AccountResource extends Resource
     {
         return $table
             ->columns([
-                TextColumn::make('name')->searchable()->sortable()->weight('bold'),
+                TextColumn::make('name')
+                    ->searchable()
+                    ->sortable()
+                    ->weight('bold')
+                    ->description(function (Account $record) {
+                        if ($record->is_sub_account && $record->parent) {
+                            return "Sub-Account of {$record->parent->name}";
+                        }
+                        $subCount = $record->subAccounts()->count();
+                        if ($subCount > 0) {
+                            return "Main Account ({$subCount} sub-accounts)";
+                        }
+                        return null;
+                    }),
                 TextColumn::make('holder_name')->label('Held By')->searchable()->badge()->color('gray'),
                 TextColumn::make('type')->badge()
                     ->color(fn (string $state) => $state === 'bank' ? 'info' : 'gray'),
@@ -106,7 +130,12 @@ class AccountResource extends Resource
             ])
             ->defaultSort('name')
             ->filters([
-                //
+                \Filament\Tables\Filters\SelectFilter::make('is_sub_account')
+                    ->label('Account Type')
+                    ->options([
+                        '0' => 'Main Accounts Only',
+                        '1' => 'Sub-Accounts Only',
+                    ]),
             ])
             ->actions([
                 Action::make('blockedIpos')
@@ -145,6 +174,7 @@ class AccountResource extends Resource
     public static function getRelations(): array
     {
         return [
+            RelationManagers\SubAccountsRelationManager::class,
             RelationManagers\FundTransactionsRelationManager::class,
             RelationManagers\IpoApplicationsRelationManager::class,
             RelationManagers\ExpensesRelationManager::class,

@@ -53,10 +53,26 @@ class IpoApplicationResource extends Resource
                     ->searchable()
                     ->preload(),
                 Select::make('account_id')
-                    ->label('Payment Account (કયા ખાતામાંથી બ્લોક થાય)')
-                    ->helperText('જે ખાતામાંથી UPI/પૈસા બ્લોક થાય તે પસંદ કરો (તમારું ખાતું અથવા દોસ્તનું ખાતું)')
-                    ->relationship('account', 'name')
+                    ->label('Payment Account (મુખ્ય ખાતું)')
+                    ->helperText('જે ખાતામાંથી UPI mandate અથવા પૈસા બ્લોક થાય')
+                    ->relationship('account', 'name', fn ($query) => $query->where('is_sub_account', false))
                     ->required()
+                    ->searchable()
+                    ->preload()
+                    ->live(),
+                Select::make('sub_account_id')
+                    ->label('Sub-Account (સબ એકાઉન્ટ - ઓપ્શનલ)')
+                    ->helperText('જો ડાયરેક્ટ ખાતામાંથી ન ભરવું હોય તો સબ એકાઉન્ટ પસંદ કરો, ફંડ તેમાં બોલશે')
+                    ->options(function (\Filament\Forms\Get $get) {
+                        $accId = $get('account_id');
+                        if (! $accId) {
+                            return \App\Models\Account::where('is_sub_account', true)->pluck('name', 'id');
+                        }
+                        return \App\Models\Account::where('is_sub_account', true)
+                            ->where('parent_id', $accId)
+                            ->pluck('name', 'id');
+                    })
+                    ->placeholder('Direct (મુખ્ય ખાતામાંથી સીધા)')
                     ->searchable()
                     ->preload()
                     ->live(),
@@ -108,9 +124,16 @@ class IpoApplicationResource extends Resource
                     ->label('Account')
                     ->searchable()
                     ->sortable()
-                    ->description(fn (IpoApplication $record) => $record->funding_type === 'transferred' && $record->fundingAccount
-                        ? "via {$record->fundingAccount->name} (Transfer)"
-                        : 'Direct'),
+                    ->description(function (IpoApplication $record) {
+                        $parts = [];
+                        if ($record->subAccount) {
+                            $parts[] = "Sub: {$record->subAccount->name}";
+                        }
+                        if ($record->funding_type === 'transferred' && $record->fundingAccount) {
+                            $parts[] = "via {$record->fundingAccount->name} (Transfer)";
+                        }
+                        return ! empty($parts) ? implode(' · ', $parts) : 'Direct';
+                    }),
                 TextColumn::make('source.name')->label('Source')->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('amount')->money('INR')->sortable(),
                 TextColumn::make('status')->badge()

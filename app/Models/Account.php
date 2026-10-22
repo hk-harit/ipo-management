@@ -14,6 +14,8 @@ class Account extends Model
 
     protected $fillable = [
         'user_id',
+        'parent_id',
+        'is_sub_account',
         'name',
         'holder_name',
         'type',
@@ -29,7 +31,28 @@ class Account extends Model
         return [
             'opening_balance' => 'decimal:2',
             'is_active' => 'boolean',
+            'is_sub_account' => 'boolean',
         ];
+    }
+
+    public function parent(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(Account::class, 'parent_id');
+    }
+
+    public function subAccounts(): HasMany
+    {
+        return $this->hasMany(Account::class, 'parent_id');
+    }
+
+    public function scopeMainAccounts($query)
+    {
+        return $query->where('is_sub_account', false);
+    }
+
+    public function scopeSubAccounts($query)
+    {
+        return $query->where('is_sub_account', true);
     }
 
     public function fundTransactions(): HasMany
@@ -39,12 +62,21 @@ class Account extends Model
 
     public function ipoApplications(): HasMany
     {
-        return $this->hasMany(IpoApplication::class);
+        if ($this->is_sub_account) {
+            return $this->hasMany(IpoApplication::class, 'sub_account_id');
+        }
+
+        return $this->hasMany(IpoApplication::class, 'account_id')->whereNull('sub_account_id');
+    }
+
+    public function subAccountIpoApplications(): HasMany
+    {
+        return $this->hasMany(IpoApplication::class, 'account_id')->whereNotNull('sub_account_id');
     }
 
     public function blockedIpoApplications(): HasMany
     {
-        return $this->hasMany(IpoApplication::class)->where('status', 'applied');
+        return $this->ipoApplications()->where('status', 'applied');
     }
 
     public function expenses(): HasMany

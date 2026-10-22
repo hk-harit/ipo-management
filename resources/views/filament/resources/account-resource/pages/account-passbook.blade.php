@@ -6,6 +6,63 @@
         $totalBalance = $record->total_balance;
     @endphp
 
+    {{-- Sub-Account Parent / Children Banner --}}
+    @if ($record->is_sub_account && $record->parent)
+        <div class="flex items-center justify-between p-3.5 rounded-2xl bg-primary-50/60 dark:bg-primary-950/40 border border-primary-200 dark:border-primary-800/40 mb-2">
+            <div class="flex items-center gap-2.5">
+                <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-primary-100 text-primary-800 dark:bg-primary-900/60 dark:text-primary-300">
+                    Sub-Account (સબ એકાઉન્ટ)
+                </span>
+                <span class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Parent Main Account: <strong>{{ $record->parent->name }}</strong>
+                </span>
+            </div>
+            <a
+                href="{{ \App\Filament\Resources\AccountResource::getUrl('passbook', ['record' => $record->parent]) }}"
+                class="text-xs font-semibold text-primary-600 dark:text-primary-400 hover:underline inline-flex items-center gap-1"
+            >
+                <span>View Main Account Passbook</span>
+                <x-heroicon-m-arrow-right class="w-3.5 h-3.5" />
+            </a>
+        </div>
+    @elseif ($record->subAccounts->isNotEmpty())
+        <div class="p-4 rounded-2xl bg-white dark:bg-gray-900 border border-gray-200/80 dark:border-white/10 shadow-xs mb-2">
+            <div class="flex items-center justify-between mb-3">
+                <div class="flex items-center gap-2">
+                    <x-heroicon-m-rectangle-stack class="w-5 h-5 text-primary-600" />
+                    <h4 class="text-sm font-bold text-gray-950 dark:text-white">
+                        Sub-Accounts Under This Account (આ ખાતાના સબ એકાઉન્ટ્સ)
+                    </h4>
+                    <span class="text-xs font-bold px-2 py-0.5 rounded-full bg-primary-50 text-primary-700 dark:bg-primary-950 dark:text-primary-300">
+                        {{ $record->subAccounts->count() }} Sub-Accounts
+                    </span>
+                </div>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                @foreach ($record->subAccounts as $sub)
+                    <div class="p-3 rounded-xl bg-gray-50 dark:bg-white/[0.03] border border-gray-200/60 dark:border-white/5 flex items-center justify-between">
+                        <div>
+                            <div class="font-bold text-xs text-gray-900 dark:text-white">{{ $sub->name }}</div>
+                            <div class="text-[11px] text-gray-500 font-mono mt-0.5">
+                                Avail: <span class="font-bold text-emerald-600">₹{{ number_format($sub->current_balance, 2) }}</span>
+                                @if ($sub->blocked_in_ipos > 0)
+                                    · Blocked: <span class="font-bold text-amber-600">₹{{ number_format($sub->blocked_in_ipos, 2) }}</span>
+                                @endif
+                            </div>
+                        </div>
+                        <a
+                            href="{{ \App\Filament\Resources\AccountResource::getUrl('passbook', ['record' => $sub]) }}"
+                            class="p-1.5 rounded-lg bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:text-primary-600 shadow-2xs border border-gray-200/60 dark:border-white/10"
+                            title="View Sub-Account Passbook"
+                        >
+                            <x-heroicon-m-arrow-top-right-on-square class="w-4 h-4" />
+                        </a>
+                    </div>
+                @endforeach
+            </div>
+        </div>
+    @endif
+
     {{-- 4 Metric Summary Cards --}}
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {{-- Total Balance --}}
