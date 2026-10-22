@@ -23,6 +23,10 @@ class SubAccountsRelationManager extends RelationManager
 
     public static function canViewForRecord(\Illuminate\Database\Eloquent\Model $ownerRecord, string $pageClass): bool
     {
+        if (! \App\Models\Account::hasSubAccountColumn()) {
+            return false;
+        }
+
         // Only main accounts can have sub-accounts
         return ! $ownerRecord->is_sub_account;
     }

@@ -20,6 +20,44 @@ Route::match(['get', 'head'], '/livewire/update', function () {
     return redirect()->to('/admin');
 });
 
+// Web-based migration runner (allows triggering migrations directly from browser without SSH terminal)
+Route::get('/migrate', function () {
+    try {
+        Artisan::call('migrate', ['--force' => true]);
+        $output = Artisan::output();
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Database migrations executed successfully.',
+            'output' => trim($output),
+        ]);
+    } catch (\Throwable $e) {
+        return response()->json([
+            'status' => 'error',
+            'message' => $e->getMessage(),
+        ], 500);
+    }
+});
+
+// Web-based cache cleaner for Hostinger shared hosting deployments
+Route::get('/clear-cache', function () {
+    try {
+        Artisan::call('optimize:clear');
+        $output = Artisan::output();
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Application cache cleared successfully.',
+            'output' => trim($output),
+        ]);
+    } catch (\Throwable $e) {
+        return response()->json([
+            'status' => 'error',
+            'message' => $e->getMessage(),
+        ], 500);
+    }
+});
+
 /**
  * Webhook/URL Cron Runner for Hostinger or External Cron (e.g. cron-job.org).
  * Usage: https://yourdomain.com/cron/sync-ipos?token=YOUR_CRON_TOKEN

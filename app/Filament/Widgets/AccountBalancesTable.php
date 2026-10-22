@@ -26,12 +26,15 @@ class AccountBalancesTable extends BaseWidget
                     ->label('Account')
                     ->weight('bold')
                     ->description(function (Account $record) {
-                        if ($record->is_sub_account && $record->parent) {
-                            return "Sub of {$record->parent->name}" . ($record->holder_name ? " · {$record->holder_name}" : '');
+                        if (Account::hasSubAccountColumn()) {
+                            if ($record->is_sub_account && $record->parent) {
+                                return "Sub of {$record->parent->name}" . ($record->holder_name ? " · {$record->holder_name}" : '');
+                            }
+                            $subCount = $record->subAccounts()->count();
+                            $subText = $subCount > 0 ? " ({$subCount} sub-accounts)" : '';
+                            return ($record->holder_name ? "Held by: {$record->holder_name}" : "Main Account") . $subText;
                         }
-                        $subCount = $record->subAccounts()->count();
-                        $subText = $subCount > 0 ? " ({$subCount} sub-accounts)" : '';
-                        return ($record->holder_name ? "Held by: {$record->holder_name}" : "Main Account") . $subText;
+                        return $record->holder_name ? "Held by: {$record->holder_name}" : null;
                     }),
 
                 TextColumn::make('type')

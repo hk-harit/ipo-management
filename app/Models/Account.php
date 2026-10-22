@@ -47,11 +47,19 @@ class Account extends Model
 
     public function scopeMainAccounts($query)
     {
+        if (! static::hasSubAccountColumn()) {
+            return $query;
+        }
+
         return $query->where('is_sub_account', false);
     }
 
     public function scopeSubAccounts($query)
     {
+        if (! static::hasSubAccountColumn()) {
+            return $query->whereRaw('1 = 0');
+        }
+
         return $query->where('is_sub_account', true);
     }
 
@@ -60,17 +68,43 @@ class Account extends Model
         return $this->hasMany(FundTransaction::class);
     }
 
+    protected static ?bool $hasSubAccountColumn = null;
+
+    public static function hasSubAccountColumn(): bool
+    {
+        if (static::$hasSubAccountColumn === null) {
+            try {
+                static::$hasSubAccountColumn = \Illuminate\Support\Facades\Schema::hasColumn('ipo_applications', 'sub_account_id')
+                    && \Illuminate\Support\Facades\Schema::hasColumn('accounts', 'is_sub_account');
+            } catch (\Throwable) {
+                static::$hasSubAccountColumn = false;
+            }
+        }
+
+        return static::$hasSubAccountColumn;
+    }
+
     public function ipoApplications(): HasMany
     {
-        if ($this->is_sub_account) {
+        if (! empty($this->is_sub_account) && static::hasSubAccountColumn()) {
             return $this->hasMany(IpoApplication::class, 'sub_account_id');
         }
 
-        return $this->hasMany(IpoApplication::class, 'account_id')->whereNull('sub_account_id');
+        $relation = $this->hasMany(IpoApplication::class, 'account_id');
+
+        if (static::hasSubAccountColumn()) {
+            $relation->whereNull('sub_account_id');
+        }
+
+        return $relation;
     }
 
     public function subAccountIpoApplications(): HasMany
     {
+        if (! static::hasSubAccountColumn()) {
+            return $this->hasMany(IpoApplication::class, 'account_id')->whereRaw('1 = 0');
+        }
+
         return $this->hasMany(IpoApplication::class, 'account_id')->whereNotNull('sub_account_id');
     }
 

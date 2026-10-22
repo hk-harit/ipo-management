@@ -66,14 +66,15 @@ class AccountResource extends Resource
                 Toggle::make('is_sub_account')
                     ->label('This is a Sub-Account (આ સબ એકાઉન્ટ છે)')
                     ->helperText('જો આ કોઈ મુખ્ય ખાતાનું સબ એકાઉન્ટ હોય તો ઓન કરો')
+                    ->visible(fn () => Account::hasSubAccountColumn())
                     ->live(),
                 Select::make('parent_id')
                     ->label('Parent / Main Account (કયા મુખ્ય ખાતા નીચે છે)')
-                    ->relationship('parent', 'name', fn ($query) => $query->where('is_sub_account', false))
+                    ->relationship('parent', 'name', fn ($query) => Account::hasSubAccountColumn() ? $query->where('is_sub_account', false) : $query)
                     ->searchable()
                     ->preload()
-                    ->visible(fn ($get) => (bool) $get('is_sub_account'))
-                    ->required(fn ($get) => (bool) $get('is_sub_account')),
+                    ->visible(fn ($get) => Account::hasSubAccountColumn() && (bool) $get('is_sub_account'))
+                    ->required(fn ($get) => Account::hasSubAccountColumn() && (bool) $get('is_sub_account')),
                 Textarea::make('notes')
                     ->columnSpanFull(),
                 Toggle::make('is_active')
@@ -91,12 +92,14 @@ class AccountResource extends Resource
                     ->sortable()
                     ->weight('bold')
                     ->description(function (Account $record) {
-                        if ($record->is_sub_account && $record->parent) {
-                            return "Sub-Account of {$record->parent->name}";
-                        }
-                        $subCount = $record->subAccounts()->count();
-                        if ($subCount > 0) {
-                            return "Main Account ({$subCount} sub-accounts)";
+                        if (Account::hasSubAccountColumn()) {
+                            if ($record->is_sub_account && $record->parent) {
+                                return "Sub-Account of {$record->parent->name}";
+                            }
+                            $subCount = $record->subAccounts()->count();
+                            if ($subCount > 0) {
+                                return "Main Account ({$subCount} sub-accounts)";
+                            }
                         }
                         return null;
                     }),
@@ -135,7 +138,19 @@ class AccountResource extends Resource
                     ->options([
                         '0' => 'Main Accounts Only',
                         '1' => 'Sub-Accounts Only',
-                    ]),
+                    ])
+                    ->query(function ($query, array $data) {
+                        if (! Account::hasSubAccountColumn()) {
+                            return $query;
+                        }
+                        if (($data['value'] ?? null) === '0') {
+                            return $query->where('is_sub_account', false);
+                        }
+                        if (($data['value'] ?? null) === '1') {
+                            return $query->where('is_sub_account', true);
+                        }
+                        return $query;
+                    }),
             ])
             ->actions([
                 Action::make('blockedIpos')

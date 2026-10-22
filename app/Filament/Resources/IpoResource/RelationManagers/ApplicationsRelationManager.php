@@ -43,7 +43,7 @@ class ApplicationsRelationManager extends RelationManager
             Select::make('account_id')
                 ->label('Payment Account (મુખ્ય ખાતું)')
                 ->helperText('જે ખાતામાંથી UPI mandate અથવા પૈસા બ્લોક થાય')
-                ->relationship('account', 'name', fn ($query) => $query->where('is_sub_account', false))
+                ->relationship('account', 'name', fn ($query) => \App\Models\Account::hasSubAccountColumn() ? $query->where('is_sub_account', false) : $query)
                 ->required()
                 ->searchable()
                 ->preload()
@@ -52,6 +52,9 @@ class ApplicationsRelationManager extends RelationManager
                 ->label('Sub-Account (સબ એકાઉન્ટ - ઓપ્શનલ)')
                 ->helperText('જો ડાયરેક્ટ ખાતામાંથી ન ભરવું હોય તો સબ એકાઉન્ટ પસંદ કરો, ફંડ તેમાં બોલશે')
                 ->options(function (\Filament\Forms\Get $get) {
+                    if (! \App\Models\Account::hasSubAccountColumn()) {
+                        return [];
+                    }
                     $accId = $get('account_id');
                     if (! $accId) {
                         return \App\Models\Account::where('is_sub_account', true)->pluck('name', 'id');
@@ -60,6 +63,7 @@ class ApplicationsRelationManager extends RelationManager
                         ->where('parent_id', $accId)
                         ->pluck('name', 'id');
                 })
+                ->visible(fn () => \App\Models\Account::hasSubAccountColumn())
                 ->placeholder('Direct (મુખ્ય ખાતામાંથી સીધા)')
                 ->searchable()
                 ->preload()

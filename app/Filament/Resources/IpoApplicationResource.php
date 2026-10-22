@@ -55,7 +55,7 @@ class IpoApplicationResource extends Resource
                 Select::make('account_id')
                     ->label('Payment Account (મુખ્ય ખાતું)')
                     ->helperText('જે ખાતામાંથી UPI mandate અથવા પૈસા બ્લોક થાય')
-                    ->relationship('account', 'name', fn ($query) => $query->where('is_sub_account', false))
+                    ->relationship('account', 'name', fn ($query) => \App\Models\Account::hasSubAccountColumn() ? $query->where('is_sub_account', false) : $query)
                     ->required()
                     ->searchable()
                     ->preload()
@@ -64,6 +64,9 @@ class IpoApplicationResource extends Resource
                     ->label('Sub-Account (સબ એકાઉન્ટ - ઓપ્શનલ)')
                     ->helperText('જો ડાયરેક્ટ ખાતામાંથી ન ભરવું હોય તો સબ એકાઉન્ટ પસંદ કરો, ફંડ તેમાં બોલશે')
                     ->options(function (\Filament\Forms\Get $get) {
+                        if (! \App\Models\Account::hasSubAccountColumn()) {
+                            return [];
+                        }
                         $accId = $get('account_id');
                         if (! $accId) {
                             return \App\Models\Account::where('is_sub_account', true)->pluck('name', 'id');
