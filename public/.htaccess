@@ -5,6 +5,11 @@
 
     RewriteEngine On
 
+    # Prevent LiteSpeed and proxy caching on admin and livewire routes
+    <IfModule LiteSpeed>
+        RewriteRule ^(admin|livewire) - [E=Cache-Control:no-cache]
+    </IfModule>
+
     # Handle Authorization Header
     RewriteCond %{HTTP:Authorization} .
     RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
@@ -13,7 +18,8 @@
     RewriteCond %{HTTP:x-xsrf-token} .
     RewriteRule .* - [E=HTTP_X_XSRF_TOKEN:%{HTTP:X-XSRF-Token}]
 
-    # Redirect Trailing Slashes If Not A Folder...
+    # Redirect Trailing Slashes If Not A Folder (exclude livewire to prevent POST turning into GET)...
+    RewriteCond %{REQUEST_URI} !^/livewire
     RewriteCond %{REQUEST_FILENAME} !-d
     RewriteCond %{REQUEST_URI} (.+)/$
     RewriteRule ^ %1 [L,R=301]
@@ -22,4 +28,10 @@
     RewriteCond %{REQUEST_FILENAME} !-d
     RewriteCond %{REQUEST_FILENAME} !-f
     RewriteRule ^ index.php [L]
+</IfModule>
+
+<IfModule mod_headers.c>
+    # Never cache dynamic admin and livewire requests
+    SetEnvIf Request_URI "^/(admin|livewire)" NO_CACHE
+    Header always set Cache-Control "no-store, no-cache, must-revalidate, max-age=0" env=NO_CACHE
 </IfModule>

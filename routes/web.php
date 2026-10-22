@@ -15,6 +15,11 @@ Route::get('/', function () {
     return redirect('/admin');
 });
 
+// Fallback for unexpected GET requests to /livewire/update (prevents 405 MethodNotAllowed errors on browser refresh or redirects)
+Route::match(['get', 'head'], '/livewire/update', function () {
+    return redirect()->to('/admin');
+});
+
 /**
  * Webhook/URL Cron Runner for Hostinger or External Cron (e.g. cron-job.org).
  * Usage: https://yourdomain.com/cron/sync-ipos?token=YOUR_CRON_TOKEN
