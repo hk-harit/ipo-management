@@ -37,6 +37,24 @@ class IpoApplicationsRelationManager extends RelationManager
                 ->required()
                 ->searchable()
                 ->preload(),
+            Select::make('funding_type')
+                ->label('Payment Method (પૈસા કેવી રીતે આવ્યા)')
+                ->options([
+                    'direct' => 'Direct (આ જ ખાતામાંથી સીધા પૈસા બ્લોક)',
+                    'transferred' => 'Transferred from another account (બીજા ખાતામાંથી નાખીને)',
+                ])
+                ->default('direct')
+                ->required()
+                ->live()
+                ->native(false),
+            Select::make('funding_account_id')
+                ->label('Transferred From Account (કયા ખાતામાંથી મોકલ્યા)')
+                ->helperText('પસંદ કરશો એટલે ઓટોમેટિક ખાતા ટ્રાન્સફર પણ થઈ જશે')
+                ->relationship('fundingAccount', 'name')
+                ->searchable()
+                ->preload()
+                ->visible(fn (\Filament\Forms\Get $get) => $get('funding_type') === 'transferred')
+                ->required(fn (\Filament\Forms\Get $get) => $get('funding_type') === 'transferred'),
             Select::make('source_id')
                 ->label('Funded By Source')
                 ->helperText('Optional — so profit on sale can be split with the right source')

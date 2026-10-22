@@ -65,6 +65,19 @@ class BulkIpoApply extends Page implements HasForms
                             ->options(fn () => Account::query()->orderBy('name')->pluck('name', 'id'))
                             ->required()
                             ->searchable(),
+                        Select::make('funding_type')
+                            ->label('Funding')
+                            ->options([
+                                'direct' => 'Direct (સીધા)',
+                                'transferred' => 'Transfer (મોકલીને)',
+                            ])
+                            ->default('direct')
+                            ->live(),
+                        Select::make('funding_account_id')
+                            ->label('From Account')
+                            ->options(fn () => Account::query()->orderBy('name')->pluck('name', 'id'))
+                            ->visible(fn (\Filament\Forms\Get $get) => $get('funding_type') === 'transferred')
+                            ->searchable(),
                         Select::make('source_id')
                             ->label('Source (optional)')
                             ->options(fn () => Source::query()->orderBy('name')->pluck('name', 'id'))
@@ -74,7 +87,7 @@ class BulkIpoApply extends Page implements HasForms
                             ->prefix('₹')
                             ->required(),
                     ])
-                    ->columns(4)
+                    ->columns(6)
                     ->addActionLabel('Add another applicant')
                     ->defaultItems(1)
                     ->reorderable(false)
@@ -106,6 +119,8 @@ class BulkIpoApply extends Page implements HasForms
                 'ipo_id' => $state['ipo_id'],
                 'applicant_id' => $row['applicant_id'],
                 'account_id' => $row['account_id'],
+                'funding_type' => $row['funding_type'] ?? 'direct',
+                'funding_account_id' => ($row['funding_type'] ?? 'direct') === 'transferred' ? ($row['funding_account_id'] ?? null) : null,
                 'source_id' => $row['source_id'] ?? null,
                 'amount' => $row['amount'],
                 'applied_date' => $state['applied_date'],

@@ -58,7 +58,26 @@ class IpoApplicationResource extends Resource
                     ->relationship('account', 'name')
                     ->required()
                     ->searchable()
-                    ->preload(),
+                    ->preload()
+                    ->live(),
+                Select::make('funding_type')
+                    ->label('Payment Method (પૈસા કેવી રીતે કપાયા)')
+                    ->options([
+                        'direct' => 'Direct (આ જ ખાતામાંથી સીધા પૈસા બ્લોક)',
+                        'transferred' => 'Transferred from another account (બીજા ખાતામાંથી નાખીને)',
+                    ])
+                    ->default('direct')
+                    ->required()
+                    ->live()
+                    ->native(false),
+                Select::make('funding_account_id')
+                    ->label('Transferred From Account (કયા ખાતામાંથી મોકલ્યા)')
+                    ->helperText('પસંદ કરશો એટલે ઓટોમેટિક ખાતા ટ્રાન્સફર (Account Transfer) પણ થઈ જશે')
+                    ->relationship('fundingAccount', 'name')
+                    ->searchable()
+                    ->preload()
+                    ->visible(fn (\Filament\Forms\Get $get) => $get('funding_type') === 'transferred')
+                    ->required(fn (\Filament\Forms\Get $get) => $get('funding_type') === 'transferred'),
                 Select::make('source_id')
                     ->label('Funded By Source')
                     ->helperText('Optional — set this so profit on sale can be split with the right source')
@@ -85,7 +104,13 @@ class IpoApplicationResource extends Resource
                 TextColumn::make('applied_date')->date()->sortable(),
                 TextColumn::make('ipo.name')->label('IPO')->searchable()->sortable(),
                 TextColumn::make('applicant.name')->label('Applicant')->searchable()->sortable(),
-                TextColumn::make('account.name')->label('Account')->searchable()->sortable(),
+                TextColumn::make('account.name')
+                    ->label('Account')
+                    ->searchable()
+                    ->sortable()
+                    ->description(fn (IpoApplication $record) => $record->funding_type === 'transferred' && $record->fundingAccount
+                        ? "via {$record->fundingAccount->name} (Transfer)"
+                        : 'Direct'),
                 TextColumn::make('source.name')->label('Source')->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('amount')->money('INR')->sortable(),
                 TextColumn::make('status')->badge()

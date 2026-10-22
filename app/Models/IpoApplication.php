@@ -17,6 +17,9 @@ class IpoApplication extends Model
         'ipo_id',
         'applicant_id',
         'account_id',
+        'funding_type',
+        'funding_account_id',
+        'auto_transfer_id',
         'source_id',
         'amount',
         'applied_date',
@@ -56,6 +59,41 @@ class IpoApplication extends Model
                 }
                 $app->shares_allotted = 0;
             }
+
+            // Auto-create AccountTransfer if funded from another account
+            if ($app->funding_type === 'transferred' && $app->funding_account_id && $app->funding_account_id != $app->account_id) {
+                if (! $app->auto_transfer_id) {
+                    $transfer = AccountTransfer::create([
+                        'user_id' => $app->user_id,
+                        'from_account_id' => $app->funding_account_id,
+                        'to_account_id' => $app->account_id,
+                        'amount' => $app->amount,
+                        'transfer_date' => $app->applied_date ?? now()->toDateString(),
+                        'notes' => 'Auto-transfer for IPO application #' . ($app->id ?? 'new'),
+                    ]);
+                    $app->auto_transfer_id = $transfer->id;
+                } else {
+                    $transfer = AccountTransfer::find($app->auto_transfer_id);
+                    if ($transfer) {
+                        $transfer->update([
+                            'from_account_id' => $app->funding_account_id,
+                            'to_account_id' => $app->account_id,
+                            'amount' => $app->amount,
+                            'transfer_date' => $app->applied_date ?? now()->toDateString(),
+                        ]);
+                    }
+                }
+            } elseif ($app->funding_type === 'direct' && $app->auto_transfer_id) {
+                AccountTransfer::where('id', $app->auto_transfer_id)->delete();
+                $app->auto_transfer_id = null;
+                $app->funding_account_id = null;
+            }
+        });
+
+        static::deleted(function (self $app) {
+            if ($app->auto_transfer_id) {
+                AccountTransfer::where('id', $app->auto_transfer_id)->delete();
+            }
         });
     }
 
@@ -72,6 +110,16 @@ class IpoApplication extends Model
     public function account(): BelongsTo
     {
         return $this->belongsTo(Account::class);
+    }
+
+    public function fundingAccount(): BelongsTo
+    {
+        return $this->belongsTo(Account::class, 'funding_account_id');
+    }
+
+    public function autoTransfer(): BelongsTo
+    {
+        return $this->belongsTo(AccountTransfer::class, 'auto_transfer_id');
     }
 
     public function source(): BelongsTo
