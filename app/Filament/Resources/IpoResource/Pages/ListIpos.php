@@ -16,6 +16,20 @@ class ListIpos extends ListRecords
 {
     protected static string $resource = IpoResource::class;
 
+    public string $viewMode = 'box';
+
+    public function mount(): void
+    {
+        parent::mount();
+        $this->viewMode = session('ipo_view_mode', 'box');
+    }
+
+    public function setViewMode(string $mode): void
+    {
+        $this->viewMode = in_array($mode, ['box', 'table'], true) ? $mode : 'box';
+        session(['ipo_view_mode' => $this->viewMode]);
+    }
+
     /**
      * Mainboard and SME are really two different games — different lot sizes,
      * different money, different odds — so the first thing to do with the list
@@ -80,6 +94,12 @@ class ListIpos extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
+            Actions\Action::make('toggleView')
+                ->label(fn () => $this->viewMode === 'box' ? 'Table View' : 'Box View')
+                ->icon(fn () => $this->viewMode === 'box' ? 'heroicon-m-table-cells' : 'heroicon-m-squares-2x2')
+                ->color('gray')
+                ->tooltip(fn () => $this->viewMode === 'box' ? 'Switch to Table View' : 'Switch to Box View')
+                ->action(fn () => $this->setViewMode($this->viewMode === 'box' ? 'table' : 'box')),
             Actions\Action::make('sync')
                 ->label('Sync IPO list')
                 ->icon('heroicon-o-arrow-path')

@@ -157,6 +157,13 @@ class IpoResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
+            ->content(function ($livewire) {
+                if ($livewire instanceof \App\Filament\Resources\IpoResource\Pages\ListIpos && ($livewire->viewMode ?? 'box') === 'box') {
+                    return view('filament.resources.ipos.box-view');
+                }
+
+                return null;
+            })
             ->columns([
                 TextColumn::make('name')
                     ->searchable()

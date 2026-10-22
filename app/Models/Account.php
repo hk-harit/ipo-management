@@ -42,6 +42,11 @@ class Account extends Model
         return $this->hasMany(IpoApplication::class);
     }
 
+    public function blockedIpoApplications(): HasMany
+    {
+        return $this->hasMany(IpoApplication::class)->where('status', 'applied');
+    }
+
     public function expenses(): HasMany
     {
         return $this->hasMany(Expense::class);
@@ -78,6 +83,22 @@ class Account extends Model
             - $applied + $returned
             - $netExpenses
             - $transfersOut + $transfersIn;
+    }
+
+    /**
+     * Amount currently blocked under ASBA / lien in pending IPO applications for this account.
+     */
+    public function getBlockedInIposAttribute(): float
+    {
+        return (float) $this->ipoApplications()->where('status', 'applied')->sum('amount');
+    }
+
+    /**
+     * Total account worth = Liquid available balance + Amount blocked in pending IPOs.
+     */
+    public function getTotalBalanceAttribute(): float
+    {
+        return (float) $this->current_balance + (float) $this->blocked_in_ipos;
     }
 
     /**

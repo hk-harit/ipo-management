@@ -21,18 +21,34 @@ class IpoCapitalDistributionChart extends ChartWidget
 
     public static function canView(): bool
     {
-        return Ipo::whereHas('applications')->exists();
+        return Ipo::whereHas('applications', function ($query) {
+            $query->whereIn('status', ['applied', 'allotted', 'partial_allotted']);
+        })->exists();
     }
 
     protected function getData(): array
     {
-        $ipos = Ipo::whereHas('applications')
-            ->with('applications')
+        $ipos = Ipo::whereHas('applications', function ($query) {
+            $query->whereIn('status', ['applied', 'allotted', 'partial_allotted']);
+        })
+            ->with(['applications' => function ($query) {
+                $query->whereIn('status', ['applied', 'allotted', 'partial_allotted']);
+            }])
             ->get()
-            ->map(fn (Ipo $i) => [
-                'name' => $i->name,
-                'amount' => (float) $i->applications->sum('amount'),
-            ])
+            ->map(function (Ipo $i) {
+                $activeAmount = $i->applications->sum(function ($app) {
+                    if ($app->status === 'partial_allotted') {
+                        return max(0.0, (float) $app->amount - (float) ($app->return_amount ?? 0));
+                    }
+
+                    return (float) $app->amount;
+                });
+
+                return [
+                    'name' => $i->name,
+                    'amount' => (float) $activeAmount,
+                ];
+            })
             ->filter(fn ($item) => $item['amount'] > 0)
             ->sortByDesc('amount')
             ->take(8);
@@ -51,7 +67,7 @@ class IpoCapitalDistributionChart extends ChartWidget
         return [
             'datasets' => [
                 [
-                    'label' => 'Total Invested (₹)',
+                    'label' => 'Current Invested (₹)',
                     'data' => $ipos->pluck('amount')->values()->all(),
                     'backgroundColor' => array_slice($colors, 0, $ipos->count()),
                     'borderWidth' => 2,
@@ -82,10 +98,14 @@ class IpoCapitalDistributionChart extends ChartWidget
                         callbacks: {
                             label: function(context) {
                                 let val = context.raw || 0;
-                                return ' ₹' + val.toLocaleString('en-IN');
+                                return ' ' + context.label + ': ₹' + Number(val).toLocaleString('en-IN');
                             }
                         }
                     }
+                },
+                scales: {
+                    x: { display: false },
+                    y: { display: false }
                 },
                 cutout: '60%',
             }

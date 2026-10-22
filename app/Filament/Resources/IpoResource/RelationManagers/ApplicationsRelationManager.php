@@ -34,13 +34,15 @@ class ApplicationsRelationManager extends RelationManager
     {
         return $form->schema([
             Select::make('applicant_id')
-                ->label('Applicant')
+                ->label('Applicant (કોના ડીમેટ/નામે)')
+                ->helperText('Demat account holder')
                 ->relationship('applicant', 'name')
                 ->required()
                 ->searchable()
                 ->preload(),
             Select::make('account_id')
-                ->label('Funded From Account')
+                ->label('Payment Account (કયા ખાતામાંથી બ્લોક)')
+                ->helperText('જે ખાતામાંથી UPI mandate અથવા પૈસા બ્લોક થાય તે ખાતું')
                 ->relationship('account', 'name')
                 ->required()
                 ->searchable()

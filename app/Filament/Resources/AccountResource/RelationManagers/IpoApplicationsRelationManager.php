@@ -13,6 +13,7 @@ use Filament\Tables\Actions\CreateAction;
 use Filament\Tables\Actions\DeleteAction;
 use Filament\Tables\Actions\EditAction;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 
 class IpoApplicationsRelationManager extends RelationManager
@@ -81,6 +82,17 @@ class IpoApplicationsRelationManager extends RelationManager
                     ->placeholder('—'),
             ])
             ->defaultSort('applied_date', 'desc')
+            ->filters([
+                SelectFilter::make('status')
+                    ->label('Filter Status')
+                    ->options([
+                        'applied' => 'Lien Blocked (Applied)',
+                        'refunded' => 'Refunded',
+                        'allotted' => 'Allotted',
+                        'partial_allotted' => 'Partially Allotted',
+                        'sold' => 'Sold',
+                    ]),
+            ])
             ->headerActions([
                 CreateAction::make(),
             ])

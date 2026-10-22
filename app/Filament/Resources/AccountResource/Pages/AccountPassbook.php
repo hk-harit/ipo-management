@@ -28,4 +28,12 @@ class AccountPassbook extends Page
     {
         return $this->record->buildLedger();
     }
+
+    public function blockedApplications(): \Illuminate\Database\Eloquent\Collection
+    {
+        return $this->record->blockedIpoApplications()
+            ->with(['ipo', 'applicant'])
+            ->latest('applied_date')
+            ->get();
+    }
 }

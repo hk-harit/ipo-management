@@ -75,17 +75,33 @@ class AccountResource extends Resource
     {
         return $table
             ->columns([
-                TextColumn::make('name')->searchable()->sortable()->weight('semibold'),
-                TextColumn::make('holder_name')->label('Held By')->searchable(),
+                TextColumn::make('name')->searchable()->sortable()->weight('bold'),
+                TextColumn::make('holder_name')->label('Held By')->searchable()->badge()->color('gray'),
                 TextColumn::make('type')->badge()
                     ->color(fn (string $state) => $state === 'bank' ? 'info' : 'gray'),
-                TextColumn::make('opening_balance')->money('INR')->sortable()->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('total_balance')
+                    ->label('Total Capital (કુલ)')
+                    ->state(fn (Account $record) => $record->total_balance)
+                    ->money('INR')
+                    ->weight('bold')
+                    ->description('Liquid + Blocked'),
+                TextColumn::make('blocked_in_ipos')
+                    ->label('Blocked in IPOs (બ્લોક)')
+                    ->state(fn (Account $record) => $record->blocked_in_ipos)
+                    ->money('INR')
+                    ->weight('bold')
+                    ->color(fn ($state) => $state > 0 ? 'warning' : 'gray')
+                    ->description(fn (Account $record) => $record->blocked_in_ipos > 0
+                        ? $record->blockedIpoApplications()->count().' app(s) pending'
+                        : 'None blocked'),
                 TextColumn::make('current_balance')
-                    ->label('Current Balance')
+                    ->label('Available Free (ઉપલબ્ધ)')
                     ->state(fn (Account $record) => $record->current_balance)
                     ->money('INR')
                     ->weight('bold')
-                    ->color(fn ($state) => $state < 0 ? 'danger' : 'success'),
+                    ->color(fn ($state) => $state < 0 ? 'danger' : 'success')
+                    ->description('Free to apply'),
+                TextColumn::make('opening_balance')->money('INR')->sortable()->toggleable(isToggledHiddenByDefault: true),
                 ToggleColumn::make('is_active')->label('Active'),
             ])
             ->defaultSort('name')
@@ -93,11 +109,30 @@ class AccountResource extends Resource
                 //
             ])
             ->actions([
+                Action::make('blockedIpos')
+                    ->label('Blocked IPOs')
+                    ->icon('heroicon-o-lock-closed')
+                    ->color(fn (Account $record) => $record->blocked_in_ipos > 0 ? 'warning' : 'gray')
+                    ->badge(fn (Account $record) => $record->blockedIpoApplications()->count() ?: null)
+                    ->badgeColor('warning')
+                    ->modalHeading(fn (Account $record) => "Blocked IPOs — {$record->name}")
+                    ->modalDescription(fn (Account $record) => "Money currently blocked under ASBA / UPI mandate in pending IPO applications.")
+                    ->modalSubmitAction(false)
+                    ->modalCancelActionLabel('Close')
+                    ->modalContent(fn (Account $record) => view('filament.resources.account-resource.blocked-ipos-modal', [
+                        'account' => $record,
+                        'blockedApplications' => $record->blockedIpoApplications()->with(['ipo', 'applicant'])->latest('applied_date')->get(),
+                    ])),
                 Action::make('passbook')
-                    ->label('Passbook')
+                    ->label('Passbook & View')
                     ->icon('heroicon-o-book-open')
                     ->color('gray')
                     ->url(fn (Account $record) => static::getUrl('passbook', ['record' => $record])),
+                Action::make('transfer')
+                    ->label('Transfer')
+                    ->icon('heroicon-o-arrow-right-circle')
+                    ->color('gray')
+                    ->url(fn (Account $record) => AccountTransferResource::getUrl('create') . '?from_account_id=' . $record->id),
                 EditAction::make(),
             ])
             ->bulkActions([

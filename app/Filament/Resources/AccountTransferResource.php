@@ -40,6 +40,7 @@ class AccountTransferResource extends Resource
                     Select::make('from_account_id')
                         ->label('From Account')
                         ->relationship('fromAccount', 'name')
+                        ->default(fn () => request()->query('from_account_id'))
                         ->required()
                         ->searchable()
                         ->preload()

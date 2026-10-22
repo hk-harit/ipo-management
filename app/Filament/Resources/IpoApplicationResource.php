@@ -46,13 +46,15 @@ class IpoApplicationResource extends Resource
                 IpoPicker::select(),
                 IpoPicker::summary(),
                 Select::make('applicant_id')
-                    ->label('Applicant')
+                    ->label('Applicant (કોના ડીમેટ/નામે)')
+                    ->helperText('Demat account holder whose name the IPO is applied in')
                     ->relationship('applicant', 'name')
                     ->required()
                     ->searchable()
                     ->preload(),
                 Select::make('account_id')
-                    ->label('Funded From Account')
+                    ->label('Payment Account (કયા ખાતામાંથી બ્લોક થાય)')
+                    ->helperText('જે ખાતામાંથી UPI/પૈસા બ્લોક થાય તે પસંદ કરો (તમારું ખાતું અથવા દોસ્તનું ખાતું)')
                     ->relationship('account', 'name')
                     ->required()
                     ->searchable()

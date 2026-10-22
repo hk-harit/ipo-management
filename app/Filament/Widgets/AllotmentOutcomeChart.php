@@ -82,6 +82,10 @@ class AllotmentOutcomeChart extends ChartWidget
                         }
                     }
                 },
+                scales: {
+                    x: { display: false },
+                    y: { display: false }
+                },
                 cutout: '60%',
             }
         JS);

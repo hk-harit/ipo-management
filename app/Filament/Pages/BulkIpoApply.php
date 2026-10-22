@@ -56,12 +56,12 @@ class BulkIpoApply extends Page implements HasForms
                     ->label('Applications')
                     ->schema([
                         Select::make('applicant_id')
-                            ->label('Applicant')
+                            ->label('Applicant (ડીમેટ)')
                             ->options(fn () => Applicant::query()->orderBy('name')->pluck('name', 'id'))
                             ->required()
                             ->searchable(),
                         Select::make('account_id')
-                            ->label('Funded From')
+                            ->label('Payment Account (બ્લોક)')
                             ->options(fn () => Account::query()->orderBy('name')->pluck('name', 'id'))
                             ->required()
                             ->searchable(),
