@@ -44,6 +44,21 @@ class IpoApplication extends Model
         ];
     }
 
+    protected static function booted(): void
+    {
+        static::saving(function (self $app) {
+            if ($app->status === 'refunded') {
+                if ($app->return_amount === null || (float) $app->return_amount <= 0) {
+                    $app->return_amount = $app->amount;
+                }
+                if (! $app->return_date) {
+                    $app->return_date = now()->toDateString();
+                }
+                $app->shares_allotted = 0;
+            }
+        });
+    }
+
     public function ipo(): BelongsTo
     {
         return $this->belongsTo(Ipo::class);

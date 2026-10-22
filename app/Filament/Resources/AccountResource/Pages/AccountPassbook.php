@@ -36,4 +36,30 @@ class AccountPassbook extends Page
             ->latest('applied_date')
             ->get();
     }
+
+    public function unblockApplication(int $applicationId): void
+    {
+        $app = \App\Models\IpoApplication::where('account_id', $this->record->id)
+            ->where('id', $applicationId)
+            ->first();
+
+        if (! $app) {
+            return;
+        }
+
+        $app->update([
+            'status' => 'refunded',
+            'return_amount' => $app->amount,
+            'return_date' => now()->toDateString(),
+            'shares_allotted' => null,
+        ]);
+
+        $this->record->refresh();
+
+        \Filament\Notifications\Notification::make()
+            ->title('Mandate Unblocked / Refunded!')
+            ->body('₹' . number_format($app->amount, 2) . ' credited back to ' . $this->record->name . ' and logged in passbook.')
+            ->success()
+            ->send();
+    }
 }

@@ -97,8 +97,15 @@ class IpoApplicationsRelationManager extends RelationManager
                 CreateAction::make(),
             ])
             ->actions([
+                \App\Filament\Support\RefundIpoApplicationAction::make(),
                 EditAction::make(),
                 DeleteAction::make(),
+            ])
+            ->bulkActions([
+                \Filament\Tables\Actions\BulkActionGroup::make([
+                    \App\Filament\Support\RefundIpoApplicationAction::bulkMake(),
+                    \Filament\Tables\Actions\DeleteBulkAction::make(),
+                ]),
             ]);
     }
 }

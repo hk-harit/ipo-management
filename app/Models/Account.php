@@ -71,7 +71,9 @@ class Account extends Model
         $fundsIn = (float) $this->fundTransactions()->where('type', 'given')->sum('amount');
         $fundsOut = (float) $this->fundTransactions()->where('type', 'returned')->sum('amount');
         $applied = (float) $this->ipoApplications()->sum('amount');
-        $returned = (float) $this->ipoApplications()->sum('return_amount');
+        $returned = (float) $this->ipoApplications()
+            ->selectRaw('COALESCE(SUM(CASE WHEN return_amount IS NOT NULL THEN return_amount WHEN status = "refunded" THEN amount ELSE 0 END), 0) as total')
+            ->value('total');
         $expensesOut = (float) $this->expenses()->whereIn('type', ['expense', 'udhar_given'])->sum('amount');
         $expensesIn = (float) $this->expenses()->where('type', 'udhar_received')->sum('amount');
         $netExpenses = $expensesOut - $expensesIn;
@@ -133,13 +135,26 @@ class Account extends Model
                 'credit' => 0.0,
             ]);
 
-            if ($app->return_date && $app->return_amount !== null) {
+            $isRefunded = ($app->status === 'refunded');
+            $hasReturn = ($app->return_amount !== null || $isRefunded);
+
+            if ($hasReturn && ($app->return_date || $isRefunded)) {
+                $returnAmt = $app->return_amount !== null ? (float) $app->return_amount : (float) $app->amount;
+                $returnDt = $app->return_date ?? $app->updated_at?->toDateString() ?? $app->applied_date;
+
+                $description = match ($app->status) {
+                    'sold' => 'Sale proceeds: '.$label,
+                    'refunded' => 'Refund (Mandate Released): '.$label,
+                    'partial_allotted' => 'Partial Refund: '.$label,
+                    default => 'Refund: '.$label,
+                };
+
                 $entries->push([
-                    'date' => $app->return_date,
-                    'created_at' => $app->updated_at,
-                    'description' => ($app->status === 'sold' ? 'Sale proceeds: ' : 'Refund: ').$label,
+                    'date' => $returnDt,
+                    'created_at' => $app->updated_at ?? $app->created_at,
+                    'description' => $description,
                     'debit' => 0.0,
-                    'credit' => (float) $app->return_amount,
+                    'credit' => $returnAmt,
                 ]);
             }
         }

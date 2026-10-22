@@ -32,7 +32,23 @@ class IpoApplicationFormFields
                 ->required()
                 ->native(false)
                 ->default('applied')
-                ->live(),
+                ->live()
+                ->afterStateUpdated(function (Get $get, Set $set, ?string $state) {
+                    if ($state === 'refunded') {
+                        $amount = $get('amount');
+                        if (blank($get('return_amount')) && filled($amount)) {
+                            $set('return_amount', $amount);
+                        }
+                        if (blank($get('return_date'))) {
+                            $set('return_date', now()->format('Y-m-d'));
+                        }
+                        $set('shares_allotted', null);
+                    } elseif ($state === 'applied') {
+                        $set('return_amount', null);
+                        $set('return_date', null);
+                        $set('shares_allotted', null);
+                    }
+                }),
 
             // Decided up front when you apply — this is the deal you made with the
             // source/applicant, not something you work out later at sale time.
@@ -72,14 +88,21 @@ class IpoApplicationFormFields
                 ->visible(fn (Get $get) => $get('status') === 'sold'),
 
             TextInput::make('return_amount')
-                ->label(fn (Get $get) => $get('status') === 'sold' ? 'Sale Proceeds (Total)' : 'Amount Returned to Account')
+                ->label(fn (Get $get) => match ($get('status')) {
+                    'sold' => 'Sale Proceeds (Total)',
+                    'refunded' => 'Refund Amount (credited to account)',
+                    default => 'Amount Returned to Account',
+                })
                 ->numeric()
                 ->prefix('₹')
                 ->live()
+                ->helperText(fn (Get $get) => $get('status') === 'refunded' ? 'Auto-filled with applied amount. This amount is credited back to the bank account.' : null)
                 ->visible(fn (Get $get) => in_array($get('status'), ['refunded', 'partial_allotted', 'sold'])),
 
             DatePicker::make('return_date')
-                ->label(fn (Get $get) => $get('status') === 'sold' ? 'Sale Date' : 'Return Date')
+                ->label(fn (Get $get) => $get('status') === 'sold' ? 'Sale Date' : 'Refund / Return Date')
+                ->default(fn (Get $get) => in_array($get('status'), ['refunded', 'partial_allotted']) ? now() : null)
+                ->helperText(fn (Get $get) => $get('status') === 'refunded' ? 'Date when mandate was released / refund came back' : null)
                 ->visible(fn (Get $get) => in_array($get('status'), ['refunded', 'partial_allotted', 'sold'])),
 
             Placeholder::make('profit_split_preview')

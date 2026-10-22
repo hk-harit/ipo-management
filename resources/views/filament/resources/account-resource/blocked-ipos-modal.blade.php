@@ -38,6 +38,7 @@
                         <th class="py-2.5 px-3">Applied Date</th>
                         <th class="py-2.5 px-3 text-right">Blocked Amount</th>
                         <th class="py-2.5 px-3 text-center">Status</th>
+                        <th class="py-2.5 px-3 text-right">Action</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-100 dark:divide-white/5 bg-white dark:bg-gray-900">
@@ -69,6 +70,15 @@
                                     Lien Blocked
                                 </span>
                             </td>
+                            <td class="py-2.5 px-3 text-right whitespace-nowrap">
+                                <a
+                                    href="{{ \App\Filament\Resources\IpoApplicationResource::getUrl('edit', ['record' => $app]) }}"
+                                    class="inline-flex items-center gap-1 text-[11px] font-semibold text-primary-600 dark:text-primary-400 hover:underline"
+                                >
+                                    <span>View / Edit</span>
+                                    <x-heroicon-m-arrow-top-right-on-square class="w-3 h-3" />
+                                </a>
+                            </td>
                         </tr>
                     @endforeach
                 </tbody>
@@ -80,7 +90,7 @@
                         <td class="py-2.5 px-3 text-right text-amber-600 dark:text-amber-400 font-bold font-mono">
                             ₹{{ number_format($blockedApplications->sum('amount'), 2) }}
                         </td>
-                        <td></td>
+                        <td colspan="2"></td>
                     </tr>
                 </tfoot>
             </table>

@@ -241,6 +241,8 @@ class Ipo extends Model
 
     public function getTotalReturnedAttribute(): float
     {
-        return (float) $this->applications()->sum('return_amount');
+        return (float) $this->applications()
+            ->selectRaw('COALESCE(SUM(CASE WHEN return_amount IS NOT NULL THEN return_amount WHEN status = "refunded" THEN amount ELSE 0 END), 0) as total')
+            ->value('total');
     }
 }

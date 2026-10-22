@@ -228,12 +228,14 @@ class ApplicationsRelationManager extends RelationManager
                                 ->send();
                         }
                     }),
+                \App\Filament\Support\RefundIpoApplicationAction::make(),
                 EditAction::make(),
                 DeleteAction::make(),
             ])
             ->bulkActions([
                 BulkActionGroup::make([
                     AllotmentCheckBulkAction::make(),
+                    \App\Filament\Support\RefundIpoApplicationAction::bulkMake(),
                     DeleteBulkAction::make(),
                 ]),
             ]);

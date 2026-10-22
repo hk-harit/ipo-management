@@ -149,13 +149,25 @@
                                     </span>
                                 </td>
                                 <td class="py-3 px-4 text-right whitespace-nowrap">
-                                    <a
-                                        href="{{ \App\Filament\Resources\IpoApplicationResource::getUrl('edit', ['record' => $app]) }}"
-                                        class="inline-flex items-center gap-1 text-xs font-semibold text-primary-600 dark:text-primary-400 hover:underline"
-                                    >
-                                        <span>View</span>
-                                        <x-heroicon-m-arrow-top-right-on-square class="w-3.5 h-3.5" />
-                                    </a>
+                                    <div class="inline-flex items-center justify-end gap-2">
+                                        <button
+                                            type="button"
+                                            wire:click="unblockApplication({{ $app->id }})"
+                                            wire:confirm="Are you sure the mandate is released? ₹{{ number_format($app->amount, 2) }} will be credited back to {{ $record->name }}."
+                                            class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold bg-amber-500/10 text-amber-700 dark:text-amber-300 hover:bg-amber-500/20 border border-amber-300/60 dark:border-amber-700/50 transition cursor-pointer"
+                                            title="Unblock mandate & credit refund to account"
+                                        >
+                                            <x-heroicon-m-arrow-uturn-left class="w-3.5 h-3.5" />
+                                            <span>Unblock / Refund</span>
+                                        </button>
+                                        <a
+                                            href="{{ \App\Filament\Resources\IpoApplicationResource::getUrl('edit', ['record' => $app]) }}"
+                                            class="inline-flex items-center gap-1 text-xs font-semibold text-primary-600 dark:text-primary-400 hover:underline"
+                                        >
+                                            <span>View</span>
+                                            <x-heroicon-m-arrow-top-right-on-square class="w-3.5 h-3.5" />
+                                        </a>
+                                    </div>
                                 </td>
                             </tr>
                         @endforeach

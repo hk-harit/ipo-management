@@ -187,11 +187,13 @@ class IpoApplicationResource extends Resource
                                 ->send();
                         }
                     }),
+                \App\Filament\Support\RefundIpoApplicationAction::make(),
                 EditAction::make(),
             ])
             ->bulkActions([
                 BulkActionGroup::make([
                     AllotmentCheckBulkAction::make(),
+                    \App\Filament\Support\RefundIpoApplicationAction::bulkMake(),
                     DeleteBulkAction::make(),
                 ]),
             ]);
