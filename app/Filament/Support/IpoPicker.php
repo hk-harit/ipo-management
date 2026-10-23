@@ -34,7 +34,7 @@ class IpoPicker
     public static function summary(string $dependsOn = 'ipo_id'): Placeholder
     {
         return Placeholder::make('ipo_summary')
-            ->label('')
+            ->hiddenLabel()
             ->content(fn (Get $get) => static::summaryFor($get($dependsOn)))
             ->visible(fn (Get $get) => filled($get($dependsOn)))
             ->columnSpanFull();
@@ -87,66 +87,97 @@ class IpoPicker
             return '';
         }
 
-        $rows = [];
+        $items = [];
 
         if ($ipo->price_band) {
-            $rows[] = ['Price band', $ipo->price_band];
+            $items[] = [
+                'label' => 'Price Band',
+                'value' => e($ipo->price_band),
+                'sub' => null,
+            ];
         }
 
         if ($ipo->lot_amount !== null) {
-            $rows[] = [
-                '1 lot',
-                '₹'.number_format($ipo->lot_amount, 2).
-                ($ipo->lot_size ? ' <span class="opacity-60">('.$ipo->lot_size.' shares)</span>' : ''),
+            $items[] = [
+                'label' => '1 Lot (Cost & Shares)',
+                'value' => '₹'.number_format($ipo->lot_amount, 2),
+                'sub' => $ipo->lot_size ? '('.number_format($ipo->lot_size).' shares)' : null,
             ];
         }
 
         if ($ipo->gmp !== null) {
             $gain = $ipo->estimated_gain_per_lot;
+            $gmpFormatted = '₹'.number_format((float) $ipo->gmp, 2);
+            $pct = $ipo->gmp_percent !== null ? ' (+'.number_format((float) $ipo->gmp_percent, 2).'%)' : '';
+            $gainText = $gain !== null ? '≈ ₹'.number_format($gain, 0).' a lot' : null;
 
-            $rows[] = [
-                'Grey market premium',
-                '<strong>₹'.number_format((float) $ipo->gmp, 2).'</strong>'.
-                ($ipo->gmp_percent !== null ? ' ('.number_format((float) $ipo->gmp_percent, 2).'%)' : '').
-                ($gain !== null ? ' <span class="opacity-60">≈ ₹'.number_format($gain, 0).' a lot</span>' : ''),
+            $items[] = [
+                'label' => 'Grey Market Premium (GMP)',
+                'value' => '<span style="color: #059669; font-weight: 700;">'.$gmpFormatted.$pct.'</span>',
+                'sub' => $gainText,
             ];
         }
 
         if ($ipo->subscription_retail !== null) {
-            $rows[] = [
-                'Retail subscribed',
-                '<strong>'.number_format((float) $ipo->subscription_retail, 2).'x</strong>'.
-                ($ipo->subscription_total !== null ? ' <span class="opacity-60">· total '.number_format((float) $ipo->subscription_total, 2).'x</span>' : '').
-                ($ipo->subscription_applications ? ' <span class="opacity-60">· '.number_format($ipo->subscription_applications).' applications</span>' : ''),
+            $subTextParts = [];
+            if ($ipo->subscription_total !== null) {
+                $subTextParts[] = 'Total: '.number_format((float) $ipo->subscription_total, 2).'x';
+            }
+            if ($ipo->subscription_applications) {
+                $subTextParts[] = number_format($ipo->subscription_applications).' apps';
+            }
+
+            $items[] = [
+                'label' => 'Retail Subscribed',
+                'value' => number_format((float) $ipo->subscription_retail, 2).'x',
+                'sub' => $subTextParts ? '('.implode(' · ', $subTextParts).')' : null,
             ];
         }
 
         if ($ipo->open_date || $ipo->close_date) {
-            $rows[] = [
-                'Dates',
-                trim(($ipo->open_date?->format('d M Y') ?? '?').' – '.($ipo->close_date?->format('d M Y') ?? '?')).
-                ($ipo->listing_date ? ' <span class="opacity-60">· lists '.$ipo->listing_date->format('d M Y').'</span>' : ''),
+            $dateRange = trim(($ipo->open_date?->format('d M Y') ?? '?').' – '.($ipo->close_date?->format('d M Y') ?? '?'));
+            $items[] = [
+                'label' => 'Issue Dates',
+                'value' => $dateRange,
+                'sub' => $ipo->listing_date ? 'Lists: '.$ipo->listing_date->format('d M Y') : null,
             ];
         }
 
-        if ($rows === []) {
+        if ($items === []) {
             return 'No market data for this IPO yet — run "Sync IPO list" on the IPOs page.';
         }
 
-        $html = '<div class="p-3.5 sm:p-4 rounded-2xl bg-emerald-50/50 dark:bg-emerald-950/20 border border-emerald-200/60 dark:border-emerald-800/40 text-sm">';
-        $html .= '<div class="grid gap-2">';
+        $html = '<div class="ipo-summary-box" style="background: rgba(16, 185, 129, 0.05); border: 1px solid rgba(16, 185, 129, 0.25); border-radius: 1rem; padding: 1rem 1.25rem; margin: 0.35rem 0 0.5rem 0; width: 100%; box-sizing: border-box;">';
 
-        foreach ($rows as [$label, $value]) {
-            $html .= '<div class="flex flex-col sm:flex-row sm:items-center sm:gap-2">'
-                .'<span class="w-full sm:w-44 shrink-0 text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400">'.e($label).'</span>'
-                .'<span class="text-xs sm:text-sm text-gray-950 dark:text-white font-medium">'.$value.'</span></div>';
+        $html .= '<div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.75rem; padding-bottom: 0.5rem; border-bottom: 1px solid rgba(16, 185, 129, 0.15); flex-wrap: wrap; gap: 0.5rem;">';
+        $html .= '<div style="display: flex; align-items: center; gap: 0.5rem;">'
+            .'<span style="display: inline-block; width: 0.5rem; height: 0.5rem; border-radius: 9999px; background-color: #10b981;"></span>'
+            .'<span style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #059669;" class="dark:text-emerald-400">Live IPO Market Intelligence</span>'
+            .'</div>';
+        $html .= '<span style="font-size: 0.7rem; font-weight: 500; color: #64748b;" class="dark:text-gray-400">Market Snapshot</span>';
+        $html .= '</div>';
+
+        $html .= '<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 0.875rem 1.25rem;">';
+
+        foreach ($items as $item) {
+            $html .= '<div style="display: flex; flex-direction: column; gap: 0.2rem; min-width: 0;">';
+            $html .= '<span style="font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.03em; color: #64748b;" class="dark:text-gray-400">'.e($item['label']).'</span>';
+            $html .= '<div style="font-size: 0.9rem; font-weight: 600; color: #0f172a; display: flex; align-items: baseline; flex-wrap: wrap; gap: 0.35rem;" class="dark:text-white">';
+            $html .= '<span>'.$item['value'].'</span>';
+            if ($item['sub']) {
+                $html .= '<span style="font-size: 0.75rem; font-weight: 400; color: #64748b;" class="dark:text-gray-400">'.e($item['sub']).'</span>';
+            }
+            $html .= '</div>';
+            $html .= '</div>';
         }
 
         $html .= '</div>';
 
         if ($ipo->gmp !== null) {
-            $html .= '<p class="mt-2 text-[11px] text-gray-400 dark:text-gray-500">Grey market premium is an unofficial, '
-                .'unregulated quote — a signal about listing gains, not a promise.</p>';
+            $html .= '<div style="margin-top: 0.75rem; padding-top: 0.5rem; border-top: 1px dashed rgba(16, 185, 129, 0.2);">'
+                .'<p style="font-size: 0.7rem; color: #64748b; margin: 0; line-height: 1.3;" class="dark:text-gray-400">'
+                .'Grey market premium is an unofficial, unregulated quote — a signal about listing gains, not a promise.'
+                .'</p></div>';
         }
 
         $html .= '</div>';

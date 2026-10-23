@@ -29,6 +29,7 @@ class AdminPanelProvider extends PanelProvider
             ->login()
             ->brandName('IPO Manage PRO')
             ->brandLogo(fn () => view('filament.components.brand-logo'))
+            ->brandLogoHeight('2.6rem')
             ->font('Outfit')
             ->colors([
                 'primary' => Color::Emerald,
@@ -40,7 +41,7 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->maxContentWidth(\Filament\Support\Enums\MaxWidth::Full)
             ->sidebarCollapsibleOnDesktop()
-            ->sidebarWidth('16.5rem')
+            ->sidebarWidth('17rem')
             ->collapsedSidebarWidth('4.5rem')
             ->renderHook(
                 'panels::head.done',

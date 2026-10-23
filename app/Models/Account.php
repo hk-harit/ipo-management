@@ -90,13 +90,7 @@ class Account extends Model
             return $this->hasMany(IpoApplication::class, 'sub_account_id');
         }
 
-        $relation = $this->hasMany(IpoApplication::class, 'account_id');
-
-        if (static::hasSubAccountColumn()) {
-            $relation->whereNull('sub_account_id');
-        }
-
-        return $relation;
+        return $this->hasMany(IpoApplication::class, 'account_id');
     }
 
     public function subAccountIpoApplications(): HasMany
@@ -162,11 +156,19 @@ class Account extends Model
     }
 
     /**
-     * Total account worth = Liquid available balance + Amount blocked in pending IPOs.
+     * Total account worth in bank = Liquid available balance + Amount blocked in pending IPOs.
      */
     public function getTotalBalanceAttribute(): float
     {
         return (float) $this->current_balance + (float) $this->blocked_in_ipos;
+    }
+
+    /**
+     * Amount currently invested in allotted shares awaiting sale from this account.
+     */
+    public function getInvestedInIposAttribute(): float
+    {
+        return (float) $this->ipoApplications()->whereIn('status', ['allotted', 'partial_allotted'])->sum('amount');
     }
 
     /**

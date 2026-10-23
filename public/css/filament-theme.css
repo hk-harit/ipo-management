@@ -256,4 +256,40 @@ body, html, .fi-body {
     .fi-wi-stats-overview {
         grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
     }
+    .xl\:grid-cols-7 {
+        grid-template-columns: repeat(7, minmax(0, 1fr)) !important;
+    }
 }
+
+/* ==========================================================================
+   Brand Logo & Header Alignment
+   ========================================================================== */
+.fi-logo {
+    display: flex !important;
+    align-items: center !important;
+    overflow: visible !important;
+}
+
+.fi-sidebar-header {
+    overflow: visible !important;
+}
+
+.fi-sidebar-header > div:first-child {
+    min-width: 0;
+    display: flex;
+    align-items: center;
+}
+
+/* ==========================================================================
+   IPO Market Summary Box
+   ========================================================================== */
+.ipo-summary-box {
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.04), 0 1px 2px -1px rgba(0, 0, 0, 0.04);
+    transition: all 0.2s ease-in-out;
+}
+
+.dark .ipo-summary-box {
+    background: rgba(6, 78, 59, 0.2) !important;
+    border-color: rgba(16, 185, 129, 0.3) !important;
+}
+
