@@ -151,6 +151,13 @@
 
                 @if ($share['focus_name'] && $share['focus_rows']->isNotEmpty())
                     <div style="margin-top:18px; font-size:16px; font-weight:700;">કોના નામે ભર્યું (PAN સાથે)</div>
+                    @if ($share['allotted'] + $share['not_allotted'] > 0)
+                        <div style="margin-top:4px; font-size:14px;">
+                            <span style="color:#047857; font-weight:700;">લાગ્યા: {{ $share['allotted'] }}</span>
+                            · <span style="color:#b91c1c; font-weight:700;">ન લાગ્યા: {{ $share['not_allotted'] }}</span>
+                            @if ($share['waiting']) · બાકી: {{ $share['waiting'] }} @endif
+                        </div>
+                    @endif
                     <table style="width:100%; border-collapse:collapse; margin-top:8px; font-size:15px;">
                         @foreach ($share['focus_rows'] as $i => $row)
                             <tr style="border-bottom:1px solid #e2e8f0;">
@@ -160,11 +167,12 @@
                                     @if ($row['pan'])<div style="font-size:12px; color:#64748b; letter-spacing:.5px;">{{ $row['pan'] }}</div>@endif
                                 </td>
                                 <td style="padding:6px 0; text-align:right; color:#475569;">{{ $row['lots'] ? $row['lots'].' લોટ' : '' }}</td>
+                                <td style="padding:6px 0 6px 10px; text-align:right; font-size:13px; font-weight:700; white-space:nowrap; color:{{ in_array($row['status'], ['allotted', 'partial_allotted', 'sold'], true) ? '#047857' : '#b91c1c' }};">{{ \App\Services\SourceShare::resultMark($row['status'], $row['shares']) }}</td>
                                 <td style="padding:6px 0; text-align:right; font-weight:700;">{{ $inr($row['amount']) }}</td>
                             </tr>
                         @endforeach
                         <tr>
-                            <td colspan="3" style="padding:10px 0 0; font-weight:700;">કુલ ({{ $share['focus_rows']->count() }} અરજી)</td>
+                            <td colspan="4" style="padding:10px 0 0; font-weight:700;">કુલ ({{ $share['focus_rows']->count() }} અરજી)</td>
                             <td style="padding:10px 0 0; text-align:right; font-weight:700; font-size:17px;">{{ $inr($share['focus_amount']) }}</td>
                         </tr>
                     </table>

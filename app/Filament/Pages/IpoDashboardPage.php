@@ -75,6 +75,20 @@ class IpoDashboardPage extends Page
                 'amount' => (float) $g->sum('amount'),
             ])->values();
 
+        // Allotment result (લાગ્યા): who got shares, how many, and under which source.
+        $isAllotted = fn (array $r) => in_array($r['status'], ['allotted', 'partial_allotted', 'sold'], true);
+        $allottedRows = $rows->filter($isAllotted)
+            ->map(fn (array $r) => $r + ['source_name' => $r['application']->source?->name, 'shares' => (int) $r['application']->shares_allotted])
+            ->values();
+        $allotment = [
+            'allotted' => $allottedRows->count(),
+            'allotted_amount' => (float) $allottedRows->sum('amount'),
+            'allotted_shares' => (int) $allottedRows->sum('shares'),
+            'not_allotted' => $rows->where('status', 'refunded')->count(),
+            'waiting' => $rows->where('status', 'applied')->count(),
+            'rows' => $allottedRows,
+        ];
+
         $accounts = $data['accounts']->filter(fn (array $a) => $a['focus_count'] > 0)->values();
 
         return [
@@ -83,6 +97,7 @@ class IpoDashboardPage extends Page
             'rows' => $rows,
             'lots' => $lots,
             'statuses' => $statuses,
+            'allotment' => $allotment,
             'accounts' => $accounts,
             'applicants' => $rows->pluck('pan')->unique()->count(),
             'with_commission' => $rows->where('applicant_pct', '>', 0)->count(),

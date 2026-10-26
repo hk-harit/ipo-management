@@ -45,6 +45,8 @@ class SourceShare
                 'pan' => $a->applicant?->pan_number,
                 'lots' => $lotAmount ? max(1, (int) round((float) $a->amount / $lotAmount)) : null,
                 'amount' => (float) $a->amount,
+                'status' => $a->status,
+                'shares' => $a->shares_allotted ? (int) $a->shares_allotted : null,
             ])->values()
             : collect();
 
@@ -64,6 +66,9 @@ class SourceShare
             'focus_name' => $focusIpo?->name,
             'focus_rows' => $focusRows,
             'focus_amount' => (float) $focusRows->sum('amount'),
+            'allotted' => $focusRows->whereIn('status', ['allotted', 'partial_allotted', 'sold'])->count(),
+            'not_allotted' => $focusRows->where('status', 'refunded')->count(),
+            'waiting' => $focusRows->where('status', 'applied')->count(),
         ];
 
         $data['text'] = static::text($data);
@@ -78,6 +83,16 @@ class SourceShare
         $digits = preg_replace('/\D/', '', (string) $mobile);
 
         return strlen($digits) === 10 ? '91'.$digits : null;
+    }
+
+    /** A result that is in: "✅ લાગ્યા (12 શેર)" or "❌ ન લાગ્યા"; nothing while it is still awaited. */
+    public static function resultMark(string $status, ?int $shares): string
+    {
+        return match ($status) {
+            'allotted', 'partial_allotted', 'sold' => '✅ લાગ્યા'.($shares ? ' ('.$shares.' શેર)' : ''),
+            'refunded' => '❌ ન લાગ્યા',
+            default => '',
+        };
     }
 
     /** Rupees in Indian grouping, no paise: 1452086 -> ₹14,52,086. */
@@ -137,8 +152,13 @@ class SourceShare
             $lines[] = '';
             $lines[] = '*કોના નામે ભર્યું*';
 
+            if ($d['allotted'] + $d['not_allotted'] > 0) {
+                $lines[] = 'લાગ્યા: '.$d['allotted'].' · ન લાગ્યા: '.$d['not_allotted'].($d['waiting'] ? ' · બાકી: '.$d['waiting'] : '');
+            }
+
             foreach ($d['focus_rows'] as $i => $row) {
-                $lines[] = ($i + 1).'. '.$row['name'].($row['lots'] ? ' — '.$row['lots'].' લોટ' : '').' — '.static::money($row['amount']);
+                $mark = static::resultMark($row['status'], $row['shares']);
+                $lines[] = ($i + 1).'. '.$row['name'].($row['lots'] ? ' — '.$row['lots'].' લોટ' : '').' — '.static::money($row['amount']).($mark !== '' ? ' '.$mark : '');
             }
 
             $lines[] = 'કુલ: '.static::money($d['focus_amount']);

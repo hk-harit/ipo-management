@@ -93,6 +93,37 @@
             </div>
         </div>
 
+        {{-- Allotment result: who got it --}}
+        @php($allot = $report['allotment'])
+        <x-filament::section heading="Allotment result — લાગ્યા (કોને લાગ્યું)">
+            <div class="mb-3 flex flex-wrap gap-2 text-sm">
+                <span class="rounded-full bg-success-50 px-3 py-1 font-bold text-success-700 dark:bg-success-500/10 dark:text-success-400">લાગ્યા {{ $allot['allotted'] }}</span>
+                <span class="rounded-full bg-gray-100 px-3 py-1 font-bold text-gray-700 dark:bg-white/10 dark:text-gray-300">ન લાગ્યા {{ $allot['not_allotted'] }}</span>
+                <span class="rounded-full bg-warning-50 px-3 py-1 font-bold text-warning-700 dark:bg-warning-500/10 dark:text-warning-400">બાકી (result nathi nakhyu) {{ $allot['waiting'] }}</span>
+                @if ($allot['allotted'])
+                    <span class="px-1 py-1 text-gray-600 dark:text-gray-300">{{ $allot['allotted_shares'] }} shares · cost {{ $money($allot['allotted_amount']) }}</span>
+                @endif
+            </div>
+            @if ($allot['allotted'])
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm">
+                        <tbody class="divide-y divide-gray-100 dark:divide-white/5">
+                            @foreach ($allot['rows'] as $r)
+                                <tr>
+                                    <td class="py-2 pr-3"><div class="font-medium">{{ $r['applicant'] }}</div><div class="text-xs text-gray-500">{{ $r['pan'] }}</div></td>
+                                    <td class="py-2 pr-3">{{ $r['source_name'] ?? '—' }}</td>
+                                    <td class="py-2 pr-3">{{ $r['account'] }}</td>
+                                    <td class="py-2 pr-3 text-right font-semibold text-success-600 dark:text-success-400">{{ $r['shares'] }} shares</td>
+                                    <td class="py-2 text-right">{{ $money($r['amount']) }}</td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            @else
+                <div class="text-sm text-gray-500 dark:text-gray-400">Haju koi result nakhyo nathi. <strong>Allotment Entry</strong> ma allotted PAN paste karo, pachi ahiya naam dekhase.</div>
+            @endif
+        </x-filament::section>
         <div class="grid grid-cols-1 gap-4 lg:grid-cols-2">
             {{-- Lot-wise --}}
             <x-filament::section heading="Lot-wise (કેટલા લોટ)">
