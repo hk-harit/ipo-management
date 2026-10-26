@@ -21,8 +21,8 @@ class RefundIpoApplicationAction
             ->tooltip('Unblock mandate / Mark application as refunded to account')
             ->visible(fn (IpoApplication $record) => $record->status === 'applied')
             ->requiresConfirmation()
-            ->modalHeading(fn (IpoApplication $record) => "Unblock Mandate / Refund — " . ($record->ipo?->name ?? 'IPO'))
-            ->modalDescription(fn (IpoApplication $record) => "This will mark the application as refunded and credit ₹" . number_format($record->amount, 2) . " back to '" . ($record->account?->name ?? 'the account') . "'. A refund entry will be added to the account's passbook.")
+            ->modalHeading(fn (IpoApplication $record) => 'Unblock Mandate / Refund — '.($record->ipo?->name ?? 'IPO'))
+            ->modalDescription(fn (IpoApplication $record) => 'This will mark the application as refunded and credit ₹'.number_format($record->amount, 2)." back to '".($record->account?->name ?? 'the account')."'. A refund entry will be added to the account's passbook.")
             ->form([
                 DatePicker::make('return_date')
                     ->label('Refund Date (મેન્ડેટ છૂટ્યાની તારીખ)')
@@ -51,7 +51,7 @@ class RefundIpoApplicationAction
 
                 Notification::make()
                     ->title('Mandate Unblocked & Refunded')
-                    ->body('₹' . number_format($returnAmount, 2) . ' credited back to ' . $accountName . ' passbook.')
+                    ->body('₹'.number_format($returnAmount, 2).' credited back to '.$accountName.' passbook.')
                     ->success()
                     ->send();
             });
@@ -84,7 +84,7 @@ class RefundIpoApplicationAction
 
                 Notification::make()
                     ->title("{$count} Application(s) Refunded")
-                    ->body('₹' . number_format($totalAmount, 2) . ' total unblocked and credited back to bank account passbooks.')
+                    ->body('₹'.number_format($totalAmount, 2).' total unblocked and credited back to bank account passbooks.')
                     ->success()
                     ->send();
             })

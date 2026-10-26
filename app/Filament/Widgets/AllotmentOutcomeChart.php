@@ -10,7 +10,7 @@ class AllotmentOutcomeChart extends ChartWidget
 {
     protected static ?string $heading = 'Application Status & Allotment Ratio (પરિણામ વિશ્લેષણ)';
 
-    protected static ?int $sort = 4;
+    protected static ?int $sort = 5;
 
     protected static ?string $maxHeight = '280px';
 

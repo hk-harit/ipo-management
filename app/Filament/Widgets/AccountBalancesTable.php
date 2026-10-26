@@ -4,8 +4,10 @@ namespace App\Filament\Widgets;
 
 use App\Filament\Resources\AccountResource;
 use App\Models\Account;
+use App\Services\DashboardSummary;
 use Filament\Tables\Actions\Action;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Filament\Widgets\TableWidget as BaseWidget;
 
@@ -15,19 +17,15 @@ class AccountBalancesTable extends BaseWidget
 
     protected int|string|array $columnSpan = 'full';
 
-    protected static ?string $heading = 'Current Account Balances — Bank & Cash (હાલમાં કયા ખાતામાં કેટલું બેલેન્સ છે)';
+    protected static ?string $heading = 'Account Balances — Bank & Cash (ખાતાવાર બેલેન્સ)';
 
     public function table(Table $table): Table
     {
+        // One set of aggregate queries for every row, instead of ~30 queries per account.
+        $summary = new DashboardSummary;
+
         return $table
-            ->query(
-                Account::query()
-                    ->when(
-                        Account::hasSubAccountColumn(),
-                        fn ($q) => $q->where('is_sub_account', false)
-                    )
-                    ->where('is_active', true)
-            )
+            ->query(Account::query()->with('parent')->withCount('subAccounts')->where('is_active', true))
             ->columns([
                 TextColumn::make('name')
                     ->label('Account (ખાતું)')
@@ -35,55 +33,59 @@ class AccountBalancesTable extends BaseWidget
                     ->searchable()
                     ->description(function (Account $record) {
                         $parts = [];
+
                         if ($record->holder_name) {
                             $parts[] = "Held by: {$record->holder_name}";
                         }
+
                         if ($record->type === 'bank' && $record->account_number) {
                             $parts[] = 'A/C: ...'.substr($record->account_number, -4);
                         }
-                        if (Account::hasSubAccountColumn()) {
-                            $subCount = $record->subAccounts()->count();
-                            if ($subCount > 0) {
-                                $subNames = $record->subAccounts()->pluck('name')->take(3)->join(', ');
-                                $parts[] = "{$subCount} Sub-accounts ({$subNames})";
-                            }
+
+                        if ($record->is_sub_account && $record->parent) {
+                            $parts[] = "Sub-account of {$record->parent->name}";
+                        } elseif ($record->sub_accounts_count > 0) {
+                            $parts[] = "{$record->sub_accounts_count} sub-account(s)";
                         }
+
                         return implode(' · ', $parts);
                     }),
-
                 TextColumn::make('type')
                     ->label('Type')
                     ->badge()
-                    ->color(fn (string $state) => $state === 'bank' ? 'info' : 'gray'),
-
-                TextColumn::make('current_balance')
-                    ->label('Available Right Now (હાલમાં ઉપલબ્ધ)')
-                    ->state(fn (Account $record) => $record->current_balance)
+                    ->color(fn (string $state) => $state === 'bank' ? 'info' : 'gray')
+                    ->formatStateUsing(fn (string $state) => ucfirst($state)),
+                TextColumn::make('available')
+                    ->label('Available (ઉપલબ્ધ)')
+                    ->state(fn (Account $record) => $summary->figuresFor($record->id)['balance'])
                     ->money('INR')
                     ->weight('bold')
                     ->color(fn ($state) => $state < 0 ? 'danger' : 'success')
                     ->description('Free balance for new IPOs'),
-
-                TextColumn::make('blocked_in_ipos')
+                TextColumn::make('blocked')
                     ->label('Blocked in IPOs (IPO માં બ્લોક)')
-                    ->state(fn (Account $record) => $record->blocked_in_ipos)
+                    ->state(fn (Account $record) => $summary->figuresFor($record->id)['blocked'])
                     ->money('INR')
                     ->weight('semibold')
-                    ->color('primary')
-                    ->description(function (Account $record) {
-                        $cnt = $record->ipoApplications()->where('status', 'applied')->count();
-                        return $cnt > 0 ? "{$cnt} app(s) pending outcome" : 'None blocked';
-                    }),
+                    ->color('primary'),
+                TextColumn::make('invested')
+                    ->label('In Demat (ડીમેટમાં)')
+                    ->state(fn (Account $record) => $summary->figuresFor($record->id)['invested'])
+                    ->money('INR')
+                    ->color('warning'),
+                TextColumn::make('total')
+                    ->label('Total Capital (કુલ)')
+                    ->state(function (Account $record) use ($summary) {
+                        $figures = $summary->figuresFor($record->id);
 
-                TextColumn::make('total_balance')
-                    ->label('Total Account Capital (ખાતાનું કુલ બેલેન્સ)')
-                    ->state(fn (Account $record) => $record->total_balance)
+                        return $figures['balance'] + $figures['blocked'] + $figures['invested'];
+                    })
                     ->money('INR')
                     ->weight('bold')
-                    ->description('Available + Blocked (બેંક પાસબુક)'),
+                    ->description('Available + Blocked + Demat'),
             ])
             ->filters([
-                \Filament\Tables\Filters\SelectFilter::make('view_type')
+                SelectFilter::make('view_type')
                     ->label('Filter Accounts')
                     ->options([
                         'main' => 'Main Bank & Cash Accounts (મુખ્ય ખાતાઓ)',
@@ -91,13 +93,11 @@ class AccountBalancesTable extends BaseWidget
                     ])
                     ->default('main')
                     ->query(function ($query, array $data) {
-                        if (($data['value'] ?? 'main') === 'all') {
+                        if (($data['value'] ?? 'main') === 'all' || ! Account::hasSubAccountColumn()) {
                             return $query;
                         }
-                        if (Account::hasSubAccountColumn()) {
-                            $query->where('is_sub_account', false);
-                        }
-                        return $query;
+
+                        return $query->where('is_sub_account', false);
                     }),
             ])
             ->actions([

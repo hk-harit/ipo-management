@@ -34,6 +34,12 @@ class MyLedger extends Page
         return $this->source()->buildLedger();
     }
 
+    /** Profit-share payments made to this source, newest first. */
+    public function payouts(): Collection
+    {
+        return $this->source()->profitPayouts()->orderByDesc('payout_date')->orderByDesc('id')->get();
+    }
+
     public function summary(): array
     {
         $source = $this->source();

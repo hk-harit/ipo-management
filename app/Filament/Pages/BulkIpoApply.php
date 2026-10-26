@@ -2,6 +2,7 @@
 
 namespace App\Filament\Pages;
 
+use App\Filament\Support\ApplicationWarnings;
 use App\Filament\Support\IpoPicker;
 use App\Models\Account;
 use App\Models\Applicant;
@@ -14,8 +15,11 @@ use Filament\Forms\Components\TextInput;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
 use Filament\Forms\Form;
+use Filament\Forms\Get;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 class BulkIpoApply extends Page implements HasForms
 {
@@ -62,23 +66,24 @@ class BulkIpoApply extends Page implements HasForms
                             ->searchable(),
                         Select::make('account_id')
                             ->label('Payment Account (બ્લોક)')
-                            ->options(fn () => \App\Models\Account::hasSubAccountColumn() ? \App\Models\Account::query()->where('is_sub_account', false)->orderBy('name')->pluck('name', 'id') : \App\Models\Account::query()->orderBy('name')->pluck('name', 'id'))
+                            ->options(fn () => Account::hasSubAccountColumn() ? Account::query()->where('is_sub_account', false)->orderBy('name')->pluck('name', 'id') : Account::query()->orderBy('name')->pluck('name', 'id'))
                             ->required()
                             ->searchable()
                             ->live(),
                         Select::make('sub_account_id')
                             ->label('Sub-Account')
-                            ->options(function (\Filament\Forms\Get $get) {
-                                if (! \App\Models\Account::hasSubAccountColumn()) {
+                            ->options(function (Get $get) {
+                                if (! Account::hasSubAccountColumn()) {
                                     return [];
                                 }
                                 $accId = $get('account_id');
                                 if (! $accId) {
-                                    return \App\Models\Account::where('is_sub_account', true)->pluck('name', 'id');
+                                    return Account::where('is_sub_account', true)->pluck('name', 'id');
                                 }
-                                return \App\Models\Account::where('is_sub_account', true)->where('parent_id', $accId)->pluck('name', 'id');
+
+                                return Account::where('is_sub_account', true)->where('parent_id', $accId)->pluck('name', 'id');
                             })
-                            ->visible(fn () => \App\Models\Account::hasSubAccountColumn())
+                            ->visible(fn () => Account::hasSubAccountColumn())
                             ->placeholder('Direct')
                             ->searchable(),
                         Select::make('funding_type')
@@ -92,13 +97,14 @@ class BulkIpoApply extends Page implements HasForms
                         Select::make('funding_account_id')
                             ->label('From Account')
                             ->options(fn () => Account::query()->orderBy('name')->pluck('name', 'id'))
-                            ->visible(fn (\Filament\Forms\Get $get) => $get('funding_type') === 'transferred')
+                            ->visible(fn (Get $get) => $get('funding_type') === 'transferred')
                             ->searchable(),
                         Select::make('source_id')
                             ->label('Source (optional)')
                             ->options(fn () => Source::query()->orderBy('name')->pluck('name', 'id'))
                             ->searchable(),
                         TextInput::make('amount')
+                            ->minValue(0.01)
                             ->numeric()
                             ->prefix('₹')
                             ->required(),
@@ -138,7 +144,9 @@ class BulkIpoApply extends Page implements HasForms
             return;
         }
 
-        $rows->each(function (array $row) use ($state) {
+        // All rows or none: a failure halfway must not leave a partial batch
+        // (and its auto-transfers) behind.
+        $created = DB::transaction(fn () => $rows->map(function (array $row) use ($state) {
             $data = [
                 'ipo_id' => $state['ipo_id'],
                 'applicant_id' => $row['applicant_id'],
@@ -149,17 +157,22 @@ class BulkIpoApply extends Page implements HasForms
                 'status' => 'applied',
             ];
 
-            if (\App\Models\Account::hasSubAccountColumn() && ! empty($row['sub_account_id'])) {
+            if (Account::hasSubAccountColumn() && ! empty($row['sub_account_id'])) {
                 $data['sub_account_id'] = $row['sub_account_id'];
             }
 
-            if (\Illuminate\Support\Facades\Schema::hasColumn('ipo_applications', 'funding_type')) {
+            if (Schema::hasColumn('ipo_applications', 'funding_type')) {
                 $data['funding_type'] = $row['funding_type'] ?? 'direct';
                 $data['funding_account_id'] = ($row['funding_type'] ?? 'direct') === 'transferred' ? ($row['funding_account_id'] ?? null) : null;
             }
 
-            IpoApplication::create($data);
-        });
+            return IpoApplication::create($data);
+        }));
+
+        foreach ($created as $application) {
+            // One overdraft warning per account, not one per row.
+            ApplicationWarnings::notify($application, checkBalance: $created->where('account_id', $application->account_id)->last()->is($application));
+        }
 
         Notification::make()
             ->title($rows->count().' application(s) created')

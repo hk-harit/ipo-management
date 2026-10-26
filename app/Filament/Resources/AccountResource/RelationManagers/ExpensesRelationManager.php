@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\AccountResource\RelationManagers;
 
 use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Form;
@@ -12,8 +13,6 @@ use Filament\Tables\Actions\DeleteAction;
 use Filament\Tables\Actions\EditAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
-
-use Filament\Forms\Components\Select;
 
 class ExpensesRelationManager extends RelationManager
 {
@@ -56,6 +55,7 @@ class ExpensesRelationManager extends RelationManager
                 ->maxLength(255),
 
             TextInput::make('amount')
+                ->minValue(0.01)
                 ->numeric()
                 ->prefix('₹')
                 ->required(),

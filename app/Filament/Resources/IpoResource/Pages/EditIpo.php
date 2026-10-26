@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\IpoResource\Pages;
 
 use App\Filament\Resources\IpoResource;
+use App\Filament\Support\GuardedDelete;
 use App\Services\AllotmentCheck\AllotmentCheckService;
 use Filament\Actions;
 use Filament\Forms\Components\Select;
@@ -25,8 +26,8 @@ class EditIpo extends EditRecord
                 ->requiresConfirmation()
                 ->modalHeading(fn () => "Check Allotment: {$this->record->name}")
                 ->modalDescription(fn () => $this->record->canAutoCheckAllotment()
-                    ? "Looks up allotment for all pending applications of this IPO directly with the registrar and updates their status."
-                    : "Registrar is not configured for this IPO yet. Please select the Registrar and Company below to save and check immediately:"
+                    ? 'Looks up allotment for all pending applications of this IPO directly with the registrar and updates their status.'
+                    : 'Registrar is not configured for this IPO yet. Please select the Registrar and Company below to save and check immediately:'
                 )
                 ->form(fn (AllotmentCheckService $service) => ! $this->record->canAutoCheckAllotment() ? [
                     Select::make('registrar')
@@ -51,6 +52,7 @@ class EditIpo extends EditRecord
                         ->required()
                         ->options(function (Get $get) use ($service) {
                             $reg = $get('registrar');
+
                             return $reg ? $service->getRegistrarCompanies($reg) : [];
                         })
                         ->default(fn (Get $get) => $get('registrar') ? $service->matchCompanyId($get('registrar'), $this->record->name) : null)
@@ -71,6 +73,7 @@ class EditIpo extends EditRecord
                                 ->body('Please select Registrar and Company first.')
                                 ->warning()
                                 ->send();
+
                             return;
                         }
                     }
@@ -83,6 +86,7 @@ class EditIpo extends EditRecord
                             ->body('All applications for this IPO are already checked or processed.')
                             ->info()
                             ->send();
+
                         return;
                     }
 
@@ -111,7 +115,7 @@ class EditIpo extends EditRecord
                         ->color($counts['allotted'] > 0 ? 'success' : ($counts['error'] > 0 ? 'warning' : 'info'))
                         ->send();
                 }),
-            Actions\DeleteAction::make(),
+            GuardedDelete::page(),
         ];
     }
 }

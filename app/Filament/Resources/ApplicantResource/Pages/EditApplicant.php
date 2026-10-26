@@ -3,7 +3,7 @@
 namespace App\Filament\Resources\ApplicantResource\Pages;
 
 use App\Filament\Resources\ApplicantResource;
-use Filament\Actions;
+use App\Filament\Support\GuardedDelete;
 use Filament\Resources\Pages\EditRecord;
 
 class EditApplicant extends EditRecord
@@ -13,7 +13,7 @@ class EditApplicant extends EditRecord
     protected function getHeaderActions(): array
     {
         return [
-            Actions\DeleteAction::make(),
+            GuardedDelete::page(),
         ];
     }
 }

@@ -2,74 +2,71 @@
 
 namespace App\Filament\Widgets;
 
-use App\Models\Account;
 use App\Models\IpoApplication;
-use App\Models\Source;
+use App\Services\DashboardSummary;
+use Filament\Widgets\Concerns\InteractsWithPageFilters;
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
 
 class OverviewStats extends BaseWidget
 {
+    use InteractsWithPageFilters;
+
     protected static ?int $sort = 1;
+
+    protected int|string|array $columnSpan = 'full';
+
+    protected function getColumns(): int
+    {
+        return 3;
+    }
 
     protected function getStats(): array
     {
-        $accounts = Account::hasSubAccountColumn()
-            ? Account::mainAccounts()->where('is_active', true)->get()
-            : Account::where('is_active', true)->get();
+        $summary = new DashboardSummary;
+        $totals = $summary->totals();
 
-        $availableBalance = (float) $accounts->sum('current_balance');
+        $period = $this->filters['period'] ?? 'all';
+        $profit = $summary->profit(...DashboardSummary::periodRange($period));
 
-        $pendingApps = IpoApplication::where('status', 'applied')->get();
-        $blockedInIpos = (float) $pendingApps->sum('amount');
-        $pendingCount = $pendingApps->count();
+        $pending = IpoApplication::where('status', 'applied')->count();
+        $demat = IpoApplication::whereIn('status', ['allotted', 'partial_allotted'])->count();
 
-        // Total Bank & Cash capital is Available + Blocked under ASBA
-        $totalBalance = $availableBalance + $blockedInIpos;
-
-        $allottedApps = IpoApplication::whereIn('status', ['allotted', 'partial_allotted'])->get();
-        $allottedAmount = (float) $allottedApps->sum('amount');
-        $allottedCount = $allottedApps->count();
-
-        $totalDue = (float) Source::all()->sum('balance_due');
-
-        $soldApps = IpoApplication::where('status', 'sold')->get();
-        $totalProfit = (float) $soldApps->sum(fn (IpoApplication $a) => (float) $a->profit);
-
-        $stats = [
-            Stat::make('Total Capital (કુલ બેંક/રોકડ મૂડી)', '₹'.number_format($totalBalance, 2))
-                ->description('ઉપલબ્ધ (₹'.number_format($availableBalance, 0).') + બ્લોક (₹'.number_format($blockedInIpos, 0).')')
-                ->color($totalBalance >= 0 ? 'success' : 'danger')
+        return [
+            Stat::make('Total Funds (કુલ મૂડી)', $this->money($totals['total_funds']))
+                ->description('Available + Blocked + In Demat')
+                ->color($totals['total_funds'] >= 0 ? 'success' : 'danger')
                 ->icon('heroicon-o-scale'),
 
-            Stat::make('Available to Use (વાપરવા માટે ઉપલબ્ધ)', '₹'.number_format($availableBalance, 2))
-                ->description('Free liquid balance across all accounts')
-                ->color($availableBalance >= 0 ? 'success' : 'danger')
+            Stat::make('Available (ઉપલબ્ધ)', $this->money($totals['available']))
+                ->description('Free to use across bank & cash')
+                ->color($totals['available'] >= 0 ? 'success' : 'danger')
                 ->icon('heroicon-o-wallet'),
 
-            Stat::make('Blocked in IPOs (IPO માં બ્લોક)', '₹'.number_format($blockedInIpos, 2))
-                ->description("{$pendingCount} application(s) pending outcome")
+            Stat::make('Blocked in IPOs (IPO માં બ્લોક)', $this->money($totals['blocked']))
+                ->description("{$pending} application(s) awaiting result")
                 ->color('primary')
                 ->icon('heroicon-o-lock-closed'),
-        ];
 
-        if ($allottedCount > 0) {
-            $stats[] = Stat::make('Allotted in Demat (ડીમેટમાં અલોટેડ)', '₹'.number_format($allottedAmount, 2))
-                ->description("{$allottedCount} app(s) awaiting listing/sale")
+            Stat::make('In Demat (ડીમેટમાં, cost)', $this->money($totals['invested']))
+                ->description("{$demat} allotted, awaiting sale")
                 ->color('warning')
-                ->icon('heroicon-o-rectangle-stack');
-        }
+                ->icon('heroicon-o-rectangle-stack'),
 
-        $stats[] = Stat::make('Total Profit (કુલ નફો)', '₹'.number_format($totalProfit, 2))
-            ->description($totalProfit >= 0 ? 'Net profit from sold shares' : 'Net loss from sold shares')
-            ->color($totalProfit >= 0 ? 'success' : 'danger')
-            ->icon('heroicon-o-arrow-trending-up');
+            Stat::make('Net Position (ચોખ્ખી સ્થિતિ)', $this->money($totals['net_position']))
+                ->description('Funds + udhar '.$this->money($totals['udhar_receivable'], 0).' − sources '.$this->money($totals['owed_to_sources'], 0).' − unpaid profit '.$this->money($totals['profit_owed'], 0))
+                ->color($totals['net_position'] >= 0 ? 'success' : 'danger')
+                ->icon('heroicon-o-banknotes'),
 
-        $stats[] = Stat::make('Due to Sources (ચૂકવવાના બાકી)', '₹'.number_format($totalDue, 2))
-            ->description('Payable to capital sources')
-            ->color($totalDue > 0 ? 'warning' : 'gray')
-            ->icon('heroicon-o-arrow-up-circle');
+            Stat::make('Profit — '.(DashboardSummary::PERIODS[$period] ?? 'All time'), $this->money($profit['profit']))
+                ->description('Yours '.$this->money($profit['your_share'], 0).' · Sources '.$this->money($profit['source_share'], 0).' · Applicants '.$this->money($profit['applicant_share'], 0))
+                ->color($profit['profit'] >= 0 ? 'success' : 'danger')
+                ->icon('heroicon-o-arrow-trending-up'),
+        ];
+    }
 
-        return $stats;
+    private function money(float $amount, int $decimals = 2): string
+    {
+        return ($amount < 0 ? '−' : '').'₹'.number_format(abs($amount), $decimals);
     }
 }

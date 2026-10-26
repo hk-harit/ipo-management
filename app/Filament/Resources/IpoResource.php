@@ -3,7 +3,9 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\IpoResource\Pages;
+use App\Filament\Resources\IpoResource\Pages\ListIpos;
 use App\Filament\Resources\IpoResource\RelationManagers;
+use App\Filament\Support\GuardedDelete;
 use App\Models\Ipo;
 use App\Services\AllotmentCheck\AllotmentCheckService;
 use Filament\Forms\Components\DatePicker;
@@ -19,7 +21,6 @@ use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Tables\Actions\Action;
 use Filament\Tables\Actions\BulkActionGroup;
-use Filament\Tables\Actions\DeleteBulkAction;
 use Filament\Tables\Actions\EditAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\Filter;
@@ -72,7 +73,7 @@ class IpoResource extends Resource
             ]),
 
             Section::make('Auto Allotment Check')
-                ->description("Set Registrar and select the Company to enable automatic allotment status checking.")
+                ->description('Set Registrar and select the Company to enable automatic allotment status checking.')
                 ->icon('heroicon-o-magnifying-glass-circle')
                 ->collapsible()
                 ->collapsed(false)
@@ -84,6 +85,7 @@ class IpoResource extends Resource
                         ->afterStateUpdated(function (Get $get, Set $set, AllotmentCheckService $service, ?string $state) {
                             if (! $state) {
                                 $set('registrar_client_id', null);
+
                                 return;
                             }
                             $matchedId = $service->matchCompanyId($state, $get('name'));
@@ -107,6 +109,7 @@ class IpoResource extends Resource
                             if ($record?->registrar_client_id && ! isset($companies[$record->registrar_client_id])) {
                                 $companies[$record->registrar_client_id] = "Current ID: {$record->registrar_client_id}";
                             }
+
                             return $companies;
                         })
                         ->helperText('Select the company from the registrar\'s live list. The Company ID is mapped automatically.')
@@ -167,7 +170,7 @@ class IpoResource extends Resource
     {
         return $table
             ->content(function ($livewire) {
-                if ($livewire instanceof \App\Filament\Resources\IpoResource\Pages\ListIpos && ($livewire->viewMode ?? 'box') === 'box') {
+                if ($livewire instanceof ListIpos && ($livewire->viewMode ?? 'box') === 'box') {
                     return view('filament.resources.ipos.box-view');
                 }
 
@@ -352,7 +355,7 @@ class IpoResource extends Resource
                     ->modalHeading(fn (Ipo $record) => "Check Allotment: {$record->name}")
                     ->modalDescription(fn (Ipo $record) => $record->canAutoCheckAllotment()
                         ? "This will look up allotment for all pending applications of {$record->name} directly with the registrar and update their status."
-                        : "Registrar is not configured for this IPO yet. Please select the Registrar and Company below to save and check immediately:"
+                        : 'Registrar is not configured for this IPO yet. Please select the Registrar and Company below to save and check immediately:'
                     )
                     ->form(fn (Ipo $record, AllotmentCheckService $service) => ! $record->canAutoCheckAllotment() ? [
                         Select::make('registrar')
@@ -377,6 +380,7 @@ class IpoResource extends Resource
                             ->required()
                             ->options(function (Get $get) use ($service) {
                                 $reg = $get('registrar');
+
                                 return $reg ? $service->getRegistrarCompanies($reg) : [];
                             })
                             ->default(fn (Get $get) => $get('registrar') ? $service->matchCompanyId($get('registrar'), $record->name) : null)
@@ -395,6 +399,7 @@ class IpoResource extends Resource
                                     ->body('Please select Registrar and Company first.')
                                     ->warning()
                                     ->send();
+
                                 return;
                             }
                         }
@@ -407,6 +412,7 @@ class IpoResource extends Resource
                                 ->body('All applications for this IPO have already been checked or updated.')
                                 ->info()
                                 ->send();
+
                             return;
                         }
 
@@ -416,8 +422,12 @@ class IpoResource extends Resource
                             ."{$counts['allotted']} Allotted · "
                             ."{$counts['refunded']} Refunded";
 
-                        if ($counts['not_found'] > 0) $summary .= " · {$counts['not_found']} Not Found";
-                        if ($counts['skipped'] > 0) $summary .= " · {$counts['skipped']} Skipped";
+                        if ($counts['not_found'] > 0) {
+                            $summary .= " · {$counts['not_found']} Not Found";
+                        }
+                        if ($counts['skipped'] > 0) {
+                            $summary .= " · {$counts['skipped']} Skipped";
+                        }
                         if ($counts['error'] > 0) {
                             $summary .= " · {$counts['error']} Errors";
                             if (! empty($counts['errors'])) {
@@ -435,7 +445,7 @@ class IpoResource extends Resource
             ])
             ->bulkActions([
                 BulkActionGroup::make([
-                    DeleteBulkAction::make(),
+                    GuardedDelete::bulk(),
                 ]),
             ]);
     }
@@ -450,7 +460,7 @@ class IpoResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListIpos::route('/'),
+            'index' => ListIpos::route('/'),
             'create' => Pages\CreateIpo::route('/create'),
             'edit' => Pages\EditIpo::route('/{record}/edit'),
         ];

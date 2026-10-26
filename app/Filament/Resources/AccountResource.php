@@ -4,6 +4,7 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\AccountResource\Pages;
 use App\Filament\Resources\AccountResource\RelationManagers;
+use App\Filament\Support\GuardedDelete;
 use App\Models\Account;
 use Filament\Forms\Components\Section;
 use Filament\Forms\Components\Select;
@@ -14,10 +15,10 @@ use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables\Actions\Action;
 use Filament\Tables\Actions\BulkActionGroup;
-use Filament\Tables\Actions\DeleteBulkAction;
 use Filament\Tables\Actions\EditAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Columns\ToggleColumn;
+use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 
 class AccountResource extends Resource
@@ -104,6 +105,7 @@ class AccountResource extends Resource
                                 return "Main Account ({$subCount} sub-accounts)";
                             }
                         }
+
                         return null;
                     }),
                 TextColumn::make('holder_name')->label('Held By')->searchable()->badge()->color('gray'),
@@ -136,7 +138,7 @@ class AccountResource extends Resource
             ])
             ->defaultSort('name')
             ->filters([
-                \Filament\Tables\Filters\SelectFilter::make('is_sub_account')
+                SelectFilter::make('is_sub_account')
                     ->label('Account Type')
                     ->options([
                         '0' => 'Main Accounts Only',
@@ -152,6 +154,7 @@ class AccountResource extends Resource
                         if (($data['value'] ?? null) === '1') {
                             return $query->where('is_sub_account', true);
                         }
+
                         return $query;
                     }),
             ])
@@ -163,7 +166,7 @@ class AccountResource extends Resource
                     ->badge(fn (Account $record) => $record->blockedIpoApplications()->count() ?: null)
                     ->badgeColor('warning')
                     ->modalHeading(fn (Account $record) => "Blocked IPOs — {$record->name}")
-                    ->modalDescription(fn (Account $record) => "Money currently blocked under ASBA / UPI mandate in pending IPO applications.")
+                    ->modalDescription(fn (Account $record) => 'Money currently blocked under ASBA / UPI mandate in pending IPO applications.')
                     ->modalSubmitAction(false)
                     ->modalCancelActionLabel('Close')
                     ->modalContent(fn (Account $record) => view('filament.resources.account-resource.blocked-ipos-modal', [
@@ -179,12 +182,12 @@ class AccountResource extends Resource
                     ->label('Transfer')
                     ->icon('heroicon-o-arrow-right-circle')
                     ->color('gray')
-                    ->url(fn (Account $record) => AccountTransferResource::getUrl('create') . '?from_account_id=' . $record->id),
+                    ->url(fn (Account $record) => AccountTransferResource::getUrl('create').'?from_account_id='.$record->id),
                 EditAction::make(),
             ])
             ->bulkActions([
                 BulkActionGroup::make([
-                    DeleteBulkAction::make(),
+                    GuardedDelete::bulk(),
                 ]),
             ]);
     }

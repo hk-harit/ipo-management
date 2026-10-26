@@ -3,6 +3,7 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\ApplicantResource\Pages;
+use App\Filament\Support\GuardedDelete;
 use App\Models\Applicant;
 use Filament\Forms\Components\Section;
 use Filament\Forms\Components\Select;
@@ -12,7 +13,6 @@ use Filament\Forms\Components\Toggle;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables\Actions\BulkActionGroup;
-use Filament\Tables\Actions\DeleteBulkAction;
 use Filament\Tables\Actions\EditAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Columns\ToggleColumn;
@@ -79,7 +79,7 @@ class ApplicantResource extends Resource
             ])
             ->bulkActions([
                 BulkActionGroup::make([
-                    DeleteBulkAction::make(),
+                    GuardedDelete::bulk(),
                 ]),
             ]);
     }

@@ -24,6 +24,9 @@ class IpoGmpAndSubscriptionTest extends TestCase
     {
         parent::setUp();
 
+        // The IPO list opens in box view by default; these tests read the table.
+        $this->withSession(['ipo_view_mode' => 'table']);
+
         $this->user = User::factory()->create();
         Carbon::setTestNow('2026-08-27');
         Http::preventStrayRequests();

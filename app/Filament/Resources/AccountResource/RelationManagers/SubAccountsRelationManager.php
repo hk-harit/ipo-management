@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\AccountResource\RelationManagers;
 
 use App\Filament\Resources\AccountResource;
+use App\Filament\Support\GuardedDelete;
 use App\Models\Account;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
@@ -10,10 +11,10 @@ use Filament\Forms\Form;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables\Actions\Action;
 use Filament\Tables\Actions\CreateAction;
-use Filament\Tables\Actions\DeleteAction;
 use Filament\Tables\Actions\EditAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Model;
 
 class SubAccountsRelationManager extends RelationManager
 {
@@ -21,9 +22,9 @@ class SubAccountsRelationManager extends RelationManager
 
     protected static ?string $title = 'Sub Accounts (સબ એકાઉન્ટ્સ)';
 
-    public static function canViewForRecord(\Illuminate\Database\Eloquent\Model $ownerRecord, string $pageClass): bool
+    public static function canViewForRecord(Model $ownerRecord, string $pageClass): bool
     {
-        if (! \App\Models\Account::hasSubAccountColumn()) {
+        if (! Account::hasSubAccountColumn()) {
             return false;
         }
 
@@ -97,6 +98,7 @@ class SubAccountsRelationManager extends RelationManager
                         $data['is_sub_account'] = true;
                         $data['parent_id'] = $this->getOwnerRecord()->id;
                         $data['user_id'] = $this->getOwnerRecord()->user_id;
+
                         return $data;
                     }),
             ])
@@ -107,7 +109,7 @@ class SubAccountsRelationManager extends RelationManager
                     ->color('gray')
                     ->url(fn (Account $record) => AccountResource::getUrl('passbook', ['record' => $record])),
                 EditAction::make(),
-                DeleteAction::make(),
+                GuardedDelete::row(),
             ]);
     }
 }

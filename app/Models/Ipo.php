@@ -3,6 +3,8 @@
 namespace App\Models;
 
 use App\Models\Concerns\BelongsToUser;
+use App\Models\Concerns\BlocksDeleteWithHistory;
+use Database\Factories\IpoFactory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -10,8 +12,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Ipo extends Model
 {
-    /** @use HasFactory<\Database\Factories\IpoFactory> */
-    use HasFactory, BelongsToUser;
+    /** @use HasFactory<IpoFactory> */
+    use BelongsToUser, BlocksDeleteWithHistory, HasFactory;
 
     protected $fillable = [
         'user_id',
@@ -229,6 +231,13 @@ class Ipo extends Model
         return null;
     }
 
+    public function deletionBlockedReason(): ?string
+    {
+        return $this->describeHistory([
+            'IPO application(s)' => $this->applications()->count(),
+        ]);
+    }
+
     public function applications(): HasMany
     {
         return $this->hasMany(IpoApplication::class);
@@ -241,8 +250,14 @@ class Ipo extends Model
 
     public function getTotalReturnedAttribute(): float
     {
-        return (float) $this->applications()
-            ->selectRaw('COALESCE(SUM(CASE WHEN return_amount IS NOT NULL THEN return_amount WHEN status = "refunded" THEN amount ELSE 0 END), 0) as total')
+        $returned = (float) $this->applications()
+            ->selectRaw("COALESCE(SUM(CASE WHEN return_amount IS NOT NULL THEN return_amount WHEN status = 'refunded' THEN amount ELSE 0 END), 0) as total")
             ->value('total');
+
+        $sales = (float) ApplicationSale::query()
+            ->whereIn('ipo_application_id', $this->applications()->select('ipo_applications.id'))
+            ->sum('net_amount');
+
+        return $returned + $sales;
     }
 }

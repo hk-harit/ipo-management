@@ -2,15 +2,19 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\Auditable;
 use App\Models\Concerns\BelongsToUser;
+use Database\Factories\IpoApplicationFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Collection;
 
 class IpoApplication extends Model
 {
-    /** @use HasFactory<\Database\Factories\IpoApplicationFactory> */
-    use HasFactory, BelongsToUser;
+    /** @use HasFactory<IpoApplicationFactory> */
+    use Auditable, BelongsToUser, HasFactory;
 
     protected $fillable = [
         'user_id',
@@ -30,6 +34,7 @@ class IpoApplication extends Model
         'sale_price_per_share',
         'return_amount',
         'return_date',
+        'sold_date',
         'source_share_percent_override',
         'applicant_commission_percent',
         'notes',
@@ -45,12 +50,19 @@ class IpoApplication extends Model
             'applicant_commission_percent' => 'decimal:2',
             'applied_date' => 'date',
             'return_date' => 'date',
+            'sold_date' => 'date',
         ];
     }
 
     protected static function booted(): void
     {
         static::saving(function (self $app) {
+            // The Sales tab changes status/shares_sold behind an open edit form's back;
+            // never let a stale form overwrite what the sales rows say.
+            if ($app->exists && $app->sales()->exists()) {
+                $app->deriveFromSales($app->sales()->get());
+            }
+
             if ($app->status === 'refunded') {
                 if ($app->return_amount === null || (float) $app->return_amount <= 0) {
                     $app->return_amount = $app->amount;
@@ -70,7 +82,7 @@ class IpoApplication extends Model
                         'to_account_id' => $app->account_id,
                         'amount' => $app->amount,
                         'transfer_date' => $app->applied_date ?? now()->toDateString(),
-                        'notes' => 'Auto-transfer for IPO application #' . ($app->id ?? 'new'),
+                        'notes' => 'Auto-transfer for IPO application #'.($app->id ?? 'new'),
                     ]);
                     $app->auto_transfer_id = $transfer->id;
                 } else {
@@ -128,6 +140,11 @@ class IpoApplication extends Model
         return $this->belongsTo(AccountTransfer::class, 'auto_transfer_id');
     }
 
+    public function sales(): HasMany
+    {
+        return $this->hasMany(ApplicationSale::class, 'ipo_application_id');
+    }
+
     public function source(): BelongsTo
     {
         return $this->belongsTo(Source::class);
@@ -139,11 +156,99 @@ class IpoApplication extends Model
      */
     public function getProfitAttribute(): ?float
     {
-        if ($this->status !== 'sold' || $this->return_amount === null) {
+        if ($this->status !== 'sold') {
             return null;
         }
 
-        return (float) $this->return_amount - (float) $this->amount;
+        // Old-style single sale: no sales rows, return_amount holds the proceeds.
+        if ($this->return_amount === null && $this->sales_count_cached() === 0) {
+            return null;
+        }
+
+        return round($this->total_received - (float) $this->amount, 2);
+    }
+
+    /** Net proceeds from every sale (after charges). */
+    public function getSalesNetAttribute(): float
+    {
+        return (float) ($this->relationLoaded('sales')
+            ? $this->sales->sum('net_amount')
+            : $this->sales()->sum('net_amount'));
+    }
+
+    /** Charges (brokerage, DP, STT...) paid across every sale. */
+    public function getSalesChargesAttribute(): float
+    {
+        return (float) ($this->relationLoaded('sales')
+            ? $this->sales->sum('charges')
+            : $this->sales()->sum('charges'));
+    }
+
+    /**
+     * Everything that has come back for this application: the refund (or, for an
+     * old-style sale, the proceeds) in return_amount, plus net sale proceeds.
+     */
+    public function getTotalReceivedAttribute(): float
+    {
+        return (float) ($this->return_amount ?? 0) + $this->sales_net;
+    }
+
+    /** Allotted shares not yet sold. */
+    public function getSharesRemainingAttribute(): int
+    {
+        return max(0, (int) $this->shares_allotted - (int) $this->shares_sold);
+    }
+
+    private function sales_count_cached(): int
+    {
+        return $this->relationLoaded('sales') ? $this->sales->count() : $this->sales()->count();
+    }
+
+    /**
+     * Re-derives shares_sold, the average price and the status from the sales
+     * rows. Sold once every allotted share is gone; if a sale is later edited or
+     * deleted so shares are left again, it goes back to allotted / partly allotted.
+     */
+    public function syncFromSales(): void
+    {
+        $this->deriveFromSales($this->sales()->get());
+
+        $this->saveQuietly();
+        $this->unsetRelation('sales');
+    }
+
+    /** Sets shares_sold, average price, status and sold_date from the given sales (no save). */
+    private function deriveFromSales(Collection $sales): void
+    {
+        $sold = (int) $sales->sum('shares_sold');
+        $allotted = (int) $this->shares_allotted;
+
+        $this->shares_sold = $sold > 0 ? $sold : null;
+        $this->sale_price_per_share = $sold > 0 ? round($sales->sum('gross_amount') / $sold, 2) : null;
+
+        if ($sold > 0 && $allotted > 0 && $sold >= $allotted) {
+            $this->status = 'sold';
+            $this->sold_date = $sales->max('sale_date');
+        } elseif ($this->status === 'sold' && $allotted > 0) {
+            $this->status = (float) ($this->return_amount ?? 0) > 0 ? 'partial_allotted' : 'allotted';
+            $this->sold_date = null;
+        }
+    }
+
+    /**
+     * What a "not allotted" application failed to get back: the applied amount
+     * minus the refund, e.g. a ₹95 deduction on a ₹15,000 mandate. Null when the
+     * refund was in full (or the application is not a plain refund).
+     */
+    public function getRefundShortfallAttribute(): ?float
+    {
+        if ($this->status !== 'refunded' || $this->return_amount === null) {
+            return null;
+        }
+
+        $short = round((float) $this->amount - (float) $this->return_amount, 2);
+
+        return $short > 0 ? $short : null;
     }
 
     /**

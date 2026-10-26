@@ -4,6 +4,8 @@ namespace App\Filament\Resources\IpoResource\RelationManagers;
 
 use App\Filament\Support\AllotmentCheckBulkAction;
 use App\Filament\Support\IpoApplicationFormFields;
+use App\Filament\Support\RefundIpoApplicationAction;
+use App\Models\Account;
 use App\Models\IpoApplication;
 use App\Services\AllotmentCheck\AllotmentCheckService;
 use Filament\Forms\Components\DatePicker;
@@ -43,7 +45,7 @@ class ApplicationsRelationManager extends RelationManager
             Select::make('account_id')
                 ->label('Payment Account (મુખ્ય ખાતું)')
                 ->helperText('જે ખાતામાંથી UPI mandate અથવા પૈસા બ્લોક થાય')
-                ->relationship('account', 'name', fn ($query) => \App\Models\Account::hasSubAccountColumn() ? $query->where('is_sub_account', false) : $query)
+                ->relationship('account', 'name', fn ($query) => Account::hasSubAccountColumn() ? $query->where('is_sub_account', false) : $query)
                 ->required()
                 ->searchable()
                 ->preload()
@@ -51,19 +53,20 @@ class ApplicationsRelationManager extends RelationManager
             Select::make('sub_account_id')
                 ->label('Sub-Account (સબ એકાઉન્ટ - ઓપ્શનલ)')
                 ->helperText('જો ડાયરેક્ટ ખાતામાંથી ન ભરવું હોય તો સબ એકાઉન્ટ પસંદ કરો, ફંડ તેમાં બોલશે')
-                ->options(function (\Filament\Forms\Get $get) {
-                    if (! \App\Models\Account::hasSubAccountColumn()) {
+                ->options(function (Get $get) {
+                    if (! Account::hasSubAccountColumn()) {
                         return [];
                     }
                     $accId = $get('account_id');
                     if (! $accId) {
-                        return \App\Models\Account::where('is_sub_account', true)->pluck('name', 'id');
+                        return Account::where('is_sub_account', true)->pluck('name', 'id');
                     }
-                    return \App\Models\Account::where('is_sub_account', true)
+
+                    return Account::where('is_sub_account', true)
                         ->where('parent_id', $accId)
                         ->pluck('name', 'id');
                 })
-                ->visible(fn () => \App\Models\Account::hasSubAccountColumn())
+                ->visible(fn () => Account::hasSubAccountColumn())
                 ->placeholder('Direct (મુખ્ય ખાતામાંથી સીધા)')
                 ->searchable()
                 ->preload()
@@ -84,8 +87,8 @@ class ApplicationsRelationManager extends RelationManager
                 ->relationship('fundingAccount', 'name')
                 ->searchable()
                 ->preload()
-                ->visible(fn (\Filament\Forms\Get $get) => $get('funding_type') === 'transferred')
-                ->required(fn (\Filament\Forms\Get $get) => $get('funding_type') === 'transferred'),
+                ->visible(fn (Get $get) => $get('funding_type') === 'transferred')
+                ->required(fn (Get $get) => $get('funding_type') === 'transferred'),
             Select::make('source_id')
                 ->label('Funded By Source')
                 ->helperText('Optional — so profit on sale can be split with the right source')
@@ -93,6 +96,7 @@ class ApplicationsRelationManager extends RelationManager
                 ->searchable()
                 ->preload(),
             TextInput::make('amount')
+                ->minValue(0.01)
                 ->numeric()
                 ->prefix('₹')
                 ->required(),
@@ -126,6 +130,7 @@ class ApplicationsRelationManager extends RelationManager
                         if ($record->funding_type === 'transferred' && $record->fundingAccount) {
                             $parts[] = "via {$record->fundingAccount->name} (Transfer)";
                         }
+
                         return ! empty($parts) ? implode(' · ', $parts) : 'Direct';
                     }),
                 TextColumn::make('amount')->money('INR')->sortable(),
@@ -153,7 +158,7 @@ class ApplicationsRelationManager extends RelationManager
                     ->icon('heroicon-o-magnifying-glass-circle')
                     ->color('success')
                     ->requiresConfirmation()
-                    ->modalHeading(fn (RelationManager $livewire) => "Check Allotment: " . ($livewire->getOwnerRecord()->name ?? 'All Applications'))
+                    ->modalHeading(fn (RelationManager $livewire) => 'Check Allotment: '.($livewire->getOwnerRecord()->name ?? 'All Applications'))
                     ->modalDescription(fn (RelationManager $livewire) => $livewire->getOwnerRecord()->canAutoCheckAllotment()
                         ? 'Directly looks up allotment results with the registrar for all pending applications and updates their status immediately.'
                         : 'Registrar is not configured for this IPO yet. Please select the Registrar and Company below to save and check immediately:'
@@ -181,6 +186,7 @@ class ApplicationsRelationManager extends RelationManager
                             ->required()
                             ->options(function (Get $get) use ($service) {
                                 $reg = $get('registrar');
+
                                 return $reg ? $service->getRegistrarCompanies($reg) : [];
                             })
                             ->default(fn (Get $get) => $get('registrar') ? $service->matchCompanyId($get('registrar'), $livewire->getOwnerRecord()->name) : null)
@@ -200,6 +206,7 @@ class ApplicationsRelationManager extends RelationManager
                                     ->body('Please select Registrar and Company first.')
                                     ->warning()
                                     ->send();
+
                                 return;
                             }
                         }
@@ -212,6 +219,7 @@ class ApplicationsRelationManager extends RelationManager
                                 ->body('All applications for this IPO have already been checked or updated.')
                                 ->info()
                                 ->send();
+
                             return;
                         }
 
@@ -257,9 +265,9 @@ class ApplicationsRelationManager extends RelationManager
 
                             Notification::make()
                                 ->title($isAllotted ? 'Shares Allotted!' : 'Application Refunded')
-                                ->body($isAllotted 
+                                ->body($isAllotted
                                     ? "Allotted {$record->shares_allotted} shares for {$record->applicant?->name}!"
-                                    : "Not allotted. Marked as refunded.")
+                                    : 'Not allotted. Marked as refunded.')
                                 ->color($isAllotted ? 'success' : 'gray')
                                 ->send();
                         } elseif ($outcome->status === 'not_found') {
@@ -282,14 +290,14 @@ class ApplicationsRelationManager extends RelationManager
                                 ->send();
                         }
                     }),
-                \App\Filament\Support\RefundIpoApplicationAction::make(),
+                RefundIpoApplicationAction::make(),
                 EditAction::make(),
                 DeleteAction::make(),
             ])
             ->bulkActions([
                 BulkActionGroup::make([
                     AllotmentCheckBulkAction::make(),
-                    \App\Filament\Support\RefundIpoApplicationAction::bulkMake(),
+                    RefundIpoApplicationAction::bulkMake(),
                     DeleteBulkAction::make(),
                 ]),
             ]);

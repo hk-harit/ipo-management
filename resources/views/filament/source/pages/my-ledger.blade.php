@@ -117,4 +117,31 @@
             </table>
         </div>
     </x-filament::section>
+
+    <x-filament::section heading="Profit Share Paid To You" description="Your share of the profit on sold IPOs, as it was paid out.">
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+                <thead>
+                    <tr class="border-b border-gray-200 text-left text-xs font-medium uppercase text-gray-500 dark:border-white/10 dark:text-gray-400">
+                        <th class="py-2 pr-4">Date</th>
+                        <th class="py-2 pr-4">Note</th>
+                        <th class="py-2 pr-4 text-right">Amount</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100 dark:divide-white/5">
+                    @forelse ($this->payouts() as $payout)
+                        <tr>
+                            <td class="py-2 pr-4 whitespace-nowrap text-gray-600 dark:text-gray-300">{{ $payout->payout_date->format('d M Y') }}</td>
+                            <td class="py-2 pr-4 text-gray-950 dark:text-white">{{ $payout->notes ?: 'Profit share payment' }}</td>
+                            <td class="py-2 pr-4 text-right font-semibold text-success-600 dark:text-success-400">₹{{ number_format((float) $payout->amount, 2) }}</td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="3" class="py-6 text-center text-gray-500 dark:text-gray-400">No profit share has been paid out yet.</td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+    </x-filament::section>
 </x-filament-panels::page>

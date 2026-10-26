@@ -6,6 +6,8 @@ use App\Filament\Resources\IpoApplicationResource\Pages;
 use App\Filament\Support\AllotmentCheckBulkAction;
 use App\Filament\Support\IpoApplicationFormFields;
 use App\Filament\Support\IpoPicker;
+use App\Filament\Support\RefundIpoApplicationAction;
+use App\Models\Account;
 use App\Models\IpoApplication;
 use App\Services\AllotmentCheck\AllotmentCheckService;
 use Filament\Forms\Components\DatePicker;
@@ -14,6 +16,7 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Form;
+use Filament\Forms\Get;
 use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Tables\Actions\Action;
@@ -55,7 +58,7 @@ class IpoApplicationResource extends Resource
                 Select::make('account_id')
                     ->label('Payment Account (મુખ્ય ખાતું)')
                     ->helperText('જે ખાતામાંથી UPI mandate અથવા પૈસા બ્લોક થાય')
-                    ->relationship('account', 'name', fn ($query) => \App\Models\Account::hasSubAccountColumn() ? $query->where('is_sub_account', false) : $query)
+                    ->relationship('account', 'name', fn ($query) => Account::hasSubAccountColumn() ? $query->where('is_sub_account', false) : $query)
                     ->required()
                     ->searchable()
                     ->preload()
@@ -63,15 +66,16 @@ class IpoApplicationResource extends Resource
                 Select::make('sub_account_id')
                     ->label('Sub-Account (સબ એકાઉન્ટ - ઓપ્શનલ)')
                     ->helperText('જો ડાયરેક્ટ ખાતામાંથી ન ભરવું હોય તો સબ એકાઉન્ટ પસંદ કરો, ફંડ તેમાં બોલશે')
-                    ->options(function (\Filament\Forms\Get $get) {
-                        if (! \App\Models\Account::hasSubAccountColumn()) {
+                    ->options(function (Get $get) {
+                        if (! Account::hasSubAccountColumn()) {
                             return [];
                         }
                         $accId = $get('account_id');
                         if (! $accId) {
-                            return \App\Models\Account::where('is_sub_account', true)->pluck('name', 'id');
+                            return Account::where('is_sub_account', true)->pluck('name', 'id');
                         }
-                        return \App\Models\Account::where('is_sub_account', true)
+
+                        return Account::where('is_sub_account', true)
                             ->where('parent_id', $accId)
                             ->pluck('name', 'id');
                     })
@@ -95,8 +99,8 @@ class IpoApplicationResource extends Resource
                     ->relationship('fundingAccount', 'name')
                     ->searchable()
                     ->preload()
-                    ->visible(fn (\Filament\Forms\Get $get) => $get('funding_type') === 'transferred')
-                    ->required(fn (\Filament\Forms\Get $get) => $get('funding_type') === 'transferred'),
+                    ->visible(fn (Get $get) => $get('funding_type') === 'transferred')
+                    ->required(fn (Get $get) => $get('funding_type') === 'transferred'),
                 Select::make('source_id')
                     ->label('Funded By Source')
                     ->helperText('Optional — set this so profit on sale can be split with the right source')
@@ -104,6 +108,7 @@ class IpoApplicationResource extends Resource
                     ->searchable()
                     ->preload(),
                 TextInput::make('amount')
+                    ->minValue(0.01)
                     ->numeric()
                     ->prefix('₹')
                     ->required(),
@@ -138,6 +143,7 @@ class IpoApplicationResource extends Resource
                         if ($record->funding_type === 'transferred' && $record->fundingAccount) {
                             $parts[] = "via {$record->fundingAccount->name} (Transfer)";
                         }
+
                         return ! empty($parts) ? implode(' · ', $parts) : 'Direct';
                     }),
                 TextColumn::make('source.name')->label('Source')->toggleable(isToggledHiddenByDefault: true),
@@ -151,6 +157,14 @@ class IpoApplicationResource extends Resource
                         default => 'gray',
                     }),
                 TextColumn::make('return_amount')->money('INR')->label('Returned')->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('refund_shortfall')
+                    ->label('Short Refund')
+                    ->state(fn (IpoApplication $record) => $record->refund_shortfall)
+                    ->money('INR')
+                    ->color('danger')
+                    ->placeholder('—')
+                    ->tooltip('Applied amount minus what the refund actually returned')
+                    ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('profit')
                     ->label('Profit')
                     ->state(fn (IpoApplication $record) => $record->profit)
@@ -216,9 +230,9 @@ class IpoApplicationResource extends Resource
 
                             Notification::make()
                                 ->title($isAllotted ? 'Shares Allotted!' : 'Application Refunded')
-                                ->body($isAllotted 
+                                ->body($isAllotted
                                     ? "Allotted {$record->shares_allotted} shares for {$record->applicant?->name}!"
-                                    : "Not allotted. Marked as refunded.")
+                                    : 'Not allotted. Marked as refunded.')
                                 ->color($isAllotted ? 'success' : 'gray')
                                 ->send();
                         } elseif ($outcome->status === 'not_found') {
@@ -241,16 +255,23 @@ class IpoApplicationResource extends Resource
                                 ->send();
                         }
                     }),
-                \App\Filament\Support\RefundIpoApplicationAction::make(),
+                RefundIpoApplicationAction::make(),
                 EditAction::make(),
             ])
             ->bulkActions([
                 BulkActionGroup::make([
                     AllotmentCheckBulkAction::make(),
-                    \App\Filament\Support\RefundIpoApplicationAction::bulkMake(),
+                    RefundIpoApplicationAction::bulkMake(),
                     DeleteBulkAction::make(),
                 ]),
             ]);
+    }
+
+    public static function getRelations(): array
+    {
+        return [
+            \App\Filament\Resources\IpoApplicationResource\RelationManagers\SalesRelationManager::class,
+        ];
     }
 
     public static function getPages(): array

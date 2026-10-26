@@ -10,16 +10,15 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Form;
+use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
+use Filament\Tables\Actions\Action;
 use Filament\Tables\Actions\BulkActionGroup;
 use Filament\Tables\Actions\DeleteBulkAction;
 use Filament\Tables\Actions\EditAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
-
-use Filament\Notifications\Notification;
-use Filament\Tables\Actions\Action;
 
 class ExpenseResource extends Resource
 {
@@ -70,6 +69,7 @@ class ExpenseResource extends Resource
                     ->visible(fn ($get) => $get('type') === 'expense'),
 
                 TextInput::make('amount')
+                    ->minValue(0.01)
                     ->label('Amount (રકમ)')
                     ->numeric()
                     ->prefix('₹')
@@ -229,7 +229,7 @@ class ExpenseResource extends Resource
                             'amount' => $record->amount,
                             'expense_date' => $data['received_date'],
                             'status' => 'completed',
-                            'notes' => 'Settlement for udhar given to ' . ($record->person_name ?: 'person') . ' on ' . $record->expense_date->format('d M Y'),
+                            'notes' => 'Settlement for udhar given to '.($record->person_name ?: 'person').' on '.$record->expense_date->format('d M Y'),
                         ]);
 
                         Notification::make()

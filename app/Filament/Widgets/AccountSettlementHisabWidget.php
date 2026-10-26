@@ -10,16 +10,20 @@ use Illuminate\Support\Collection;
 
 class AccountSettlementHisabWidget extends Widget
 {
-    protected static ?int $sort = 3;
+    protected static ?int $sort = 11;
 
     protected int|string|array $columnSpan = 'full';
 
     protected static string $view = 'filament.widgets.account-settlement-hisab-widget';
 
     public ?int $settleFromAccountId = null;
+
     public ?int $settleToAccountId = null;
+
     public ?float $settleAmount = null;
+
     public ?string $settleNotes = null;
+
     public bool $showSettleModal = false;
 
     /**
@@ -137,6 +141,7 @@ class AccountSettlementHisabWidget extends Widget
                 ->body('Please enter a valid amount.')
                 ->danger()
                 ->send();
+
             return;
         }
 

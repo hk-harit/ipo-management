@@ -2,15 +2,17 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\Auditable;
 use App\Models\Concerns\BelongsToUser;
+use Database\Factories\FundTransactionFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class FundTransaction extends Model
 {
-    /** @use HasFactory<\Database\Factories\FundTransactionFactory> */
-    use HasFactory, BelongsToUser;
+    /** @use HasFactory<FundTransactionFactory> */
+    use Auditable, BelongsToUser, HasFactory;
 
     protected $fillable = [
         'user_id',

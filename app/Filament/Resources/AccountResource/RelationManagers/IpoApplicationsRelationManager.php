@@ -3,14 +3,18 @@
 namespace App\Filament\Resources\AccountResource\RelationManagers;
 
 use App\Filament\Support\IpoApplicationFormFields;
+use App\Filament\Support\RefundIpoApplicationAction;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Form;
+use Filament\Forms\Get;
 use Filament\Resources\RelationManagers\RelationManager;
+use Filament\Tables\Actions\BulkActionGroup;
 use Filament\Tables\Actions\CreateAction;
 use Filament\Tables\Actions\DeleteAction;
+use Filament\Tables\Actions\DeleteBulkAction;
 use Filament\Tables\Actions\EditAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
@@ -53,8 +57,8 @@ class IpoApplicationsRelationManager extends RelationManager
                 ->relationship('fundingAccount', 'name')
                 ->searchable()
                 ->preload()
-                ->visible(fn (\Filament\Forms\Get $get) => $get('funding_type') === 'transferred')
-                ->required(fn (\Filament\Forms\Get $get) => $get('funding_type') === 'transferred'),
+                ->visible(fn (Get $get) => $get('funding_type') === 'transferred')
+                ->required(fn (Get $get) => $get('funding_type') === 'transferred'),
             Select::make('source_id')
                 ->label('Funded By Source')
                 ->helperText('Optional — so profit on sale can be split with the right source')
@@ -62,6 +66,7 @@ class IpoApplicationsRelationManager extends RelationManager
                 ->searchable()
                 ->preload(),
             TextInput::make('amount')
+                ->minValue(0.01)
                 ->numeric()
                 ->prefix('₹')
                 ->required(),
@@ -115,14 +120,14 @@ class IpoApplicationsRelationManager extends RelationManager
                 CreateAction::make(),
             ])
             ->actions([
-                \App\Filament\Support\RefundIpoApplicationAction::make(),
+                RefundIpoApplicationAction::make(),
                 EditAction::make(),
                 DeleteAction::make(),
             ])
             ->bulkActions([
-                \Filament\Tables\Actions\BulkActionGroup::make([
-                    \App\Filament\Support\RefundIpoApplicationAction::bulkMake(),
-                    \Filament\Tables\Actions\DeleteBulkAction::make(),
+                BulkActionGroup::make([
+                    RefundIpoApplicationAction::bulkMake(),
+                    DeleteBulkAction::make(),
                 ]),
             ]);
     }

@@ -54,14 +54,20 @@ class AdminPanelProvider extends PanelProvider
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\\Filament\\Pages')
             ->pages([
-                Pages\Dashboard::class,
+                \App\Filament\Pages\Dashboard::class,
             ])
             ->widgets([
                 \App\Filament\Widgets\OverviewStats::class,
-                \App\Filament\Widgets\AccountSettlementHisabWidget::class,
                 \App\Filament\Widgets\AccountBalancesTable::class,
+                \App\Filament\Widgets\ProfitTrendChart::class,
+                \App\Filament\Widgets\IpoCapitalDistributionChart::class,
+                \App\Filament\Widgets\AllotmentOutcomeChart::class,
                 \App\Filament\Widgets\AllottedAwaitingSaleWidget::class,
                 \App\Filament\Widgets\NeedsAttentionWidget::class,
+                \App\Filament\Widgets\SourceDuesWidget::class,
+                \App\Filament\Widgets\ApplicantCommissionWidget::class,
+                \App\Filament\Widgets\PendingUdharWidget::class,
+                \App\Filament\Widgets\AccountSettlementHisabWidget::class,
             ])
             ->middleware([
                 EncryptCookies::class,

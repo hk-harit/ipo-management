@@ -2,15 +2,17 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\Auditable;
 use App\Models\Concerns\BelongsToUser;
+use Database\Factories\ExpenseFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Expense extends Model
 {
-    /** @use HasFactory<\Database\Factories\ExpenseFactory> */
-    use HasFactory, BelongsToUser;
+    /** @use HasFactory<ExpenseFactory> */
+    use Auditable, BelongsToUser, HasFactory;
 
     protected $fillable = [
         'user_id',
@@ -62,9 +64,9 @@ class Expense extends Model
     public function getDisplayDescriptionAttribute(): string
     {
         return match ($this->type) {
-            'udhar_given' => 'Udhar Given to ' . ($this->person_name ?: 'Person'),
-            'udhar_received' => 'Udhar Received from ' . ($this->person_name ?: 'Person'),
-            default => 'Expense: ' . ($this->category ?: 'General'),
+            'udhar_given' => 'Udhar Given to '.($this->person_name ?: 'Person'),
+            'udhar_received' => 'Udhar Received from '.($this->person_name ?: 'Person'),
+            default => 'Expense: '.($this->category ?: 'General'),
         };
     }
 }

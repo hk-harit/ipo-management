@@ -51,6 +51,8 @@ class SourceResource extends Resource
                     ->native(false),
                 TextInput::make('profit_share_percent')
                     ->label('Profit Share %')
+                    ->minValue(0)
+                    ->maxValue(100)
                     ->helperText('% of profit from sold IPOs funded by this source that goes to them')
                     ->numeric()
                     ->suffix('%')
@@ -133,10 +135,15 @@ class SourceResource extends Resource
                     ->weight('bold')
                     ->color(fn ($state) => $state > 0 ? 'danger' : 'success'),
                 TextColumn::make('total_profit_share_due')
-                    ->label('Profit Share Due')
+                    ->label('Profit Share Earned')
                     ->state(fn (Source $record) => $record->total_profit_share_due)
                     ->money('INR')
                     ->color('info'),
+                TextColumn::make('profit_share_pending')
+                    ->label('Profit Pending')
+                    ->state(fn (Source $record) => $record->profit_share_pending)
+                    ->money('INR')
+                    ->color(fn ($state) => $state > 0 ? 'warning' : 'success'),
                 IconColumn::make('portal_enabled')
                     ->label('Portal')
                     ->boolean()
@@ -155,7 +162,21 @@ class SourceResource extends Resource
                 ToggleColumn::make('is_active')->label('Active'),
                 TextColumn::make('created_at')->dateTime()->sortable()->toggleable(isToggledHiddenByDefault: true),
             ])
-            ->defaultSort('name');
+            ->defaultSort('name')
+            ->actions([
+                \Filament\Tables\Actions\Action::make('statement')
+                    ->label('Statement')
+                    ->icon('heroicon-o-document-text')
+                    ->color('gray')
+                    ->url(fn (Source $record) => static::getUrl('statement', ['record' => $record])),
+                \Filament\Tables\Actions\Action::make('payProfit')
+                    ->label('Pay Profit')
+                    ->icon('heroicon-o-hand-raised')
+                    ->color('success')
+                    ->visible(fn (Source $record) => $record->profit_share_pending > 0)
+                    ->url(fn (Source $record) => ProfitPayoutResource::getUrl('create', ['source_id' => $record->id])),
+                \Filament\Tables\Actions\EditAction::make(),
+            ]);
     }
 
     public static function getRelations(): array
@@ -171,6 +192,7 @@ class SourceResource extends Resource
             'index' => Pages\ListSources::route('/'),
             'create' => Pages\CreateSource::route('/create'),
             'edit' => Pages\EditSource::route('/{record}/edit'),
+            'statement' => Pages\SourceStatement::route('/{record}/statement'),
         ];
     }
 }

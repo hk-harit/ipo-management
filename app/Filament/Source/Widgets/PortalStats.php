@@ -49,7 +49,7 @@ class PortalStats extends BaseWidget
                 ->icon('heroicon-o-document-check'),
 
             Stat::make('Your Profit Share', $this->money($profitShare))
-                ->description($source->profit_share_percent.'% of profit on sold IPOs')
+                ->description('Paid '.$this->money($source->profit_share_paid).' · Pending '.$this->money($source->profit_share_pending))
                 ->color('info')
                 ->icon('heroicon-o-banknotes'),
         ];

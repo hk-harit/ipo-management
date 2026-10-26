@@ -59,6 +59,7 @@ class AccountTransferResource extends Resource
                             },
                         ]),
                     TextInput::make('amount')
+                        ->minValue(0.01)
                         ->numeric()
                         ->prefix('₹')
                         ->required(),

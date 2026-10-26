@@ -3,7 +3,8 @@
 namespace App\Filament\Resources\SourceResource\Pages;
 
 use App\Filament\Resources\SourceResource;
-use Filament\Actions;
+use App\Filament\Support\GuardedDelete;
+use Filament\Actions\Action;
 use Filament\Resources\Pages\EditRecord;
 
 class EditSource extends EditRecord
@@ -13,7 +14,12 @@ class EditSource extends EditRecord
     protected function getHeaderActions(): array
     {
         return [
-            Actions\DeleteAction::make(),
+            Action::make('statement')
+                ->label('Statement')
+                ->icon('heroicon-o-document-text')
+                ->color('gray')
+                ->url(fn () => SourceResource::getUrl('statement', ['record' => $this->record])),
+            GuardedDelete::page(),
         ];
     }
 }

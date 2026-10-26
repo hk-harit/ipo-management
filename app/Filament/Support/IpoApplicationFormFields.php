@@ -9,6 +9,7 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Get;
 use Filament\Forms\Set;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\HtmlString;
 
 /**
@@ -55,6 +56,8 @@ class IpoApplicationFormFields
             TextInput::make('source_share_percent_override')
                 ->label('Source Share % (this application)')
                 ->numeric()
+                ->minValue(0)
+                ->maxValue(100)
                 ->suffix('%')
                 ->live()
                 ->helperText(fn (Get $get) => self::sourceDefaultHelperText($get))
@@ -63,6 +66,16 @@ class IpoApplicationFormFields
             TextInput::make('applicant_commission_percent')
                 ->label('Applicant Commission %')
                 ->numeric()
+                ->minValue(0)
+                ->maxValue(100)
+                ->rules([
+                    fn (Get $get): \Closure => function (string $attribute, $value, \Closure $fail) use ($get) {
+                        $source = filled($get('source_id')) ? self::sourcePercent($get) : 0.0;
+                        if ($source + (float) $value > 100) {
+                            $fail('Source share + applicant commission cannot be more than 100%.');
+                        }
+                    },
+                ])
                 ->suffix('%')
                 ->default(0)
                 ->live(),
@@ -72,10 +85,23 @@ class IpoApplicationFormFields
                 ->numeric()
                 ->visible(fn (Get $get) => in_array($get('status'), ['allotted', 'partial_allotted', 'sold'])),
 
+            Placeholder::make('sales_hint')
+                ->label('Sales (વેચાણ)')
+                ->content('Record each sale — date, shares, price and charges — in the Sales tab below. Status, shares sold and profit update from those.')
+                ->visible(fn (Get $get, ?Model $record) => $get('status') === 'sold' && (bool) $record?->sales()->exists()),
             TextInput::make('shares_sold')
                 ->numeric()
+                ->minValue(0)
+                ->rules([
+                    fn (Get $get): \Closure => function (string $attribute, $value, \Closure $fail) use ($get) {
+                        $allotted = $get('shares_allotted');
+                        if (filled($allotted) && (float) $value > (float) $allotted) {
+                            $fail('Shares sold cannot be more than shares allotted ('.$allotted.').');
+                        }
+                    },
+                ])
                 ->live(onBlur: true)
-                ->visible(fn (Get $get) => $get('status') === 'sold'),
+                ->visible(fn (Get $get, ?Model $record) => $get('status') === 'sold' && ! $record?->sales()->exists()),
 
             TextInput::make('sale_price_per_share')
                 ->label('Sale Price / Share')
@@ -85,7 +111,7 @@ class IpoApplicationFormFields
                 ->afterStateUpdated(function (Get $get, Set $set) {
                     self::autoFillReturnAmount($get, $set);
                 })
-                ->visible(fn (Get $get) => $get('status') === 'sold'),
+                ->visible(fn (Get $get, ?Model $record) => $get('status') === 'sold' && ! $record?->sales()->exists()),
 
             TextInput::make('return_amount')
                 ->label(fn (Get $get) => match ($get('status')) {
@@ -94,6 +120,7 @@ class IpoApplicationFormFields
                     default => 'Amount Returned to Account',
                 })
                 ->numeric()
+                ->minValue(0)
                 ->prefix('₹')
                 ->live()
                 ->helperText(fn (Get $get) => $get('status') === 'refunded' ? 'Auto-filled with applied amount. This amount is credited back to the bank account.' : null)
@@ -109,7 +136,7 @@ class IpoApplicationFormFields
                 ->label('Profit Split (auto-calculated)')
                 ->live()
                 ->content(fn (Get $get) => self::profitSplitPreview($get))
-                ->visible(fn (Get $get) => $get('status') === 'sold')
+                ->visible(fn (Get $get, ?Model $record) => $get('status') === 'sold' && ! $record?->sales()->exists())
                 ->columnSpanFull(),
         ];
     }
@@ -122,6 +149,16 @@ class IpoApplicationFormFields
         if ($shares > 0 && $price > 0) {
             $set('return_amount', round($shares * $price, 2));
         }
+    }
+
+    /** The % the chosen source gets: this application's override, else the source's default. */
+    private static function sourcePercent(Get $get): float
+    {
+        if (filled($get('source_share_percent_override'))) {
+            return (float) $get('source_share_percent_override');
+        }
+
+        return (float) (Source::find($get('source_id'))?->profit_share_percent ?? 0);
     }
 
     private static function sourceDefaultHelperText(Get $get): string

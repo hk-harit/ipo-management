@@ -2,7 +2,10 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\Auditable;
 use App\Models\Concerns\BelongsToUser;
+use App\Models\Concerns\BlocksDeleteWithHistory;
+use Database\Factories\SourceFactory;
 use Filament\Models\Contracts\FilamentUser;
 use Filament\Panel;
 use Illuminate\Auth\Authenticatable as AuthenticatableTrait;
@@ -21,8 +24,8 @@ use Illuminate\Support\Collection;
  */
 class Source extends Model implements AuthenticatableContract, FilamentUser
 {
-    /** @use HasFactory<\Database\Factories\SourceFactory> */
-    use AuthenticatableTrait, BelongsToUser, HasFactory;
+    /** @use HasFactory<SourceFactory> */
+    use Auditable, AuthenticatableTrait, BelongsToUser, BlocksDeleteWithHistory, HasFactory;
 
     protected $fillable = [
         'user_id',
@@ -85,6 +88,20 @@ class Source extends Model implements AuthenticatableContract, FilamentUser
         $this->attributes['mobile'] = static::normaliseMobile($value);
     }
 
+    public function deletionBlockedReason(): ?string
+    {
+        return $this->describeHistory([
+            'fund transaction(s)' => $this->fundTransactions()->count(),
+            'IPO application(s)' => $this->ipoApplications()->count(),
+            'profit payout(s)' => $this->profitPayouts()->count(),
+        ]);
+    }
+
+    public function profitPayouts(): HasMany
+    {
+        return $this->hasMany(ProfitPayout::class);
+    }
+
     public function fundTransactions(): HasMany
     {
         return $this->hasMany(FundTransaction::class);
@@ -100,8 +117,27 @@ class Source extends Model implements AuthenticatableContract, FilamentUser
     {
         return (float) $this->ipoApplications()
             ->where('status', 'sold')
+            ->with(['sales', 'source'])
             ->get()
             ->sum('source_profit_share');
+    }
+
+    /** Profit share paid out to this source so far. */
+    public function getProfitSharePaidAttribute(): float
+    {
+        return (float) $this->profitPayouts()->sum('amount');
+    }
+
+    /** Profit share earned but not yet paid out (negative if paid ahead). */
+    public function getProfitSharePendingAttribute(): float
+    {
+        return round($this->total_profit_share_due - $this->profit_share_paid, 2);
+    }
+
+    /** Everything you owe this source: their money still with you plus unpaid profit share. */
+    public function getTotalPayableAttribute(): float
+    {
+        return round($this->balance_due + $this->profit_share_pending, 2);
     }
 
     /** Total money this source has ever handed in. */
@@ -150,7 +186,7 @@ class Source extends Model implements AuthenticatableContract, FilamentUser
     public function ipoWiseSummary(): Collection
     {
         return $this->ipoApplications()
-            ->with(['ipo', 'applicant'])
+            ->with(['ipo', 'applicant', 'sales'])
             ->get()
             ->groupBy('ipo_id')
             ->map(function (Collection $apps) {
@@ -167,7 +203,7 @@ class Source extends Model implements AuthenticatableContract, FilamentUser
                     'applied' => (float) $apps->sum('amount'),
                     'allotted_apps' => $apps->whereIn('status', ['allotted', 'partial_allotted', 'sold'])->count(),
                     'shares_allotted' => (int) $apps->sum('shares_allotted'),
-                    'returned' => (float) $apps->sum('return_amount'),
+                    'returned' => (float) $apps->sum(fn ($a) => $a->total_received),
                     'profit' => (float) $sold->sum('profit'),
                     'my_share' => (float) $sold->sum('source_profit_share'),
                 ];

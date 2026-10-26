@@ -54,6 +54,7 @@ class FundTransactionResource extends Resource
                     ->required()
                     ->native(false),
                 TextInput::make('amount')
+                    ->minValue(0.01)
                     ->numeric()
                     ->prefix('₹')
                     ->required(),

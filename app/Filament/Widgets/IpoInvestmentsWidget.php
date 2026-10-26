@@ -38,14 +38,14 @@ class IpoInvestmentsWidget extends BaseWidget
                     ->description(fn (Ipo $record) => collect([
                         $record->symbol,
                         $record->issue_type === 'SME' ? 'SME' : 'Mainboard',
-                        $record->allotment_date ? 'Allotment: ' . $record->allotment_date->format('d M Y') : null,
+                        $record->allotment_date ? 'Allotment: '.$record->allotment_date->format('d M Y') : null,
                     ])->filter()->implode(' · ')),
 
                 TextColumn::make('applications_count')
                     ->label('Applications')
                     ->badge()
                     ->color('primary')
-                    ->state(fn (Ipo $record) => $record->applications->count() . ' Apps')
+                    ->state(fn (Ipo $record) => $record->applications->count().' Apps')
                     ->description(function (Ipo $record) {
                         $applied = $record->applications->where('status', 'applied')->count();
                         $allotted = $record->applications->whereIn('status', ['allotted', 'partial_allotted'])->count();
@@ -53,10 +53,18 @@ class IpoInvestmentsWidget extends BaseWidget
                         $sold = $record->applications->where('status', 'sold')->count();
 
                         $parts = [];
-                        if ($applied > 0) $parts[] = "{$applied} pending";
-                        if ($allotted > 0) $parts[] = "{$allotted} allotted";
-                        if ($sold > 0) $parts[] = "{$sold} sold";
-                        if ($refunded > 0) $parts[] = "{$refunded} refunded";
+                        if ($applied > 0) {
+                            $parts[] = "{$applied} pending";
+                        }
+                        if ($allotted > 0) {
+                            $parts[] = "{$allotted} allotted";
+                        }
+                        if ($sold > 0) {
+                            $parts[] = "{$sold} sold";
+                        }
+                        if ($refunded > 0) {
+                            $parts[] = "{$refunded} refunded";
+                        }
 
                         return implode(' · ', $parts) ?: null;
                     }),
@@ -72,6 +80,7 @@ class IpoInvestmentsWidget extends BaseWidget
                     ->label('Returned (પાછા મળ્યા)')
                     ->state(function (Ipo $record) {
                         $ret = (float) $record->applications->sum('return_amount');
+
                         return $ret > 0 ? $ret : null;
                     })
                     ->money('INR')
@@ -81,7 +90,10 @@ class IpoInvestmentsWidget extends BaseWidget
                     ->label('Profit (નફો)')
                     ->state(function (Ipo $record) {
                         $sold = $record->applications->where('status', 'sold');
-                        if ($sold->isEmpty()) return null;
+                        if ($sold->isEmpty()) {
+                            return null;
+                        }
+
                         return (float) $sold->sum(fn ($a) => (float) $a->profit);
                     })
                     ->money('INR')
@@ -94,9 +106,16 @@ class IpoInvestmentsWidget extends BaseWidget
                     ->badge()
                     ->state(function (Ipo $record) {
                         $apps = $record->applications;
-                        if ($apps->isEmpty()) return 'None';
-                        if ($apps->contains(fn ($a) => in_array($a->status, ['allotted', 'partial_allotted', 'sold']))) return 'Allotted';
-                        if ($apps->every(fn ($a) => $a->status === 'refunded')) return 'Refunded';
+                        if ($apps->isEmpty()) {
+                            return 'None';
+                        }
+                        if ($apps->contains(fn ($a) => in_array($a->status, ['allotted', 'partial_allotted', 'sold']))) {
+                            return 'Allotted';
+                        }
+                        if ($apps->every(fn ($a) => $a->status === 'refunded')) {
+                            return 'Refunded';
+                        }
+
                         return 'Pending';
                     })
                     ->color(fn (string $state) => match ($state) {
@@ -116,7 +135,7 @@ class IpoInvestmentsWidget extends BaseWidget
                     ->modalHeading(fn (Ipo $record) => "Check Allotment: {$record->name}")
                     ->modalDescription(fn (Ipo $record) => $record->canAutoCheckAllotment()
                         ? "Look up allotment for all pending applications of {$record->name} with registrar."
-                        : "Registrar is not configured for this IPO yet. Please select the Registrar and Company below:"
+                        : 'Registrar is not configured for this IPO yet. Please select the Registrar and Company below:'
                     )
                     ->form(fn (Ipo $record, AllotmentCheckService $service) => ! $record->canAutoCheckAllotment() ? [
                         Select::make('registrar')
@@ -141,6 +160,7 @@ class IpoInvestmentsWidget extends BaseWidget
                             ->required()
                             ->options(function (Get $get) use ($service) {
                                 $reg = $get('registrar');
+
                                 return $reg ? $service->getRegistrarCompanies($reg) : [];
                             })
                             ->default(fn (Get $get) => $get('registrar') ? $service->matchCompanyId($get('registrar'), $record->name) : null)
@@ -159,6 +179,7 @@ class IpoInvestmentsWidget extends BaseWidget
                                     ->body('Please select Registrar and Company first.')
                                     ->warning()
                                     ->send();
+
                                 return;
                             }
                         }
@@ -171,6 +192,7 @@ class IpoInvestmentsWidget extends BaseWidget
                                 ->body('All applications for this IPO have already been checked.')
                                 ->info()
                                 ->send();
+
                             return;
                         }
 
@@ -180,8 +202,12 @@ class IpoInvestmentsWidget extends BaseWidget
                             ."{$counts['allotted']} Allotted · "
                             ."{$counts['refunded']} Refunded";
 
-                        if ($counts['not_found'] > 0) $summary .= " · {$counts['not_found']} Not Found";
-                        if ($counts['skipped'] > 0) $summary .= " · {$counts['skipped']} Skipped";
+                        if ($counts['not_found'] > 0) {
+                            $summary .= " · {$counts['not_found']} Not Found";
+                        }
+                        if ($counts['skipped'] > 0) {
+                            $summary .= " · {$counts['skipped']} Skipped";
+                        }
                         if ($counts['error'] > 0) {
                             $summary .= " · {$counts['error']} Errors";
                             if (! empty($counts['errors'])) {

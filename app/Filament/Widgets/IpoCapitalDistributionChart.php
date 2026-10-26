@@ -10,7 +10,7 @@ class IpoCapitalDistributionChart extends ChartWidget
 {
     protected static ?string $heading = 'Capital Distribution by IPO (રોકાણ ક્યાં કેટલું છે)';
 
-    protected static ?int $sort = 3;
+    protected static ?int $sort = 4;
 
     protected static ?string $maxHeight = '280px';
 
