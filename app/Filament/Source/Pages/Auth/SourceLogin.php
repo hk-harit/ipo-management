@@ -2,6 +2,7 @@
 
 namespace App\Filament\Source\Pages\Auth;
 
+use App\Filament\Pages\Auth\RemembersByDefault;
 use App\Models\Source;
 use Filament\Forms\Components\Component;
 use Filament\Forms\Components\TextInput;
@@ -19,6 +20,8 @@ use Illuminate\Validation\ValidationException;
  */
 class SourceLogin extends BaseLogin
 {
+    use RemembersByDefault;
+
     public function getTitle(): string|Htmlable
     {
         return 'Sign in';

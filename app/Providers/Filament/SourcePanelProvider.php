@@ -3,6 +3,9 @@
 namespace App\Providers\Filament;
 
 use App\Filament\Source\Pages\Auth\SourceLogin;
+use App\Filament\Source\Pages\Dashboard;
+use App\Filament\Source\Widgets\IpoWiseSummary;
+use App\Filament\Source\Widgets\PortalStats;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
@@ -34,17 +37,19 @@ class SourcePanelProvider extends PanelProvider
             ->authGuard('source')
             ->login(SourceLogin::class)
             ->brandName('My IPO Account')
+            ->renderHook('panels::head.end', fn () => view('pwa.head', ['manifest' => 'source-manifest.webmanifest', 'title' => 'My IPO']))
+            ->renderHook('panels::body.end', fn () => view('pwa.register'))
             ->colors([
                 'primary' => Color::Emerald,
             ])
             ->discoverPages(in: app_path('Filament/Source/Pages'), for: 'App\\Filament\\Source\\Pages')
             ->discoverWidgets(in: app_path('Filament/Source/Widgets'), for: 'App\\Filament\\Source\\Widgets')
             ->pages([
-                \App\Filament\Source\Pages\Dashboard::class,
+                Dashboard::class,
             ])
             ->widgets([
-                \App\Filament\Source\Widgets\PortalStats::class,
-                \App\Filament\Source\Widgets\IpoWiseSummary::class,
+                PortalStats::class,
+                IpoWiseSummary::class,
             ])
             ->middleware([
                 EncryptCookies::class,

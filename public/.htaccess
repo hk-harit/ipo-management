@@ -35,3 +35,14 @@
     SetEnvIf Request_URI "^/(admin|livewire)" NO_CACHE
     Header always set Cache-Control "no-store, no-cache, must-revalidate, max-age=0" env=NO_CACHE
 </IfModule>
+
+# Installable phone app: serve the manifest with the right type, and never let the service worker file go stale.
+<IfModule mod_mime.c>
+    AddType application/manifest+json .webmanifest
+</IfModule>
+<IfModule mod_headers.c>
+    <Files "sw.js">
+        Header set Cache-Control "no-cache, max-age=0"
+        Header set Service-Worker-Allowed "/"
+    </Files>
+</IfModule>
