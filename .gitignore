@@ -29,3 +29,8 @@ database/backup_before_clear.sql
 check_users.php
 test_feed.php
 
+
+# Real user/PAN data and DB dumps — never commit
+database/seeders/applicants_data.json
+database/live_*.sql
+database/*.sql

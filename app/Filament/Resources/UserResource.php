@@ -5,6 +5,7 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\UserResource\Pages;
 use App\Models\User;
 use Filament\Forms\Components\Section;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -23,6 +24,12 @@ class UserResource extends Resource
 
     protected static ?string $navigationLabel = 'Manage Logins';
 
+    /** Managing logins (including resetting passwords) is admin-only. */
+    public static function canAccess(): bool
+    {
+        return auth()->user()?->isAdmin() ?? false;
+    }
+
     public static function form(Form $form): Form
     {
         return $form->schema([
@@ -37,6 +44,12 @@ class UserResource extends Resource
                         ->required()
                         ->unique(ignoreRecord: true)
                         ->maxLength(255),
+                    Select::make('role')
+                        ->options(['user' => 'User', 'admin' => 'Admin'])
+                        ->default('user')
+                        ->required()
+                        ->native(false)
+                        ->helperText('Admins can manage other logins.'),
                     TextInput::make('password')
                         ->password()
                         ->revealable()
@@ -58,6 +71,7 @@ class UserResource extends Resource
             ->columns([
                 TextColumn::make('name')->searchable()->sortable(),
                 TextColumn::make('email')->searchable()->sortable(),
+                TextColumn::make('role')->badge(),
                 TextColumn::make('created_at')->label('Login Created')->dateTime()->sortable(),
             ])
             ->defaultSort('created_at')

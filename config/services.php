@@ -72,6 +72,15 @@ return [
     ],
 
     /*
+     * Shared secret for the /cron/* URLs. Read here (not with env() in routes)
+     * so it still works after `php artisan config:cache`. No default on purpose:
+     * leave CRON_TOKEN empty and those URLs refuse every request.
+     */
+    'cron' => [
+        'token' => env('CRON_TOKEN'),
+    ],
+
+    /*
      * tesseract-ocr — reads the numeric captcha on Bigshare's allotment
      * checker (BigshareChecker). Needs the binary installed on the server;
      * point TESSERACT_BINARY at a full path if it's not on PATH.
