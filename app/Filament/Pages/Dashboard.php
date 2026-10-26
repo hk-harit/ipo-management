@@ -39,6 +39,10 @@ class Dashboard extends BaseDashboard
     protected function getHeaderActions(): array
     {
         return [
+            Action::make('ipoDashboard')
+                ->label('IPO Dashboard (IPO નો હિસાબ)')
+                ->icon('heroicon-o-presentation-chart-line')
+                ->url(IpoDashboardPage::getUrl()),
             Action::make('accountOverview')
                 ->label('Account Overview (ખાતાવાર હિસાબ)')
                 ->icon('heroicon-o-table-cells')
