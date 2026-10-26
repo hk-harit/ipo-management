@@ -3,6 +3,7 @@
 namespace App\Filament\Pages;
 
 use App\Services\DashboardSummary;
+use Filament\Actions\Action;
 use Filament\Forms\Components\Section;
 use Filament\Forms\Components\ToggleButtons;
 use Filament\Forms\Form;
@@ -33,6 +34,16 @@ class Dashboard extends BaseDashboard
                 ])
                 ->compact(),
         ]);
+    }
+
+    protected function getHeaderActions(): array
+    {
+        return [
+            Action::make('accountOverview')
+                ->label('Account Overview (ખાતાવાર હિસાબ)')
+                ->icon('heroicon-o-table-cells')
+                ->url(AccountOverviewPage::getUrl()),
+        ];
     }
 
     public function getColumns(): int|string|array
