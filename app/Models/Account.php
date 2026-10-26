@@ -96,7 +96,11 @@ class Account extends Model
             return $this->hasMany(IpoApplication::class, 'sub_account_id');
         }
 
-        return $this->hasMany(IpoApplication::class, 'account_id');
+        // A main account's own applications — those paid from a sub-account are debited
+        // from that sub-account instead (see subAccountIpoApplications for the rollup).
+        $relation = $this->hasMany(IpoApplication::class, 'account_id');
+
+        return static::hasSubAccountColumn() ? $relation->whereNull('sub_account_id') : $relation;
     }
 
     public function subAccountIpoApplications(): HasMany

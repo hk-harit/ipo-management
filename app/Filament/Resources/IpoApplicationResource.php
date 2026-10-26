@@ -3,6 +3,7 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\IpoApplicationResource\Pages;
+use App\Filament\Resources\IpoApplicationResource\RelationManagers\SalesRelationManager;
 use App\Filament\Support\AllotmentCheckBulkAction;
 use App\Filament\Support\IpoApplicationFormFields;
 use App\Filament\Support\IpoPicker;
@@ -65,7 +66,7 @@ class IpoApplicationResource extends Resource
                     ->live(),
                 Select::make('sub_account_id')
                     ->label('Sub-Account (સબ એકાઉન્ટ - ઓપ્શનલ)')
-                    ->helperText('જો ડાયરેક્ટ ખાતામાંથી ન ભરવું હોય તો સબ એકાઉન્ટ પસંદ કરો, ફંડ તેમાં બોલશે')
+                    ->helperText('જો ડાયરેક્ટ ખાતામાંથી ન ભરવું હોય તો સબ એકાઉન્ટ પસંદ કરો. પૈસા ફક્ત સબ એકાઉન્ટમાંથી કપાશે, મુખ્ય ખાતામાંથી નહીં (પહેલા મુખ્ય ખાતામાંથી સબ ખાતામાં ટ્રાન્સફર કરો)')
                     ->options(function (Get $get) {
                         if (! Account::hasSubAccountColumn()) {
                             return [];
@@ -270,7 +271,7 @@ class IpoApplicationResource extends Resource
     public static function getRelations(): array
     {
         return [
-            \App\Filament\Resources\IpoApplicationResource\RelationManagers\SalesRelationManager::class,
+            SalesRelationManager::class,
         ];
     }
 

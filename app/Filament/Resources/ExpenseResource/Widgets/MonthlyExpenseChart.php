@@ -3,7 +3,6 @@
 namespace App\Filament\Resources\ExpenseResource\Widgets;
 
 use App\Models\Expense;
-use Carbon\Carbon;
 use Filament\Support\RawJs;
 use Filament\Widgets\ChartWidget;
 

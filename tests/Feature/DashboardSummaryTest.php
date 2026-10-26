@@ -89,12 +89,13 @@ class DashboardSummaryTest extends TestCase
         }
     }
 
-    public function test_totals_cover_main_accounts_only_and_include_demat_udhar_and_dues(): void
+    public function test_totals_cover_every_active_account_and_include_demat_udhar_and_dues(): void
     {
-        [$a, $b] = $this->busyBooks();
+        [$a, $b, $sub] = $this->busyBooks();
         $totals = (new DashboardSummary)->totals();
 
-        $available = $a->fresh()->current_balance + $b->fresh()->current_balance;
+        // Sub-accounts hold real money, so they are part of the total (counted once).
+        $available = $a->fresh()->current_balance + $b->fresh()->current_balance + $sub->fresh()->current_balance;
 
         $this->assertEqualsWithDelta($available, $totals['available'], 0.001);
         $this->assertEqualsWithDelta(6500.0, $totals['blocked'], 0.001, '5000 + 1500 applied');

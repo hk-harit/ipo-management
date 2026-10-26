@@ -50,8 +50,9 @@ class DashboardSummary
 
     /**
      * Balance, blocked and invested money for every account, keyed by account id.
-     * A sub-account's applications are the ones tagged with it; a main account's
-     * are the ones paid from it — the same rule as Account::ipoApplications().
+     * A sub-account holds real money (moved in from a main account), so an
+     * application paid from it is debited from it alone; a main account's are the
+     * ones paid from it directly — the same rule as Account::ipoApplications().
      *
      * @return Collection<int, array{balance: float, blocked: float, invested: float}>
      */
@@ -78,7 +79,7 @@ class DashboardSummary
         $transfersIn = AccountTransfer::query()
             ->selectRaw('to_account_id as account, SUM(amount) as total')->groupBy('to_account_id')->pluck('total', 'account');
 
-        $byPayer = $this->applicationAggregates('account_id');
+        $byPayer = $this->applicationAggregates('account_id', onlyDirect: true);
         $bySub = Account::hasSubAccountColumn() ? $this->applicationAggregates('sub_account_id') : collect();
 
         return $this->figures = Account::query()->get()->mapWithKeys(function (Account $account) use (
@@ -104,6 +105,30 @@ class DashboardSummary
         });
     }
 
+    /**
+     * A main account together with its sub-accounts: what it holds in total and,
+     * separately, the cash sitting in sub-accounts that is still to be brought back.
+     *
+     * @return array{balance: float, blocked: float, invested: float, in_sub_accounts: float}
+     */
+    public function rollup(int $mainAccountId): array
+    {
+        $figures = $this->accountFigures();
+        $subIds = Account::hasSubAccountColumn()
+            ? Account::query()->where('parent_id', $mainAccountId)->pluck('id')
+            : collect();
+
+        $own = $this->figuresFor($mainAccountId);
+        $subs = $figures->only($subIds->all());
+
+        return [
+            'balance' => $own['balance'] + (float) $subs->sum('balance'),
+            'blocked' => $own['blocked'] + (float) $subs->sum('blocked'),
+            'invested' => $own['invested'] + (float) $subs->sum('invested'),
+            'in_sub_accounts' => (float) $subs->sum('balance'),
+        ];
+    }
+
     /** @return array{balance: float, blocked: float, invested: float} */
     public function figuresFor(int $accountId): array
     {
@@ -111,19 +136,17 @@ class DashboardSummary
     }
 
     /**
-     * The headline money position, over active main accounts (sub-accounts are
-     * buckets inside a main account, so counting them would double the money).
+     * The headline money position, over every active account. A sub-account holds
+     * its own money (moved in from a main account) and an application is debited
+     * from exactly one account, so nothing is counted twice.
      *
      * @return array{available: float, blocked: float, invested: float, total_funds: float, udhar_receivable: float, owed_to_sources: float, profit_owed: float, net_position: float}
      */
     public function totals(): array
     {
-        $mainIds = Account::query()
-            ->where('is_active', true)
-            ->when(Account::hasSubAccountColumn(), fn ($q) => $q->where('is_sub_account', false))
-            ->pluck('id');
+        $activeIds = Account::query()->where('is_active', true)->pluck('id');
 
-        $figures = $this->accountFigures()->only($mainIds->all());
+        $figures = $this->accountFigures()->only($activeIds->all());
 
         $available = (float) $figures->sum('balance');
         $blocked = (float) $figures->sum('blocked');
@@ -234,10 +257,11 @@ class DashboardSummary
     }
 
     /** Applied / returned / blocked / invested per account, grouped by the given column. */
-    private function applicationAggregates(string $column): Collection
+    private function applicationAggregates(string $column, bool $onlyDirect = false): Collection
     {
         return IpoApplication::query()
             ->whereNotNull($column)
+            ->when($onlyDirect && Account::hasSubAccountColumn(), fn ($q) => $q->whereNull('sub_account_id'))
             ->selectRaw("
                 {$column} as acc,
                 SUM(amount) as applied,

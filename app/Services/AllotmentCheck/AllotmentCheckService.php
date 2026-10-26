@@ -2,6 +2,7 @@
 
 namespace App\Services\AllotmentCheck;
 
+use App\Models\Ipo;
 use App\Models\IpoApplication;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
@@ -47,6 +48,7 @@ class AllotmentCheckService
                 };
             } catch (Throwable $e) {
                 report($e);
+
                 return [];
             }
         });
@@ -167,7 +169,7 @@ class AllotmentCheckService
      *     registrar: ?string
      * }
      */
-    public function checkDirect(\App\Models\Ipo $ipo, string $pan): array
+    public function checkDirect(Ipo $ipo, string $pan): array
     {
         $pan = strtoupper(trim($pan));
 
@@ -189,7 +191,7 @@ class AllotmentCheckService
         if (! $ipo->registrar || ! $ipo->registrar_client_id) {
             // Check if allotment date is still in future
             $isFuture = $ipo->allotment_date && $ipo->allotment_date->isFuture();
-            
+
             return [
                 'success' => false,
                 'status' => $isFuture ? 'pending' : 'not_found',
@@ -199,8 +201,8 @@ class AllotmentCheckService
                 'refund_amount' => null,
                 'refund_reference' => null,
                 'company_name' => $ipo->name,
-                'message' => $isFuture 
-                    ? 'Allotment is scheduled for ' . $ipo->allotment_date->format('d M Y') . '. Registrar has not declared results yet.'
+                'message' => $isFuture
+                    ? 'Allotment is scheduled for '.$ipo->allotment_date->format('d M Y').'. Registrar has not declared results yet.'
                     : 'Registrar details not configured for this IPO or results not declared yet.',
                 'registrar' => $ipo->registrar,
             ];
@@ -238,7 +240,7 @@ class AllotmentCheckService
                 'refund_amount' => null,
                 'refund_reference' => null,
                 'company_name' => $ipo->name,
-                'message' => 'Registrar server error: ' . $e->getMessage(),
+                'message' => 'Registrar server error: '.$e->getMessage(),
                 'registrar' => $ipo->registrar,
             ];
         }
@@ -259,7 +261,7 @@ class AllotmentCheckService
         }
 
         $isAllotted = $result->isAllotted();
-        $status = $isAllotted 
+        $status = $isAllotted
             ? ($result->isFullyAllotted() ? 'allotted' : 'partial_allotted')
             : 'not_allotted';
 
@@ -272,7 +274,7 @@ class AllotmentCheckService
             'refund_amount' => $result->refundAmount,
             'refund_reference' => $result->refundReference,
             'company_name' => $result->companyName ?? $ipo->name,
-            'message' => $isAllotted 
+            'message' => $isAllotted
                 ? "Congratulations! {$result->sharesAllotted} shares allotted."
                 : 'Not allotted. Better luck in the next IPO!',
             'registrar' => $ipo->registrar,
@@ -283,7 +285,7 @@ class AllotmentCheckService
      * Run allotment checks directly/synchronously for multiple applications.
      * Ideal for environments without background queue workers (e.g. Hostinger shared hosting).
      *
-     * @param iterable<IpoApplication> $applications
+     * @param  iterable<IpoApplication>  $applications
      * @return array{
      *     total: int,
      *     allotted: int,

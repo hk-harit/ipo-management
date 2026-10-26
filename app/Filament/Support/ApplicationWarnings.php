@@ -14,7 +14,8 @@ class ApplicationWarnings
 {
     public static function notify(IpoApplication $application, bool $checkBalance = true): void
     {
-        $account = $application->account;
+        // The account that actually pays: the sub-account when one is chosen.
+        $account = $application->sub_account_id ? $application->subAccount : $application->account;
 
         if ($checkBalance && $account && $account->current_balance < 0) {
             Notification::make()

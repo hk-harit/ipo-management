@@ -3,10 +3,10 @@
 namespace App\Filament\Resources\IpoResource\Pages;
 
 use App\Filament\Resources\IpoResource;
+use App\Models\Ipo;
 use App\Services\IpoFeeds\FeedException;
 use App\Services\IpoFeeds\IpoAlertsFeed;
 use App\Services\IpoFeeds\IpoSync;
-use App\Models\Ipo;
 use Filament\Actions;
 use Filament\Notifications\Notification;
 use Filament\Resources\Components\Tab;

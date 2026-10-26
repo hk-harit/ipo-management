@@ -13,6 +13,8 @@ use Filament\Forms\Components\Toggle;
 use Filament\Forms\Form;
 use Filament\Forms\Get;
 use Filament\Resources\Resource;
+use Filament\Tables\Actions\Action;
+use Filament\Tables\Actions\EditAction;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Columns\ToggleColumn;
@@ -164,18 +166,18 @@ class SourceResource extends Resource
             ])
             ->defaultSort('name')
             ->actions([
-                \Filament\Tables\Actions\Action::make('statement')
+                Action::make('statement')
                     ->label('Statement')
                     ->icon('heroicon-o-document-text')
                     ->color('gray')
                     ->url(fn (Source $record) => static::getUrl('statement', ['record' => $record])),
-                \Filament\Tables\Actions\Action::make('payProfit')
+                Action::make('payProfit')
                     ->label('Pay Profit')
                     ->icon('heroicon-o-hand-raised')
                     ->color('success')
                     ->visible(fn (Source $record) => $record->profit_share_pending > 0)
                     ->url(fn (Source $record) => ProfitPayoutResource::getUrl('create', ['source_id' => $record->id])),
-                \Filament\Tables\Actions\EditAction::make(),
+                EditAction::make(),
             ]);
     }
 

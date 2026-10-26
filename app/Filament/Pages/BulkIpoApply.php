@@ -171,7 +171,7 @@ class BulkIpoApply extends Page implements HasForms
 
         foreach ($created as $application) {
             // One overdraft warning per account, not one per row.
-            ApplicationWarnings::notify($application, checkBalance: $created->where('account_id', $application->account_id)->last()->is($application));
+            ApplicationWarnings::notify($application, checkBalance: $created->where(fn ($a) => ($a->sub_account_id ?: $a->account_id) === ($application->sub_account_id ?: $application->account_id))->last()->is($application));
         }
 
         Notification::make()

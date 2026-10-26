@@ -41,26 +41,26 @@ class ExpenseOverviewStats extends BaseWidget
 
         $diff = $thisMonthExpense - $lastMonthExpense;
         $trendDesc = $lastMonthExpense > 0
-            ? ($diff > 0 ? '+₹' . number_format($diff, 2) . ' vs last month' : '-₹' . number_format(abs($diff), 2) . ' vs last month')
+            ? ($diff > 0 ? '+₹'.number_format($diff, 2).' vs last month' : '-₹'.number_format(abs($diff), 2).' vs last month')
             : 'Current month total';
 
         return [
-            Stat::make('This Month Expenses', '₹' . number_format($thisMonthExpense, 2))
+            Stat::make('This Month Expenses', '₹'.number_format($thisMonthExpense, 2))
                 ->description($trendDesc)
                 ->color($diff > 0 ? 'danger' : 'success')
                 ->icon('heroicon-o-calendar-days'),
 
-            Stat::make('Udhar Given (Pending)', '₹' . number_format($pendingUdhar, 2))
+            Stat::make('Udhar Given (Pending)', '₹'.number_format($pendingUdhar, 2))
                 ->description($pendingPeopleCount > 0 ? "Pending from {$pendingPeopleCount} person(s)" : 'No pending loans')
                 ->color($pendingUdhar > 0 ? 'warning' : 'success')
                 ->icon('heroicon-o-arrow-up-right'),
 
-            Stat::make('Udhar Recovered', '₹' . number_format($udharReceived, 2))
+            Stat::make('Udhar Recovered', '₹'.number_format($udharReceived, 2))
                 ->description('Total money received back')
                 ->color('info')
                 ->icon('heroicon-o-arrow-down-left'),
 
-            Stat::make('All-Time Expenses', '₹' . number_format($totalAllTime, 2))
+            Stat::make('All-Time Expenses', '₹'.number_format($totalAllTime, 2))
                 ->description('Total regular expenses')
                 ->color('gray')
                 ->icon('heroicon-o-banknotes'),

@@ -3,8 +3,11 @@
 namespace App\Filament\Resources\AccountResource\Pages;
 
 use App\Filament\Resources\AccountResource;
+use App\Models\IpoApplication;
+use Filament\Notifications\Notification;
 use Filament\Resources\Pages\Concerns\InteractsWithRecord;
 use Filament\Resources\Pages\Page;
+use Illuminate\Support\Collection;
 
 class AccountPassbook extends Page
 {
@@ -24,7 +27,7 @@ class AccountPassbook extends Page
         return $this->record->name.' — Passbook';
     }
 
-    public function ledger(): \Illuminate\Support\Collection
+    public function ledger(): Collection
     {
         return $this->record->buildLedger();
     }
@@ -39,7 +42,7 @@ class AccountPassbook extends Page
 
     public function unblockApplication(int $applicationId): void
     {
-        $app = \App\Models\IpoApplication::where('account_id', $this->record->id)
+        $app = IpoApplication::where('account_id', $this->record->id)
             ->where('id', $applicationId)
             ->first();
 
@@ -56,9 +59,9 @@ class AccountPassbook extends Page
 
         $this->record->refresh();
 
-        \Filament\Notifications\Notification::make()
+        Notification::make()
             ->title('Mandate Unblocked / Refunded!')
-            ->body('₹' . number_format($app->amount, 2) . ' credited back to ' . $this->record->name . ' and logged in passbook.')
+            ->body('₹'.number_format($app->amount, 2).' credited back to '.$this->record->name.' and logged in passbook.')
             ->success()
             ->send();
     }

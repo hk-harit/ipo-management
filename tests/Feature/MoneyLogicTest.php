@@ -258,17 +258,17 @@ class MoneyLogicTest extends TestCase
         }
     }
 
-    public function test_sub_accounts_are_a_separate_bucket_and_do_not_inflate_main_totals(): void
+    public function test_a_sub_account_is_its_own_bucket_debited_alone(): void
     {
         $main = $this->account('Main', 10000);
         $sub = Account::create(['name' => 'Sub', 'type' => 'bank', 'opening_balance' => 0, 'parent_id' => $main->id, 'is_sub_account' => true]);
 
         $this->apply($main, 3000, ['sub_account_id' => $sub->id]);
 
-        $this->assertSame(7000.0, $main->fresh()->current_balance);
-        $this->assertSame(-3000.0, $sub->fresh()->current_balance);
+        $this->assertSame(10000.0, $main->fresh()->current_balance, 'the main account is not debited for a sub-account application');
+        $this->assertSame(-3000.0, $sub->fresh()->current_balance, 'the sub-account pays (and shows overdrawn until funded)');
         $this->assertCount(1, Account::mainAccounts()->get());
-        $this->assertSame(7000.0, (float) Account::mainAccounts()->get()->sum('current_balance'));
+        $this->assertSame(7000.0, (float) Account::query()->get()->sum('current_balance'), 'across all accounts the 3000 is counted once');
     }
 
     public function test_each_login_only_sees_its_own_money(): void

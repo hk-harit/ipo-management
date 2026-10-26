@@ -24,6 +24,23 @@ class AccountBalancesTable extends BaseWidget
         // One set of aggregate queries for every row, instead of ~30 queries per account.
         $summary = new DashboardSummary;
 
+        // A main account's row also counts its sub-accounts' blocked / demat money and
+        // lists the cash sitting in them separately; a sub-account's row is just itself.
+        $figures = function (Account $record) use ($summary): array {
+            if ($record->is_sub_account) {
+                return $summary->figuresFor($record->id) + ['in_sub_accounts' => 0.0];
+            }
+
+            $rollup = $summary->rollup($record->id);
+
+            return [
+                'balance' => $summary->figuresFor($record->id)['balance'],
+                'blocked' => $rollup['blocked'],
+                'invested' => $rollup['invested'],
+                'in_sub_accounts' => $rollup['in_sub_accounts'],
+            ];
+        };
+
         return $table
             ->query(Account::query()->with('parent')->withCount('subAccounts')->where('is_active', true))
             ->columns([
@@ -57,32 +74,39 @@ class AccountBalancesTable extends BaseWidget
                     ->formatStateUsing(fn (string $state) => ucfirst($state)),
                 TextColumn::make('available')
                     ->label('Available (ઉપલબ્ધ)')
-                    ->state(fn (Account $record) => $summary->figuresFor($record->id)['balance'])
+                    ->state(fn (Account $record) => $figures($record)['balance'])
                     ->money('INR')
                     ->weight('bold')
                     ->color(fn ($state) => $state < 0 ? 'danger' : 'success')
                     ->description('Free balance for new IPOs'),
+                TextColumn::make('in_sub_accounts')
+                    ->label('In Sub-accounts (સબ ખાતામાં)')
+                    ->state(fn (Account $record) => $record->is_sub_account ? null : $figures($record)['in_sub_accounts'])
+                    ->money('INR')
+                    ->color('info')
+                    ->placeholder('—')
+                    ->description(fn (Account $record) => ! $record->is_sub_account && $figures($record)['in_sub_accounts'] != 0.0 ? 'to bring back to this account' : null),
                 TextColumn::make('blocked')
                     ->label('Blocked in IPOs (IPO માં બ્લોક)')
-                    ->state(fn (Account $record) => $summary->figuresFor($record->id)['blocked'])
+                    ->state(fn (Account $record) => $figures($record)['blocked'])
                     ->money('INR')
                     ->weight('semibold')
                     ->color('primary'),
                 TextColumn::make('invested')
                     ->label('In Demat (ડીમેટમાં)')
-                    ->state(fn (Account $record) => $summary->figuresFor($record->id)['invested'])
+                    ->state(fn (Account $record) => $figures($record)['invested'])
                     ->money('INR')
                     ->color('warning'),
                 TextColumn::make('total')
                     ->label('Total Capital (કુલ)')
-                    ->state(function (Account $record) use ($summary) {
-                        $figures = $summary->figuresFor($record->id);
+                    ->state(function (Account $record) use ($figures) {
+                        $f = $figures($record);
 
-                        return $figures['balance'] + $figures['blocked'] + $figures['invested'];
+                        return $f['balance'] + $f['in_sub_accounts'] + $f['blocked'] + $f['invested'];
                     })
                     ->money('INR')
                     ->weight('bold')
-                    ->description('Available + Blocked + Demat'),
+                    ->description('Available + sub-accounts + Blocked + Demat'),
             ])
             ->filters([
                 SelectFilter::make('view_type')

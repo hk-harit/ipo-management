@@ -74,12 +74,12 @@ class IpoApplication extends Model
             }
 
             // Auto-create AccountTransfer if funded from another account
-            if ($app->funding_type === 'transferred' && $app->funding_account_id && $app->funding_account_id != $app->account_id) {
+            if ($app->funding_type === 'transferred' && $app->funding_account_id && $app->funding_account_id != ($app->sub_account_id ?: $app->account_id)) {
                 if (! $app->auto_transfer_id) {
                     $transfer = AccountTransfer::create([
                         'user_id' => $app->user_id,
                         'from_account_id' => $app->funding_account_id,
-                        'to_account_id' => $app->account_id,
+                        'to_account_id' => $app->sub_account_id ?: $app->account_id,
                         'amount' => $app->amount,
                         'transfer_date' => $app->applied_date ?? now()->toDateString(),
                         'notes' => 'Auto-transfer for IPO application #'.($app->id ?? 'new'),
@@ -90,7 +90,7 @@ class IpoApplication extends Model
                     if ($transfer) {
                         $transfer->update([
                             'from_account_id' => $app->funding_account_id,
-                            'to_account_id' => $app->account_id,
+                            'to_account_id' => $app->sub_account_id ?: $app->account_id,
                             'amount' => $app->amount,
                             'transfer_date' => $app->applied_date ?? now()->toDateString(),
                         ]);
