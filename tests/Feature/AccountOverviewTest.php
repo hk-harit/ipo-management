@@ -141,6 +141,46 @@ class AccountOverviewTest extends TestCase
         $this->get('/admin/account-overview')->assertOk();
     }
 
+    public function test_applications_are_grouped_by_source_with_the_commission_split(): void
+    {
+        $this->jio->update(['min_amount' => 13428]);
+        $friend = Applicant::create(['name' => 'Friend Two', 'relation' => 'friend', 'pan_number' => 'ABCPD1234E']);
+
+        $this->apply($this->pilo, $this->jio, 13428, $this->utsav)->update(['applicant_commission_percent' => 25]);
+        IpoApplication::create([
+            'ipo_id' => $this->jio->id, 'applicant_id' => $friend->id, 'account_id' => $this->pilo->id, 'source_id' => $this->utsav->id,
+            'amount' => 187992, 'applied_date' => '2026-10-03', 'status' => 'applied',
+        ]);
+        $this->apply($this->main, $this->jio, 13428, $this->pravin);
+        $this->apply($this->main, $this->jio, 13428, null);
+
+        $groups = (new AccountOverview)->build($this->jio->id)['source_groups'];
+
+        $utsav = $groups->firstWhere('source', 'Utsav bhai');
+        $this->assertSame(2, $utsav['count']);
+        $this->assertSame(201420.0, $utsav['amount']);
+        $this->assertSame(40.0, $utsav['source_pct']);
+        $this->assertSame('1 × 0% · 1 × 25%', $utsav['applicant_pct_summary']);
+
+        $big = $utsav['rows']->first();
+        $this->assertSame('Friend Two', $big['applicant']);
+        $this->assertSame(14.0, $big['lots'], '187,992 is 14 lots of 13,428');
+        $this->assertSame(60.0, $big['you_pct'], '100 - 40 source - 0 applicant');
+
+        $paid25 = $utsav['rows']->firstWhere('applicant', 'Ved');
+        $this->assertSame(35.0, $paid25['you_pct'], '100 - 40 - 25');
+
+        $this->assertSame(50.0, $groups->firstWhere('source', 'Pravin masa')['source_pct']);
+        $this->assertNotNull($groups->firstWhere('source', 'No source'));
+
+        Livewire::test(AccountOverviewPage::class)
+            ->set('ipo', (string) $this->jio->id)
+            ->assertSee('Source → Applicants')
+            ->assertSee('Friend Two')
+            ->assertSee('ABCPD1234E')
+            ->assertSee('25%');
+    }
+
     public function test_a_login_only_sees_its_own_accounts(): void
     {
         $this->apply($this->pilo, $this->jio, 13428, $this->utsav);

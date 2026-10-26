@@ -23,6 +23,54 @@ class AccountOverview
 {
     public function __construct(private readonly DashboardSummary $summary = new DashboardSummary) {}
 
+    /**
+     * Applications grouped by the source whose money funded them: who applied, from
+     * which account, how many lots, and the split — source %, applicant %, and what is
+     * left for you. Amounts are only filled in once an application is sold.
+     */
+    private function sourceGroups(Collection $applications, ?float $lotAmount, Collection $accountNames, bool $hasSub): Collection
+    {
+        return $applications
+            ->groupBy(fn (IpoApplication $a) => $a->source?->name ?? 'No source')
+            ->map(function (Collection $apps, string $name) use ($lotAmount, $accountNames, $hasSub) {
+                $rows = $apps->sortByDesc('amount')->map(function (IpoApplication $a) use ($lotAmount, $accountNames, $hasSub) {
+                    $sourcePct = $a->source ? $a->effective_source_share_percent : 0.0;
+                    $applicantPct = (float) $a->applicant_commission_percent;
+                    $accountId = ($hasSub && $a->sub_account_id) ? $a->sub_account_id : $a->account_id;
+
+                    return [
+                        'application' => $a,
+                        'applicant' => $a->applicant?->name,
+                        'pan' => $a->applicant?->pan_number,
+                        'account' => $accountNames[$accountId] ?? '#'.$accountId,
+                        'lots' => $lotAmount ? round((float) $a->amount / $lotAmount, 1) : null,
+                        'amount' => (float) $a->amount,
+                        'source_pct' => $sourcePct,
+                        'applicant_pct' => $applicantPct,
+                        'you_pct' => max(0.0, 100 - $sourcePct - $applicantPct),
+                        'status' => $a->status,
+                        'profit' => $a->profit,
+                        'source_share' => $a->source_profit_share,
+                        'applicant_share' => $a->applicant_profit_share,
+                        'your_share' => $a->your_profit_share,
+                    ];
+                })->values();
+
+                return [
+                    'source' => $name,
+                    'count' => $rows->count(),
+                    'amount' => (float) $rows->sum('amount'),
+                    'source_pct' => $rows->first()['source_pct'] ?? 0.0,
+                    'applicant_pct_summary' => $rows->groupBy(fn ($r) => (string) $r['applicant_pct'])
+                        ->map(fn (Collection $g, string $pct) => $g->count().' × '.rtrim(rtrim(number_format((float) $pct, 2), '0'), '.').'%')
+                        ->values()->implode(' · '),
+                    'rows' => $rows,
+                ];
+            })
+            ->sortByDesc('amount')
+            ->values();
+    }
+
     /** IPOs that have at least one application, newest activity first, for the picker. */
     public function ipoOptions(): Collection
     {
@@ -65,7 +113,7 @@ class AccountOverview
 
         // The account that actually paid for an application: the sub-account when set.
         $applications = IpoApplication::query()
-            ->with(['applicant:id,name,pan_number', 'source:id,name', 'ipo:id,name'])
+            ->with(['applicant:id,name,pan_number', 'source', 'ipo:id,name', 'sales'])
             ->orderBy('applied_date')
             ->orderBy('id')
             ->get()
@@ -136,6 +184,15 @@ class AccountOverview
             ];
         })->filter(fn ($s) => $s['given'] > 0 || $s['focus_count'] > 0)->values();
 
+        $focusApplications = $applications->flatten(1);
+        if ($ipoId) {
+            $focusApplications = $focusApplications->where('ipo_id', $ipoId);
+        }
+        $lotAmount = $ipoId ? Ipo::find($ipoId)?->lot_amount : null;
+        $accountNames = $accounts->pluck('name', 'id');
+
+        $sourceGroups = $this->sourceGroups($focusApplications, $lotAmount, $accountNames, $hasSub);
+
         $totals = [
             'given' => (float) $ordered->sum('given_total'),
             'returned' => (float) $ordered->sum('returned_total'),
@@ -149,6 +206,6 @@ class AccountOverview
 
         $ipo = $ipoId ? $this->ipoOptions()->firstWhere('id', $ipoId) : null;
 
-        return ['accounts' => $ordered, 'sources' => $sources, 'totals' => $totals, 'ipo' => $ipo];
+        return ['accounts' => $ordered, 'sources' => $sources, 'source_groups' => $sourceGroups, 'totals' => $totals, 'ipo' => $ipo];
     }
 }
