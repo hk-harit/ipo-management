@@ -131,26 +131,34 @@
                     </div>
                 @endif
 
-                <div style="margin-top:22px; font-size:16px; font-weight:700;">
-                    IPO માં ભર્યા — કુલ {{ $share['ipo_count'] }} IPO · {{ $share['apps_total'] }} અરજી · {{ $inr($share['amount_total']) }}
-                </div>
-                <table style="width:100%; border-collapse:collapse; margin-top:8px; font-size:15px;">
-                    @foreach ($share['ipos'] as $ipo)
-                        <tr style="border-bottom:1px solid #e2e8f0;">
-                            <td style="padding:7px 0;">{{ $ipo['name'] }}</td>
-                            <td style="padding:7px 0; text-align:right; color:#475569;">{{ $ipo['apps'] }} અરજી</td>
-                            <td style="padding:7px 0; text-align:right; font-weight:700;">{{ $inr($ipo['amount']) }}</td>
-                        </tr>
-                    @endforeach
-                </table>
+@if ($share['focus_name'])
+                    <div style="margin-top:22px; font-size:18px; font-weight:700;">{{ $share['focus_name'] }}</div>
+                    <div style="font-size:15px; color:#475569;">કુલ {{ $share['apps_total'] }} અરજી · <strong style="color:#0f172a;">{{ $inr($share['amount_total']) }}</strong></div>
+                @else
+                    <div style="margin-top:22px; font-size:16px; font-weight:700;">
+                        IPO માં ભર્યા — કુલ {{ $share['ipo_count'] }} IPO · {{ $share['apps_total'] }} અરજી · {{ $inr($share['amount_total']) }}
+                    </div>
+                    <table style="width:100%; border-collapse:collapse; margin-top:8px; font-size:15px;">
+                        @foreach ($share['ipos'] as $ipo)
+                            <tr style="border-bottom:1px solid #e2e8f0;">
+                                <td style="padding:7px 0;">{{ $ipo['name'] }}</td>
+                                <td style="padding:7px 0; text-align:right; color:#475569;">{{ $ipo['apps'] }} અરજી</td>
+                                <td style="padding:7px 0; text-align:right; font-weight:700;">{{ $inr($ipo['amount']) }}</td>
+                            </tr>
+                        @endforeach
+                    </table>
+                @endif
 
                 @if ($share['focus_name'] && $share['focus_rows']->isNotEmpty())
-                    <div style="margin-top:24px; font-size:16px; font-weight:700;">{{ $share['focus_name'] }} — કોના નામે ભર્યું</div>
+                    <div style="margin-top:18px; font-size:16px; font-weight:700;">કોના નામે ભર્યું (PAN સાથે)</div>
                     <table style="width:100%; border-collapse:collapse; margin-top:8px; font-size:15px;">
                         @foreach ($share['focus_rows'] as $i => $row)
                             <tr style="border-bottom:1px solid #e2e8f0;">
                                 <td style="padding:6px 0; width:34px; color:#64748b;">{{ $i + 1 }}</td>
-                                <td style="padding:6px 0;">{{ $row['name'] }}</td>
+                                <td style="padding:6px 0;">
+                                    {{ $row['name'] }}
+                                    @if ($row['pan'])<div style="font-size:12px; color:#64748b; letter-spacing:.5px;">{{ $row['pan'] }}</div>@endif
+                                </td>
                                 <td style="padding:6px 0; text-align:right; color:#475569;">{{ $row['lots'] ? $row['lots'].' લોટ' : '' }}</td>
                                 <td style="padding:6px 0; text-align:right; font-weight:700;">{{ $inr($row['amount']) }}</td>
                             </tr>

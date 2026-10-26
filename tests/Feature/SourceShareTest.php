@@ -58,20 +58,20 @@ class SourceShareTest extends TestCase
         return (new AccountOverview)->build($this->jio->id)['source_groups']->firstWhere('source', 'Utsav bhai')['share'];
     }
 
-    public function test_the_share_covers_every_ipo_and_the_money_given(): void
+    public function test_with_an_ipo_selected_the_share_is_about_that_ipo_only(): void
     {
         $share = $this->share();
 
-        $this->assertSame(2, $share['ipo_count'], 'Paras and Jio, not just the IPO on screen');
-        $this->assertSame(3, $share['apps_total']);
-        $this->assertSame(215973.0, $share['amount_total']);
-        $this->assertSame(400000.0, $share['given']);
+        $this->assertSame(1, $share['ipo_count'], 'Jio only — Paras is not mentioned');
+        $this->assertSame(2, $share['apps_total']);
+        $this->assertSame(201420.0, $share['amount_total']);
+        $this->assertSame('Jio Platforms', $share['focus_name']);
+        $this->assertSame(400000.0, $share['given'], 'money given is the source\'s own balance, not per IPO');
         $this->assertSame(25000.0, $share['returned']);
         $this->assertSame(375000.0, $share['due']);
-        $this->assertSame('Jio Platforms', $share['ipos'][0]['name'], 'most recent IPO first');
     }
 
-    public function test_the_message_is_ready_for_whatsapp(): void
+    public function test_the_message_for_one_ipo_is_ready_for_whatsapp(): void
     {
         $text = $this->share()['text'];
 
@@ -79,21 +79,46 @@ class SourceShareTest extends TestCase
         $this->assertStringContainsString('તમે આપ્યા: ₹4,00,000', $text);
         $this->assertStringContainsString('પાછા આપ્યા: ₹25,000', $text);
         $this->assertStringContainsString('હજી અમારી પાસે: ₹3,75,000', $text);
-        $this->assertStringContainsString('કુલ 2 IPO · 3 અરજી · ₹2,15,973', $text);
-        $this->assertStringContainsString('• Jio Platforms — 2 અરજી · ₹2,01,420', $text);
-        $this->assertStringContainsString('• Paras Healthcare — 1 અરજી · ₹14,553', $text);
+        $this->assertStringContainsString('*Jio Platforms — IPO માં ભર્યા*', $text);
+        $this->assertStringContainsString('કુલ 2 અરજી · ₹2,01,420', $text);
         $this->assertStringContainsString('1. Namasvu — 14 લોટ — ₹1,87,992', $text);
         $this->assertStringContainsString('2. Ved Mordiya — 1 લોટ — ₹13,428', $text);
         $this->assertStringContainsString('કુલ: ₹2,01,420', $text);
+
+        $this->assertStringNotContainsString('Paras', $text, 'the other IPO must not leak into a Jio statement');
+        $this->assertStringNotContainsString('Old Friend', $text);
+        $this->assertStringNotContainsString('₹2,15,973', $text, 'no all-IPO total');
     }
 
-    public function test_pan_and_commission_never_go_into_the_message(): void
+    public function test_with_no_ipo_selected_every_ipo_is_summarised(): void
     {
-        $text = $this->share()['text'];
+        $source = Source::find($this->utsav->id);
+        $apps = IpoApplication::query()->with(['ipo', 'applicant'])->where('source_id', $source->id)->get();
 
-        $this->assertStringNotContainsString('ABCDE1234F', $text);
-        $this->assertStringNotContainsString('25%', $text);
-        $this->assertStringNotContainsString('commission', strtolower($text));
+        $share = SourceShare::build($source, $apps, null, null);
+
+        $this->assertSame(2, $share['ipo_count']);
+        $this->assertSame(215973.0, $share['amount_total']);
+        $this->assertStringContainsString('કુલ 2 IPO · 3 અરજી · ₹2,15,973', $share['text']);
+        $this->assertStringContainsString('• Jio Platforms — 2 અરજી · ₹2,01,420', $share['text']);
+        $this->assertStringContainsString('• Paras Healthcare — 1 અરજી · ₹14,553', $share['text']);
+    }
+
+    public function test_pan_is_on_the_image_but_not_in_the_text_and_commission_is_never_shared(): void
+    {
+        $share = $this->share();
+
+        $this->assertStringNotContainsString('ABCDE1234F', $share['text']);
+        $this->assertStringNotContainsString('25%', $share['text']);
+        $this->assertStringNotContainsString('commission', strtolower($share['text']));
+
+        $this->assertSame('ABCDE1234F', $share['focus_rows'][0]['pan'], 'the image card gets the PAN');
+
+        $html = view('filament.pages.partials.source-share', ['share' => $share])->render();
+        $this->assertStringContainsString('ABCDE1234F', $html);
+        $this->assertStringContainsString('PAN સાથે', $html);
+        $this->assertStringNotContainsString('25%', $html);
+        $this->assertStringNotContainsString('Paras Healthcare', $html, 'the image is for the selected IPO only');
     }
 
     public function test_the_whatsapp_number_is_built_from_the_sources_mobile(): void
@@ -121,7 +146,7 @@ class SourceShareTest extends TestCase
                 ->assertSee('Copy text')
                 ->assertSee('Copy image')
                 ->assertSee('Download image')
-                ->assertSee('IPO માં ભર્યા — કુલ 2 IPO')
+                ->assertSee('Jio Platforms')
                 ->assertSee('Share image');
         }
     }

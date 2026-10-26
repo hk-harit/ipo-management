@@ -13,8 +13,8 @@ use Illuminate\Support\Collection;
  * looked at. Builds both the plain-text message and the figures the image card draws,
  * so the two can never disagree.
  *
- * Deliberately left out: PAN numbers and the applicants' commission — those are
- * yours, not something to forward to a source.
+ * The applicants' commission is deliberately left out — that is yours, not something
+ * to forward to a source. PAN numbers appear on the image only, not in the text.
  */
 class SourceShare
 {
@@ -24,7 +24,11 @@ class SourceShare
      */
     public static function build(Source $source, Collection $applications, ?Ipo $focusIpo, ?float $lotAmount): array
     {
-        $ipos = $applications
+        // With an IPO selected the statement is about that IPO alone; with none selected
+        // ("All IPOs") it summarises every IPO funded with this source's money.
+        $scoped = $focusIpo ? $applications->where('ipo_id', $focusIpo->id) : $applications;
+
+        $ipos = $scoped
             ->groupBy('ipo_id')
             ->map(fn (Collection $apps) => [
                 'name' => $apps->first()->ipo?->name ?? 'IPO',
@@ -38,6 +42,7 @@ class SourceShare
         $focusRows = $focusIpo
             ? $applications->where('ipo_id', $focusIpo->id)->sortByDesc('amount')->map(fn (IpoApplication $a) => [
                 'name' => $a->applicant?->name ?? '—',
+                'pan' => $a->applicant?->pan_number,
                 'lots' => $lotAmount ? max(1, (int) round((float) $a->amount / $lotAmount)) : null,
                 'amount' => (float) $a->amount,
             ])->values()
@@ -114,16 +119,23 @@ class SourceShare
         }
 
         $lines[] = '';
-        $lines[] = '*IPO માં ભર્યા*';
-        $lines[] = 'કુલ '.$d['ipo_count'].' IPO · '.$d['apps_total'].' અરજી · '.static::money($d['amount_total']);
 
-        foreach ($d['ipos'] as $ipo) {
-            $lines[] = '• '.$ipo['name'].' — '.$ipo['apps'].' અરજી · '.static::money($ipo['amount']);
+        if ($d['focus_name']) {
+            // One IPO: its total and who it was applied for.
+            $lines[] = '*'.$d['focus_name'].' — IPO માં ભર્યા*';
+            $lines[] = 'કુલ '.$d['apps_total'].' અરજી · '.static::money($d['amount_total']);
+        } else {
+            $lines[] = '*IPO માં ભર્યા*';
+            $lines[] = 'કુલ '.$d['ipo_count'].' IPO · '.$d['apps_total'].' અરજી · '.static::money($d['amount_total']);
+
+            foreach ($d['ipos'] as $ipo) {
+                $lines[] = '• '.$ipo['name'].' — '.$ipo['apps'].' અરજી · '.static::money($ipo['amount']);
+            }
         }
 
         if ($d['focus_name'] && $d['focus_rows']->isNotEmpty()) {
             $lines[] = '';
-            $lines[] = '*'.$d['focus_name'].' — કોના નામે ભર્યું*';
+            $lines[] = '*કોના નામે ભર્યું*';
 
             foreach ($d['focus_rows'] as $i => $row) {
                 $lines[] = ($i + 1).'. '.$row['name'].($row['lots'] ? ' — '.$row['lots'].' લોટ' : '').' — '.static::money($row['amount']);
