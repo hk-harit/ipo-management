@@ -49,7 +49,18 @@ class AllotmentEntryTest extends TestCase
         return Livewire::test(AllotmentEntryPage::class);
     }
 
-    public function test_the_page_lists_the_pending_applications_of_the_latest_ipo(): void
+    public function test_a_pan_can_carry_its_own_share_count(): void
+    {
+        $this->page()
+            ->set('paste', "JQPPM7159J 24\nOYSPK2271R, Allotted, 12\nCWUPD7942L")
+            ->call('applyPaste')
+            ->assertSet('rows.'.$this->apps['Ved']->id.'.shares', 24)
+            ->assertSet('rows.'.$this->apps['Pratik']->id.'.shares', 12)
+            ->assertSet('rows.'.$this->apps['Isha']->id.'.shares', 12, 'no count given: one lot')
+            ->assertSet('rows.'.$this->apps['Isha']->id.'.result', 'allotted');
+    }
+
+    public function test_the_page_opens_with_the_latest_ipo_and_lists_pending_applications(): void
     {
         $this->page()
             ->assertOk()

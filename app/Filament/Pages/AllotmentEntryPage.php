@@ -115,8 +115,19 @@ class AllotmentEntryPage extends Page
     /** Marks every application whose PAN appears in the pasted text as allotted. */
     public function applyPaste(): void
     {
-        preg_match_all('/\b[A-Z]{5}[0-9]{4}[A-Z]\b/i', strtoupper($this->paste), $matches);
-        $pans = array_unique($matches[0]);
+        // Each PAN, optionally followed by its shares: "ABCDE1234F", "ABCDE1234F 12", "ABCDE1234F, Allotted, 12".
+        preg_match_all(
+            '/\b([A-Z]{5}[0-9]{4}[A-Z])\b(?:[\s,;:|\-]+(?:ALLOTTED|ALOTTED)?[\s,;:|\-]*(\d{1,6})(?![0-9A-Z]))?/',
+            strtoupper($this->paste),
+            $matches,
+            PREG_SET_ORDER,
+        );
+
+        $sharesByPan = [];
+        foreach ($matches as $match) {
+            $sharesByPan[$match[1]] = isset($match[2]) && $match[2] !== '' ? (int) $match[2] : ($sharesByPan[$match[1]] ?? null);
+        }
+        $pans = array_keys($sharesByPan);
 
         if ($pans === []) {
             Notification::make()->warning()->title('Koi PAN malyo nahi')->body('PAN (jem ke ABCDE1234F) ek line ma ek, paste karo.')->send();
@@ -130,7 +141,7 @@ class AllotmentEntryPage extends Page
 
             if ($pan !== '' && in_array($pan, $pans, true)) {
                 $this->rows[$application->id]['result'] = 'allotted';
-                $this->rows[$application->id]['shares'] ??= $this->defaultShares();
+                $this->rows[$application->id]['shares'] = $sharesByPan[$pan] ?? $this->rows[$application->id]['shares'] ?? $this->defaultShares();
                 $found[$pan] = true;
             }
         }
