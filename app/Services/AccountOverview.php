@@ -58,6 +58,8 @@ class AccountOverview
 
                 return [
                     'source' => $name,
+                    'source_id' => $apps->first()->source_id,
+                    'share' => null,
                     'count' => $rows->count(),
                     'amount' => (float) $rows->sum('amount'),
                     'source_pct' => $rows->first()['source_pct'] ?? 0.0,
@@ -192,6 +194,22 @@ class AccountOverview
         $accountNames = $accounts->pluck('name', 'id');
 
         $sourceGroups = $this->sourceGroups($focusApplications, $lotAmount, $accountNames, $hasSub);
+
+        // What each source gets on WhatsApp covers every IPO funded with their money,
+        // not just the one being looked at.
+        $allBySource = $applications->flatten(1)->groupBy('source_id');
+        $sourceModels = Source::query()->get()->keyBy('id');
+        $focusIpo = $ipoId ? Ipo::find($ipoId) : null;
+
+        $sourceGroups = $sourceGroups->map(function (array $group) use ($allBySource, $sourceModels, $focusIpo, $lotAmount) {
+            $source = $sourceModels->get($group['source_id']);
+
+            if ($source) {
+                $group['share'] = SourceShare::build($source, $allBySource->get($source->id, collect()), $focusIpo, $lotAmount);
+            }
+
+            return $group;
+        });
 
         $totals = [
             'given' => (float) $ordered->sum('given_total'),

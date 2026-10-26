@@ -12,6 +12,9 @@
                             · applicants: {{ $group['applicant_pct_summary'] }}
                         </span>
                     </summary>
+                    @if ($group['share'])
+                        @include('filament.pages.partials.source-share', ['share' => $group['share']])
+                    @endif
                     <div class="overflow-x-auto px-3 pb-3">
                         <table class="w-full text-sm">
                             <thead>
