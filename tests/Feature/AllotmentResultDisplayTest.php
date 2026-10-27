@@ -117,6 +117,35 @@ class AllotmentResultDisplayTest extends TestCase
         $this->assertStringContainsString('❌ ન લાગ્યા', $html);
     }
 
+    public function test_the_source_table_on_the_page_shows_each_applicants_result_and_the_counts(): void
+    {
+        $this->enterResult();
+
+        $groups = (new AccountOverview)->build($this->jio->id)['source_groups'];
+        $utsav = $groups->firstWhere('source', 'Utsav bhai');
+
+        $this->assertSame([2, 1, 1], [$utsav['allotted'], $utsav['not_allotted'], $utsav['waiting']]);
+        $this->assertSame(24, $utsav['rows']->firstWhere('applicant', 'Isha')['shares']);
+
+        Livewire::test(IpoDashboardPage::class)
+            ->call('openIpo', $this->jio->id)
+            ->assertSee('Result (લાગ્યા?)')
+            ->assertSee('લાગ્યા 2')
+            ->assertSee('ન લાગ્યા 1')
+            ->assertSee('✅ લાગ્યા (24 શેર)')
+            ->assertSee('❌ ન લાગ્યા');
+    }
+
+    public function test_the_whatsapp_buttons_have_their_own_background_colour(): void
+    {
+        $this->enterResult();
+        $share = (new AccountOverview)->build($this->jio->id)['source_groups']->firstWhere('source', 'Utsav bhai')['share'];
+
+        $html = view('filament.pages.partials.source-share', ['share' => $share])->render();
+
+        $this->assertMatchesRegularExpression('/<a[^>]*style="background:#16a34a; color:#ffffff;"[^>]*>\s*WhatsApp message/s', $html);
+    }
+
     public function test_the_result_marks_follow_the_status(): void
     {
         $this->assertSame('✅ લાગ્યા (12 શેર)', SourceShare::resultMark('allotted', 12));

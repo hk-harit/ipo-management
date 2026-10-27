@@ -86,7 +86,8 @@
 <div class="px-3 pb-3" x-data="ipoShare(@js($cardId), @js($share['text']), @js($share['phone']), @js($share['filename']))">
     <div class="flex flex-wrap items-center gap-2">
         <a :href="waUrl" target="_blank" rel="noopener"
-           class="inline-flex items-center gap-1 rounded-lg bg-success-600 px-3 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-success-500">
+           style="background:#16a34a; color:#ffffff;"
+           class="inline-flex items-center gap-1 rounded-lg px-3 py-1.5 text-sm font-semibold shadow-sm">
             WhatsApp message
             @if (! $share['phone'])<span class="text-xs font-normal opacity-80">(number nathi — contact pasand karo)</span>@endif
         </a>
@@ -97,7 +98,8 @@
         <button type="button" x-on:click="download()"
                 class="rounded-lg border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-white/20 dark:text-gray-200 dark:hover:bg-white/5">Download image</button>
         <button type="button" x-show="canShare" x-cloak x-on:click="shareImage()"
-                class="rounded-lg bg-primary-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-primary-500">Share image (WhatsApp)</button>
+                style="background:#16a34a; color:#ffffff;"
+                class="rounded-lg px-3 py-1.5 text-sm font-semibold">Share image (WhatsApp)</button>
         <span x-show="note" x-cloak x-text="note" class="text-xs text-gray-600 dark:text-gray-300"></span>
     </div>
 

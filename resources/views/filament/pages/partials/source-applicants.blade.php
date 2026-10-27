@@ -10,6 +10,9 @@
                             {{ $group['count'] }} apps · <strong>{{ $money($group['amount']) }}</strong>
                             @if ($group['source'] !== 'No source') · source gets {{ rtrim(rtrim(number_format($group['source_pct'], 2), '0'), '.') }}% @endif
                             · applicants: {{ $group['applicant_pct_summary'] }}
+                            @if ($group['allotted'] + $group['not_allotted'] > 0)
+                                · <strong style="color:#047857;">લાગ્યા {{ $group['allotted'] }}</strong> · <strong style="color:#b91c1c;">ન લાગ્યા {{ $group['not_allotted'] }}</strong>@if ($group['waiting']) · બાકી {{ $group['waiting'] }}@endif
+                            @endif
                         </span>
                     </summary>
                     @if ($group['share'])
@@ -26,6 +29,7 @@
                                     <th class="py-2 pr-3 text-right">Source %</th>
                                     <th class="py-2 pr-3 text-right">Applicant %</th>
                                     <th class="py-2 pr-3 text-right">You %</th>
+                                    <th class="py-2 pr-3">Result (લાગ્યા?)</th>
                                     @if ($showProfit)
                                         <th class="py-2 pr-3 text-right">Profit</th>
                                         <th class="py-2 text-right">Applicant gets</th>
@@ -45,6 +49,7 @@
                                         <td class="py-2 pr-3 text-right">{{ rtrim(rtrim(number_format($r['source_pct'], 2), '0'), '.') }}%</td>
                                         <td class="py-2 pr-3 text-right font-semibold {{ $r['applicant_pct'] > 0 ? 'text-info-600 dark:text-info-400' : 'text-gray-400' }}">{{ rtrim(rtrim(number_format($r['applicant_pct'], 2), '0'), '.') ?: '0' }}%</td>
                                         <td class="py-2 pr-3 text-right">{{ rtrim(rtrim(number_format($r['you_pct'], 2), '0'), '.') }}%</td>
+                                        <td class="py-2 pr-3 whitespace-nowrap font-semibold" style="color:{{ in_array($r['status'], ['allotted', 'partial_allotted', 'sold'], true) ? '#047857' : '#b91c1c' }};">{{ \App\Services\SourceShare::resultMark($r['status'], $r['shares']) ?: '—' }}</td>
                                         @if ($showProfit)
                                             <td class="py-2 pr-3 text-right">{{ $r['profit'] !== null ? $money($r['profit']) : '' }}</td>
                                             <td class="py-2 text-right font-semibold">{{ $r['applicant_share'] !== null && $r['applicant_pct'] > 0 ? $money($r['applicant_share']) : '' }}</td>

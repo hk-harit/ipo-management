@@ -49,6 +49,7 @@ class AccountOverview
                         'applicant_pct' => $applicantPct,
                         'you_pct' => max(0.0, 100 - $sourcePct - $applicantPct),
                         'status' => $a->status,
+                        'shares' => $a->shares_allotted ? (int) $a->shares_allotted : null,
                         'profit' => $a->profit,
                         'source_share' => $a->source_profit_share,
                         'applicant_share' => $a->applicant_profit_share,
@@ -63,6 +64,9 @@ class AccountOverview
                     'count' => $rows->count(),
                     'amount' => (float) $rows->sum('amount'),
                     'source_pct' => $rows->first()['source_pct'] ?? 0.0,
+                    'allotted' => $rows->filter(fn ($r) => in_array($r['status'], ['allotted', 'partial_allotted', 'sold'], true))->count(),
+                    'not_allotted' => $rows->where('status', 'refunded')->count(),
+                    'waiting' => $rows->where('status', 'applied')->count(),
                     'applicant_pct_summary' => $rows->groupBy(fn ($r) => (string) $r['applicant_pct'])
                         ->map(fn (Collection $g, string $pct) => $g->count().' × '.rtrim(rtrim(number_format((float) $pct, 2), '0'), '.').'%')
                         ->values()->implode(' · '),
