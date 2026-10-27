@@ -135,16 +135,16 @@
 
 @if ($share['focus_name'])
                     <div style="margin-top:22px; font-size:18px; font-weight:700;">{{ $share['focus_name'] }}</div>
-                    <div style="font-size:15px; color:#475569;">Total {{ $share['apps_total'] }} applications · <strong style="color:#0f172a;">{{ $inr($share['amount_total']) }}</strong></div>
+                    <div style="font-size:15px; color:#475569;">Total {{ $share['apps_total'] }} {{ $share['apps_total'] === 1 ? 'application' : 'applications' }} · <strong style="color:#0f172a;">{{ $inr($share['amount_total']) }}</strong></div>
                 @else
                     <div style="margin-top:22px; font-size:16px; font-weight:700;">
-                        Applied in IPO — Total {{ $share['ipo_count'] }} IPO · {{ $share['apps_total'] }} applications · {{ $inr($share['amount_total']) }}
+                        Applied in IPOs — Total {{ $share['ipo_count'] }} {{ $share['ipo_count'] === 1 ? 'IPO' : 'IPOs' }} · {{ $share['apps_total'] }} {{ $share['apps_total'] === 1 ? 'application' : 'applications' }} · {{ $inr($share['amount_total']) }}
                     </div>
                     <table style="width:100%; border-collapse:collapse; margin-top:8px; font-size:15px;">
                         @foreach ($share['ipos'] as $ipo)
                             <tr style="border-bottom:1px solid #e2e8f0;">
                                 <td style="padding:7px 0;">{{ $ipo['name'] }}</td>
-                                <td style="padding:7px 0; text-align:right; color:#475569;">{{ $ipo['apps'] }} applications</td>
+                                <td style="padding:7px 0; text-align:right; color:#475569;">{{ $ipo['apps'] }} {{ $ipo['apps'] === 1 ? 'application' : 'applications' }}</td>
                                 <td style="padding:7px 0; text-align:right; font-weight:700;">{{ $inr($ipo['amount']) }}</td>
                             </tr>
                         @endforeach
@@ -168,13 +168,13 @@
                                     {{ $row['name'] }}
                                     @if ($row['pan'])<div style="font-size:12px; color:#64748b; letter-spacing:.5px;">{{ $row['pan'] }}</div>@endif
                                 </td>
-                                <td style="padding:6px 0; text-align:right; color:#475569;">{{ $row['lots'] ? $row['lots'].' lots' : '' }}</td>
+                                <td style="padding:6px 0; text-align:right; color:#475569;">{{ $row['lots'] ? $row['lots'].($row['lots'] === 1 ? ' lot' : ' lots') : '' }}</td>
                                 <td style="padding:6px 0 6px 10px; text-align:right; font-size:13px; font-weight:700; white-space:nowrap; color:{{ in_array($row['status'], ['allotted', 'partial_allotted', 'sold'], true) ? '#047857' : '#b91c1c' }};">{{ \App\Services\SourceShare::resultMark($row['status'], $row['shares']) }}</td>
                                 <td style="padding:6px 0; text-align:right; font-weight:700;">{{ $inr($row['amount']) }}</td>
                             </tr>
                         @endforeach
                         <tr>
-                            <td colspan="4" style="padding:10px 0 0; font-weight:700;">Total ({{ $share['focus_rows']->count() }} applications)</td>
+                            <td colspan="4" style="padding:10px 0 0; font-weight:700;">Total ({{ $share['focus_rows']->count() }} {{ $share['focus_rows']->count() === 1 ? 'application' : 'applications' }})</td>
                             <td style="padding:10px 0 0; text-align:right; font-weight:700; font-size:17px;">{{ $inr($share['focus_amount']) }}</td>
                         </tr>
                     </table>

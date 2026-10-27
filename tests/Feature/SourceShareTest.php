@@ -157,6 +157,15 @@ class SourceShareTest extends TestCase
         }
     }
 
+    public function test_the_image_says_1_lot_not_1_lots(): void
+    {
+        $html = view('filament.pages.partials.source-share', ['share' => $this->share()])->render();
+
+        $this->assertStringContainsString('14 lots', $html);
+        $this->assertStringContainsString('1 lot<', $html);
+        $this->assertStringNotContainsString('1 lots', $html);
+    }
+
     public function test_a_group_without_a_source_has_no_share(): void
     {
         IpoApplication::query()->where('ipo_id', $this->jio->id)->update(['source_id' => null]);
