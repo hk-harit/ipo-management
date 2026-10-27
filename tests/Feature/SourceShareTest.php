@@ -140,7 +140,13 @@ class SourceShareTest extends TestCase
     public function test_both_pages_show_the_share_buttons_and_the_image_card(): void
     {
         foreach ([IpoDashboardPage::class, AccountOverviewPage::class] as $page) {
-            Livewire::test($page)
+            $component = Livewire::test($page);
+
+            if ($page === IpoDashboardPage::class) {
+                $component->call('openIpo', $this->jio->id);
+            }
+
+            $component
                 ->assertOk()
                 ->assertSee('WhatsApp message')
                 ->assertSee('Copy text')

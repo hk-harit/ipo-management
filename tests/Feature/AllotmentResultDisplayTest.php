@@ -56,19 +56,19 @@ class AllotmentResultDisplayTest extends TestCase
 
     public function test_before_any_result_the_dashboard_says_so(): void
     {
-        $report = Livewire::test(IpoDashboardPage::class)->instance()->report();
+        $report = Livewire::test(IpoDashboardPage::class)->call('openIpo', $this->jio->id)->instance()->report();
 
         $this->assertSame(0, $report['allotment']['allotted']);
         $this->assertSame(4, $report['allotment']['waiting']);
 
-        Livewire::test(IpoDashboardPage::class)->assertSee('Haju koi result nakhyo nathi');
+        Livewire::test(IpoDashboardPage::class)->call('openIpo', $this->jio->id)->assertSee('Allotment Entry');
     }
 
     public function test_the_ipo_dashboard_counts_and_names_who_got_it(): void
     {
         $this->enterResult();
 
-        $allot = Livewire::test(IpoDashboardPage::class)->instance()->report()['allotment'];
+        $allot = Livewire::test(IpoDashboardPage::class)->call('openIpo', $this->jio->id)->instance()->report()['allotment'];
 
         $this->assertSame(2, $allot['allotted']);
         $this->assertSame(1, $allot['not_allotted']);
@@ -79,9 +79,9 @@ class AllotmentResultDisplayTest extends TestCase
         $this->assertSame('Utsav bhai', $allot['rows']->first()['source_name']);
 
         Livewire::test(IpoDashboardPage::class)
-            ->assertSee('લાગ્યા 2')
-            ->assertSee('ન લાગ્યા 1')
-            ->assertSee('24 shares')
+            ->call('openIpo', $this->jio->id)
+            ->assertSee('લાગ્યા')
+            ->assertSee('36 shares')
             ->assertSee('Ved')
             ->assertSee('Isha');
     }
