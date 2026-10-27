@@ -100,6 +100,7 @@ class DashboardSummary
             return [$id => [
                 'balance' => $balance,
                 'blocked' => (float) ($apps->blocked ?? 0),
+                'refund_pending' => (float) ($apps->refund_pending ?? 0),
                 'invested' => (float) ($apps->invested ?? 0),
             ]];
         });
@@ -124,6 +125,7 @@ class DashboardSummary
         return [
             'balance' => $own['balance'] + (float) $subs->sum('balance'),
             'blocked' => $own['blocked'] + (float) $subs->sum('blocked'),
+            'refund_pending' => $own['refund_pending'] + (float) $subs->sum('refund_pending'),
             'invested' => $own['invested'] + (float) $subs->sum('invested'),
             'in_sub_accounts' => (float) $subs->sum('balance'),
         ];
@@ -132,7 +134,7 @@ class DashboardSummary
     /** @return array{balance: float, blocked: float, invested: float} */
     public function figuresFor(int $accountId): array
     {
-        return $this->accountFigures()->get($accountId, ['balance' => 0.0, 'blocked' => 0.0, 'invested' => 0.0]);
+        return $this->accountFigures()->get($accountId, ['balance' => 0.0, 'blocked' => 0.0, 'refund_pending' => 0.0, 'invested' => 0.0]);
     }
 
     /**
@@ -150,6 +152,7 @@ class DashboardSummary
 
         $available = (float) $figures->sum('balance');
         $blocked = (float) $figures->sum('blocked');
+        $refundPending = (float) $figures->sum('refund_pending');
         $invested = (float) $figures->sum('invested');
 
         $udhar = (float) Expense::query()->where('type', 'udhar_given')->where('status', 'pending')->sum('amount');
@@ -168,6 +171,7 @@ class DashboardSummary
         return [
             'available' => $available,
             'blocked' => $blocked,
+            'refund_pending' => $refundPending,
             'invested' => $invested,
             'total_funds' => $totalFunds,
             'udhar_receivable' => $udhar,
@@ -267,7 +271,8 @@ class DashboardSummary
                 SUM(amount) as applied,
                 SUM(CASE WHEN return_amount IS NOT NULL THEN return_amount WHEN status = 'refunded' THEN amount ELSE 0 END)
                     + SUM(COALESCE((SELECT SUM(s.net_amount) FROM application_sales s WHERE s.ipo_application_id = ipo_applications.id), 0)) as returned,
-                SUM(CASE WHEN status = 'applied' THEN amount ELSE 0 END) as blocked,
+                SUM(CASE WHEN status IN ('applied', 'not_allotted') THEN amount ELSE 0 END) as blocked,
+                SUM(CASE WHEN status = 'not_allotted' THEN amount ELSE 0 END) as refund_pending,
                 SUM(CASE WHEN status IN ('allotted', 'partial_allotted')
                     THEN (amount - COALESCE(return_amount, 0)) * (1 - CASE
                         WHEN COALESCE(shares_allotted, 0) <= 0 THEN 0

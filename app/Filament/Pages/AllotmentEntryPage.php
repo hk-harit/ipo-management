@@ -78,7 +78,7 @@ class AllotmentEntryPage extends Page
         return IpoApplication::query()
             ->with(['applicant:id,name,pan_number', 'account:id,name'])
             ->where('ipo_id', (int) $this->ipo)
-            ->whereIn('status', ['applied', 'allotted', 'refunded'])
+            ->whereIn('status', ['applied', 'allotted', 'not_allotted', 'refunded'])
             ->orderBy('applicant_id')
             ->orderBy('id')
             ->get();
@@ -104,6 +104,7 @@ class AllotmentEntryPage extends Page
             $a->id => [
                 'result' => match ($a->status) {
                     'allotted' => 'allotted',
+                    'not_allotted' => 'not_allotted',
                     'refunded' => 'refunded',
                     default => 'pending',
                 },
@@ -156,12 +157,12 @@ class AllotmentEntryPage extends Page
             ->send();
     }
 
-    /** Everything still waiting gets "not allotted". */
-    public function markRestRefunded(): void
+    /** Everything still waiting gets "not allotted" (refund to come). */
+    public function markRestNotAllotted(): void
     {
         foreach ($this->rows as $id => $row) {
             if ($row['result'] === 'pending') {
-                $this->rows[$id]['result'] = 'refunded';
+                $this->rows[$id]['result'] = 'not_allotted';
             }
         }
     }
@@ -169,7 +170,7 @@ class AllotmentEntryPage extends Page
     public function save(): void
     {
         $applications = $this->applications()->keyBy('id');
-        $changed = ['allotted' => 0, 'refunded' => 0, 'pending' => 0];
+        $changed = ['allotted' => 0, 'not_allotted' => 0, 'refunded' => 0, 'pending' => 0];
         $problems = [];
 
         foreach ($this->rows as $id => $row) {
@@ -203,13 +204,15 @@ class AllotmentEntryPage extends Page
                         'return_amount' => null,
                         'return_date' => null,
                     ]),
-                    // The model fills the full refund amount and date for a refunded application.
-                    'refunded' => $application->update([
-                        'status' => 'refunded',
-                        'shares_allotted' => null,
+                    // No shares; the money stays blocked until the bank refunds it (Refunds page).
+                    'not_allotted' => $application->update([
+                        'status' => 'not_allotted',
+                        'shares_allotted' => 0,
                         'return_amount' => null,
                         'return_date' => null,
                     ]),
+                    // Only reachable by leaving an already-refunded row alone, which is skipped above.
+                    'refunded' => null,
                     default => $application->update([
                         'status' => 'applied',
                         'shares_allotted' => null,
@@ -227,7 +230,7 @@ class AllotmentEntryPage extends Page
         Notification::make()
             ->success()
             ->title('Allotment save thayu')
-            ->body("{$changed['allotted']} allotted · {$changed['refunded']} not allotted (refund) · {$changed['pending']} pachha pending")
+            ->body("{$changed['allotted']} allotted · {$changed['not_allotted']} not allotted (refund aavvanu baki) · {$changed['pending']} pachha pending")
             ->send();
     }
 
@@ -235,6 +238,7 @@ class AllotmentEntryPage extends Page
     {
         return match ($application->status) {
             'allotted' => 'allotted',
+            'not_allotted' => 'not_allotted',
             'refunded' => 'refunded',
             default => 'pending',
         };
@@ -247,7 +251,7 @@ class AllotmentEntryPage extends Page
 
         return [
             'allotted' => (int) $counts->get('allotted', 0),
-            'refunded' => (int) $counts->get('refunded', 0),
+            'not_allotted' => (int) $counts->get('not_allotted', 0) + (int) $counts->get('refunded', 0),
             'pending' => (int) $counts->get('pending', 0),
             'total' => count($this->rows),
         ];

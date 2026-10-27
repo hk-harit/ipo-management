@@ -25,7 +25,8 @@ class IpoApplicationFormFields
             Select::make('status')
                 ->options([
                     'applied' => 'Applied',
-                    'refunded' => 'Refunded',
+                    'not_allotted' => 'Not allotted (refund pending)',
+                    'refunded' => 'Refunded (money is back)',
                     'allotted' => 'Allotted',
                     'partial_allotted' => 'Partially Allotted',
                     'sold' => 'Sold',
@@ -44,6 +45,10 @@ class IpoApplicationFormFields
                             $set('return_date', now()->format('Y-m-d'));
                         }
                         $set('shares_allotted', null);
+                    } elseif ($state === 'not_allotted') {
+                        $set('return_amount', null);
+                        $set('return_date', null);
+                        $set('shares_allotted', 0);
                     } elseif ($state === 'applied') {
                         $set('return_amount', null);
                         $set('return_date', null);

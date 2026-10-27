@@ -379,17 +379,16 @@ class AllotmentCheckService
             $application->status = $result->isFullyAllotted() ? 'allotted' : 'partial_allotted';
             $application->shares_allotted = $result->sharesAllotted;
         } else {
-            $application->status = 'refunded';
-            $application->shares_allotted = null;
+            // No shares. The money is only back once the bank refunds it, which is marked separately.
+            $application->status = 'not_allotted';
+            $application->shares_allotted = 0;
         }
 
-        if ($result->refundAmount !== null && in_array($application->status, ['refunded', 'partial_allotted'], true)) {
+        if ($result->refundAmount !== null && $application->status === 'partial_allotted') {
             $application->return_amount = $result->refundAmount;
-        } elseif ($application->status === 'refunded' && $application->return_amount === null) {
-            $application->return_amount = $application->amount;
         }
 
-        if (in_array($application->status, ['refunded', 'partial_allotted'], true) && ! $application->return_date) {
+        if ($application->status === 'partial_allotted' && ! $application->return_date) {
             $application->return_date = now()->toDateString();
         }
 

@@ -36,6 +36,7 @@ class AccountBalancesTable extends BaseWidget
             return [
                 'balance' => $summary->figuresFor($record->id)['balance'],
                 'blocked' => $rollup['blocked'],
+                'refund_pending' => $rollup['refund_pending'],
                 'invested' => $rollup['invested'],
                 'in_sub_accounts' => $rollup['in_sub_accounts'],
             ];
@@ -91,7 +92,8 @@ class AccountBalancesTable extends BaseWidget
                     ->state(fn (Account $record) => $figures($record)['blocked'])
                     ->money('INR')
                     ->weight('semibold')
-                    ->color('primary'),
+                    ->color('primary')
+                    ->description(fn (Account $record) => ($figures($record)['refund_pending'] ?? 0) > 0 ? 'refund baki ₹'.number_format($figures($record)['refund_pending'], 0) : null),
                 TextColumn::make('invested')
                     ->label('In Demat (ડીમેટમાં)')
                     ->state(fn (Account $record) => $figures($record)['invested'])

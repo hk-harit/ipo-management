@@ -114,7 +114,7 @@ class Account extends Model
 
     public function blockedIpoApplications(): HasMany
     {
-        return $this->ipoApplications()->where('status', 'applied');
+        return $this->ipoApplications()->whereIn('status', IpoApplication::BLOCKED);
     }
 
     public function deletionBlockedReason(): ?string
@@ -192,7 +192,7 @@ class Account extends Model
      */
     public function getBlockedInIposAttribute(): float
     {
-        return (float) $this->ipoApplications()->where('status', 'applied')->sum('amount');
+        return (float) $this->ipoApplications()->whereIn('status', IpoApplication::BLOCKED)->sum('amount');
     }
 
     /**

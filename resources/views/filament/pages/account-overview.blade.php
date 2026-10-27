@@ -5,6 +5,7 @@
         $money = fn (float $v) => ($v < 0 ? '−' : '').'₹'.number_format(abs($v), 2);
         $statusLabel = fn (string $s) => match ($s) {
             'applied' => 'Result awaited',
+            'not_allotted' => 'Not allotted (refund pending)',
             'refunded' => 'Not allotted',
             'allotted' => 'Allotted',
             'partial_allotted' => 'Partly allotted',

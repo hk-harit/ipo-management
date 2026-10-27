@@ -167,7 +167,7 @@ class Source extends Model implements AuthenticatableContract, FilamentUser
     /** Still applied, result not yet known — their money currently locked up. */
     public function getBlockedInIposAttribute(): float
     {
-        return (float) $this->ipoApplications()->where('status', 'applied')->sum('amount');
+        return (float) $this->ipoApplications()->whereIn('status', IpoApplication::BLOCKED)->sum('amount');
     }
 
     /** Applications that got shares — fully or partially. */

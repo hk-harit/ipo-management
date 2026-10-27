@@ -138,6 +138,7 @@ class ApplicationsRelationManager extends RelationManager
                     ->color(fn (string $state) => match ($state) {
                         'applied' => 'warning',
                         'refunded' => 'gray',
+                        'not_allotted' => 'danger',
                         'allotted', 'partial_allotted' => 'success',
                         'sold' => 'info',
                         default => 'gray',

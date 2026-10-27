@@ -72,7 +72,9 @@ class IpoDashboardPage extends Page
                 'amount' => (float) $group->sum('amt'),
                 'allotted' => (int) $allotted->sum('n'),
                 'shares' => (int) $allotted->sum('shares'),
-                'not_allotted' => (int) $group->where('status', 'refunded')->sum('n'),
+                'not_allotted' => (int) $group->whereIn('status', IpoApplication::NOT_ALLOTTED)->sum('n'),
+                'refund_pending' => (int) $group->where('status', 'not_allotted')->sum('n'),
+                'refund_pending_amount' => (float) $group->where('status', 'not_allotted')->sum('amt'),
                 'waiting' => (int) $group->where('status', 'applied')->sum('n'),
                 'last' => $group->max('last'),
             ];
@@ -101,7 +103,10 @@ class IpoDashboardPage extends Page
             'allotted' => $allottedRows->count(),
             'allotted_amount' => (float) $allottedRows->sum('amount'),
             'allotted_shares' => (int) $allottedRows->sum('shares'),
-            'not_allotted' => $rows->where('status', 'refunded')->count(),
+            'not_allotted' => $rows->whereIn('status', IpoApplication::NOT_ALLOTTED)->count(),
+            'refund_pending' => $rows->where('status', 'not_allotted')->count(),
+            'refund_pending_amount' => (float) $rows->where('status', 'not_allotted')->sum('amount'),
+            'refund_received' => $rows->where('status', 'refunded')->count(),
             'waiting' => $rows->where('status', 'applied')->count(),
             'rows' => $allottedRows,
         ];
@@ -120,7 +125,10 @@ class IpoDashboardPage extends Page
                     'applied_amount' => (float) $apps->sum('amount'),
                     'allotted' => $got->count(),
                     'shares' => (int) $got->sum('shares_allotted'),
-                    'not_allotted' => $apps->where('status', 'refunded')->count(),
+                    'not_allotted' => $apps->whereIn('status', IpoApplication::NOT_ALLOTTED)->count(),
+                    'refund_pending' => $apps->where('status', 'not_allotted')->count(),
+                    'refund_pending_amount' => (float) $apps->where('status', 'not_allotted')->sum('amount'),
+                    'refund_received' => $apps->where('status', 'refunded')->count(),
                     'waiting' => $apps->where('status', 'applied')->count(),
                     'allottees' => $got->sortBy(fn (IpoApplication $x) => $x->applicant?->name)
                         ->map(fn (IpoApplication $x) => ['name' => $x->applicant?->name, 'shares' => (int) $x->shares_allotted])

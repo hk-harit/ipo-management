@@ -29,7 +29,7 @@ class AllotmentOutcomeChart extends ChartWidget
         $applied = IpoApplication::where('status', 'applied')->count();
         $allotted = IpoApplication::whereIn('status', ['allotted', 'partial_allotted'])->count();
         $sold = IpoApplication::where('status', 'sold')->count();
-        $refunded = IpoApplication::where('status', 'refunded')->count();
+        $refunded = IpoApplication::whereIn('status', IpoApplication::NOT_ALLOTTED)->count();
 
         return [
             'datasets' => [

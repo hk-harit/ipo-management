@@ -92,20 +92,20 @@ class AllotmentEntryTest extends TestCase
         $this->page()
             ->set('paste', 'JQPPM7159J')
             ->call('applyPaste')
-            ->call('markRestRefunded')
+            ->call('markRestNotAllotted')
             ->assertSet('rows.'.$this->apps['Ved']->id.'.result', 'allotted')
-            ->assertSet('rows.'.$this->apps['Pratik']->id.'.result', 'refunded')
-            ->assertSet('rows.'.$this->apps['Isha']->id.'.result', 'refunded');
+            ->assertSet('rows.'.$this->apps['Pratik']->id.'.result', 'not_allotted')
+            ->assertSet('rows.'.$this->apps['Isha']->id.'.result', 'not_allotted');
     }
 
-    public function test_saving_records_allotment_and_refunds_and_the_names_show_in_the_awaiting_sale_list(): void
+    public function test_saving_records_allotment_and_not_allotted_and_the_names_show_in_the_awaiting_sale_list(): void
     {
         $before = $this->account->current_balance; // 100000 - 3 x 13428
 
         $this->page()
             ->set('paste', 'JQPPM7159J')
             ->call('applyPaste')
-            ->call('markRestRefunded')
+            ->call('markRestNotAllotted')
             ->call('save')
             ->assertNotified('Allotment save thayu');
 
@@ -115,13 +115,14 @@ class AllotmentEntryTest extends TestCase
         $this->assertNull($ved->return_amount);
 
         foreach (['Pratik', 'Isha'] as $name) {
-            $refunded = $this->apps[$name]->fresh();
-            $this->assertSame('refunded', $refunded->status);
-            $this->assertSame('13428.00', (string) $refunded->return_amount, 'the full amount comes back');
-            $this->assertNotNull($refunded->return_date);
+            $notAllotted = $this->apps[$name]->fresh();
+            $this->assertSame('not_allotted', $notAllotted->status, 'no shares, refund still to come');
+            $this->assertNull($notAllotted->return_amount, 'the money has not come back yet');
+            $this->assertNull($notAllotted->return_date);
         }
 
-        $this->assertSame($before + 2 * 13428.0, $this->account->current_balance, 'only the two refunds credit the account');
+        $this->assertSame($before, $this->account->current_balance, 'nothing is credited until the refund arrives');
+        $this->assertSame(2 * 13428.0, $this->account->blocked_in_ipos, 'the two not-allotted amounts are still held by the bank');
         $this->assertSame(13428.0, $this->account->invested_in_ipos);
 
         // The point of it all: the allottee's name now shows in the "Allotted — Awaiting Sale" list.

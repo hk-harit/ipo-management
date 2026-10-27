@@ -40,7 +40,7 @@ class SourceShare
             ->values();
 
         $focusRows = $focusIpo
-            ? $applications->where('ipo_id', $focusIpo->id)->sortByDesc('amount')->map(fn (IpoApplication $a) => [
+            ? $applications->where('ipo_id', $focusIpo->id)->sort(fn (IpoApplication $x, IpoApplication $y) => [IpoApplication::resultRank($x->status), -(float) $x->amount] <=> [IpoApplication::resultRank($y->status), -(float) $y->amount])->map(fn (IpoApplication $a) => [
                 'name' => $a->applicant?->name ?? '—',
                 'pan' => $a->applicant?->pan_number,
                 'lots' => $lotAmount ? max(1, (int) round((float) $a->amount / $lotAmount)) : null,
@@ -67,7 +67,7 @@ class SourceShare
             'focus_rows' => $focusRows,
             'focus_amount' => (float) $focusRows->sum('amount'),
             'allotted' => $focusRows->whereIn('status', ['allotted', 'partial_allotted', 'sold'])->count(),
-            'not_allotted' => $focusRows->where('status', 'refunded')->count(),
+            'not_allotted' => $focusRows->whereIn('status', IpoApplication::NOT_ALLOTTED)->count(),
             'waiting' => $focusRows->where('status', 'applied')->count(),
         ];
 
@@ -90,7 +90,7 @@ class SourceShare
     {
         return match ($status) {
             'allotted', 'partial_allotted', 'sold' => '✅ લાગ્યા'.($shares ? ' ('.$shares.' શેર)' : ''),
-            'refunded' => '❌ ન લાગ્યા',
+            'not_allotted', 'refunded' => '❌ ન લાગ્યા',
             default => '',
         };
     }

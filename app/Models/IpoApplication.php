@@ -16,6 +16,26 @@ class IpoApplication extends Model
     /** @use HasFactory<IpoApplicationFactory> */
     use Auditable, BelongsToUser, HasFactory;
 
+    /** Shares were received. */
+    public const ALLOTTED = ['allotted', 'partial_allotted', 'sold'];
+
+    /** No shares. 'not_allotted' = refund still to come, 'refunded' = the money is back. */
+    public const NOT_ALLOTTED = ['not_allotted', 'refunded'];
+
+    /** Money the bank is still holding: result awaited, or not allotted and the refund not arrived. */
+    public const BLOCKED = ['applied', 'not_allotted'];
+
+    /** Display order in lists: got it first, waiting next, not allotted last. */
+    public static function resultRank(string $status): int
+    {
+        return match (true) {
+            in_array($status, self::ALLOTTED, true) => 0,
+            $status === 'applied' => 1,
+            $status === 'not_allotted' => 2,
+            default => 3,
+        };
+    }
+
     protected $fillable = [
         'user_id',
         'ipo_id',

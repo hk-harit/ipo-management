@@ -153,6 +153,7 @@ class IpoApplicationResource extends Resource
                     ->color(fn (string $state) => match ($state) {
                         'applied' => 'warning',
                         'refunded' => 'gray',
+                        'not_allotted' => 'danger',
                         'allotted', 'partial_allotted' => 'success',
                         'sold' => 'info',
                         default => 'gray',
@@ -191,6 +192,7 @@ class IpoApplicationResource extends Resource
                     ->label('Status')
                     ->options([
                         'applied' => 'Applied',
+                        'not_allotted' => 'Not allotted (refund pending)',
                         'refunded' => 'Refunded',
                         'allotted' => 'Allotted',
                         'partial_allotted' => 'Partially Allotted',

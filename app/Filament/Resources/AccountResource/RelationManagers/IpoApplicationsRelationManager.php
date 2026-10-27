@@ -92,6 +92,7 @@ class IpoApplicationsRelationManager extends RelationManager
                     ->color(fn (string $state) => match ($state) {
                         'applied' => 'warning',
                         'refunded' => 'gray',
+                        'not_allotted' => 'danger',
                         'allotted', 'partial_allotted' => 'success',
                         'sold' => 'info',
                         default => 'gray',
@@ -110,6 +111,7 @@ class IpoApplicationsRelationManager extends RelationManager
                     ->label('Filter Status')
                     ->options([
                         'applied' => 'Lien Blocked (Applied)',
+                        'not_allotted' => 'Not allotted (refund pending)',
                         'refunded' => 'Refunded',
                         'allotted' => 'Allotted',
                         'partial_allotted' => 'Partially Allotted',

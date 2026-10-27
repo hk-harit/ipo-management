@@ -33,7 +33,7 @@ class AccountOverview
         return $applications
             ->groupBy(fn (IpoApplication $a) => $a->source?->name ?? 'No source')
             ->map(function (Collection $apps, string $name) use ($lotAmount, $accountNames, $hasSub) {
-                $rows = $apps->sortByDesc('amount')->map(function (IpoApplication $a) use ($lotAmount, $accountNames, $hasSub) {
+                $rows = $apps->sort(fn (IpoApplication $x, IpoApplication $y) => [IpoApplication::resultRank($x->status), -(float) $x->amount] <=> [IpoApplication::resultRank($y->status), -(float) $y->amount])->map(function (IpoApplication $a) use ($lotAmount, $accountNames, $hasSub) {
                     $sourcePct = $a->source ? $a->effective_source_share_percent : 0.0;
                     $applicantPct = (float) $a->applicant_commission_percent;
                     $accountId = ($hasSub && $a->sub_account_id) ? $a->sub_account_id : $a->account_id;
@@ -65,7 +65,10 @@ class AccountOverview
                     'amount' => (float) $rows->sum('amount'),
                     'source_pct' => $rows->first()['source_pct'] ?? 0.0,
                     'allotted' => $rows->filter(fn ($r) => in_array($r['status'], ['allotted', 'partial_allotted', 'sold'], true))->count(),
-                    'not_allotted' => $rows->where('status', 'refunded')->count(),
+                    'not_allotted' => $rows->whereIn('status', IpoApplication::NOT_ALLOTTED)->count(),
+                    'refund_pending' => $rows->where('status', 'not_allotted')->count(),
+                    'refund_pending_amount' => (float) $rows->where('status', 'not_allotted')->sum('amount'),
+                    'refund_received' => $rows->where('status', 'refunded')->count(),
                     'waiting' => $rows->where('status', 'applied')->count(),
                     'applicant_pct_summary' => $rows->groupBy(fn ($r) => (string) $r['applicant_pct'])
                         ->map(fn (Collection $g, string $pct) => $g->count().' × '.rtrim(rtrim(number_format((float) $pct, 2), '0'), '.').'%')
@@ -157,7 +160,7 @@ class AccountOverview
                 'blocked' => $figure['blocked'],
                 'invested' => $figure['invested'],
                 'balance' => $figure['balance'],
-                'applications' => $focus->values(),
+                'applications' => $focus->sort(fn (IpoApplication $x, IpoApplication $y) => IpoApplication::resultRank($x->status) <=> IpoApplication::resultRank($y->status))->values(),
             ];
         });
 

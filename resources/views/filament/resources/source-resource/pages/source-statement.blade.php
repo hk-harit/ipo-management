@@ -101,6 +101,7 @@
                             <td class="py-2 pr-4">
                                 {{ match ($app->status) {
                                     'applied' => 'Result awaited',
+                                    'not_allotted' => 'Not allotted — refund coming',
                                     'refunded' => 'Not allotted',
                                     'allotted' => 'Allotted',
                                     'partial_allotted' => 'Partly allotted',

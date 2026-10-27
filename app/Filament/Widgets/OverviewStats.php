@@ -44,7 +44,7 @@ class OverviewStats extends BaseWidget
                 ->icon('heroicon-o-wallet'),
 
             Stat::make('Blocked in IPOs (IPO માં બ્લોક)', $this->money($totals['blocked']))
-                ->description("{$pending} application(s) awaiting result")
+                ->description("{$pending} awaiting result".($totals['refund_pending'] > 0 ? ' · refund baki '.$this->money($totals['refund_pending'], 0) : ''))
                 ->color('primary')
                 ->icon('heroicon-o-lock-closed'),
 

@@ -28,6 +28,9 @@
                         <div class="mt-3 flex flex-wrap gap-2 text-xs font-bold">
                             <span class="rounded-full bg-success-50 px-2.5 py-1 text-success-700 dark:bg-success-500/10 dark:text-success-400">લાગ્યા {{ $row['allotted'] }}</span>
                             <span class="rounded-full bg-gray-100 px-2.5 py-1 text-gray-700 dark:bg-white/10 dark:text-gray-300">ન લાગ્યા {{ $row['not_allotted'] }}</span>
+                            @if ($row['refund_pending'])
+                                <span class="rounded-full px-2.5 py-1" style="background:#fef2f2; color:#b91c1c;">Refund baki {{ $row['refund_pending'] }} · {{ $money($row['refund_pending_amount']) }}</span>
+                            @endif
                             @if ($row['waiting'])
                                 <span class="rounded-full bg-warning-50 px-2.5 py-1 text-warning-700 dark:bg-warning-500/10 dark:text-warning-400">બાકી {{ $row['waiting'] }}</span>
                             @endif
@@ -79,7 +82,12 @@
             <div class="rounded-xl border border-gray-200 p-4 dark:border-white/10">
                 <div class="text-xs uppercase text-gray-500 dark:text-gray-400">ન લાગ્યા</div>
                 <div class="text-2xl font-bold text-gray-950 dark:text-white">{{ $allot['not_allotted'] }}</div>
-                <div class="text-xs text-gray-500 dark:text-gray-400">paisa pacha aavya</div>
+                <div class="text-xs">
+                    @if ($allot['refund_pending'])<span style="color:#b91c1c; font-weight:600;">Refund baki {{ $allot['refund_pending'] }} · {{ $money($allot['refund_pending_amount']) }}</span>@endif
+                    @if ($allot['refund_received'])<span class="text-gray-500 dark:text-gray-400"> · aavyu {{ $allot['refund_received'] }}</span>@endif
+                    @if (! $allot['refund_pending'] && ! $allot['refund_received'])<span class="text-gray-500 dark:text-gray-400">—</span>@endif
+                    <a href="{{ \App\Filament\Pages\RefundsPage::getUrl() }}" class="text-primary-600 underline"> Refunds</a>
+                </div>
             </div>
             <div class="rounded-xl border border-gray-200 p-4 dark:border-white/10">
                 <div class="text-xs uppercase text-gray-500 dark:text-gray-400">બાકી (result nathi)</div>
@@ -101,6 +109,8 @@
                                 <span class="text-gray-600 dark:text-gray-300">{{ $a['applied'] }} apply · {{ $money($a['applied_amount']) }}</span>
                                 <span class="rounded-full bg-success-50 px-2.5 py-0.5 text-xs font-bold text-success-700 dark:bg-success-500/10 dark:text-success-400">લાગ્યા {{ $a['allotted'] }}@if ($a['shares']) · {{ $a['shares'] }} shares @endif</span>
                                 <span class="rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-bold text-gray-700 dark:bg-white/10 dark:text-gray-300">ન લાગ્યા {{ $a['not_allotted'] }}</span>
+                                @if ($a['refund_pending'])<span class="rounded-full px-2.5 py-0.5 text-xs font-bold" style="background:#fef2f2; color:#b91c1c;">Refund baki {{ $a['refund_pending'] }} · {{ $money($a['refund_pending_amount']) }}</span>@endif
+                                @if ($a['refund_received'])<span class="rounded-full px-2.5 py-0.5 text-xs font-bold" style="background:#f0fdf4; color:#15803d;">Refund aavyu {{ $a['refund_received'] }}</span>@endif
                                 @if ($a['waiting'])<span class="rounded-full bg-warning-50 px-2.5 py-0.5 text-xs font-bold text-warning-700 dark:bg-warning-500/10 dark:text-warning-400">બાકી {{ $a['waiting'] }}</span>@endif
                             </span>
                         </summary>

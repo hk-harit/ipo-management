@@ -15,10 +15,11 @@ class LiveDeploySeeder extends Seeder
      */
     public function run(): void
     {
-        $dataFile = __DIR__ . '/applicants_data.json';
+        $dataFile = __DIR__.'/applicants_data.json';
 
         if (! File::exists($dataFile)) {
             $this->command->error("Data file {$dataFile} not found.");
+
             return;
         }
 
@@ -35,12 +36,13 @@ class LiveDeploySeeder extends Seeder
             );
         }
 
-        $this->command->info(count($data['users']) . ' users synced.');
+        $this->command->info(count($data['users']).' users synced.');
 
         // Seed Applicants
         $admin = User::first();
         if (! $admin) {
             $this->command->error('No admin user found to attach applicants.');
+
             return;
         }
 
@@ -64,6 +66,6 @@ class LiveDeploySeeder extends Seeder
 
         DB::statement('SET FOREIGN_KEY_CHECKS=1;');
 
-        $this->command->info(count($data['applicants']) . ' applicants synced successfully.');
+        $this->command->info(count($data['applicants']).' applicants synced successfully.');
     }
 }

@@ -73,6 +73,7 @@ class MyApplications extends Page implements HasTable
                     ->badge()
                     ->formatStateUsing(fn (string $state) => match ($state) {
                         'applied' => 'Result awaited',
+                        'not_allotted' => 'Not allotted — refund coming',
                         'refunded' => 'Not allotted',
                         'allotted' => 'Allotted',
                         'partial_allotted' => 'Partly allotted',
@@ -82,6 +83,7 @@ class MyApplications extends Page implements HasTable
                     ->color(fn (string $state) => match ($state) {
                         'applied' => 'warning',
                         'refunded' => 'gray',
+                        'not_allotted' => 'danger',
                         'allotted', 'partial_allotted' => 'success',
                         'sold' => 'info',
                         default => 'gray',
@@ -116,6 +118,7 @@ class MyApplications extends Page implements HasTable
                 SelectFilter::make('status')
                     ->options([
                         'applied' => 'Result awaited',
+                        'not_allotted' => 'Not allotted — refund coming',
                         'refunded' => 'Not allotted',
                         'allotted' => 'Allotted',
                         'partial_allotted' => 'Partly allotted',

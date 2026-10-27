@@ -22,17 +22,17 @@ class IpoCapitalDistributionChart extends ChartWidget
     public static function canView(): bool
     {
         return Ipo::whereHas('applications', function ($query) {
-            $query->whereIn('status', ['applied', 'allotted', 'partial_allotted']);
+            $query->whereIn('status', ['applied', 'not_allotted', 'allotted', 'partial_allotted']);
         })->exists();
     }
 
     protected function getData(): array
     {
         $ipos = Ipo::whereHas('applications', function ($query) {
-            $query->whereIn('status', ['applied', 'allotted', 'partial_allotted']);
+            $query->whereIn('status', ['applied', 'not_allotted', 'allotted', 'partial_allotted']);
         })
             ->with(['applications' => function ($query) {
-                $query->whereIn('status', ['applied', 'allotted', 'partial_allotted']);
+                $query->whereIn('status', ['applied', 'not_allotted', 'allotted', 'partial_allotted']);
             }])
             ->get()
             ->map(function (Ipo $i) {

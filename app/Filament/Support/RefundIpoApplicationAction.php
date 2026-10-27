@@ -19,7 +19,7 @@ class RefundIpoApplicationAction
             ->icon('heroicon-o-arrow-uturn-left')
             ->color('warning')
             ->tooltip('Unblock mandate / Mark application as refunded to account')
-            ->visible(fn (IpoApplication $record) => $record->status === 'applied')
+            ->visible(fn (IpoApplication $record) => in_array($record->status, ['applied', 'not_allotted'], true))
             ->requiresConfirmation()
             ->modalHeading(fn (IpoApplication $record) => 'Unblock Mandate / Refund — '.($record->ipo?->name ?? 'IPO'))
             ->modalDescription(fn (IpoApplication $record) => 'This will mark the application as refunded and credit ₹'.number_format($record->amount, 2)." back to '".($record->account?->name ?? 'the account')."'. A refund entry will be added to the account's passbook.")

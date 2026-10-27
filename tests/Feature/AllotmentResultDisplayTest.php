@@ -50,7 +50,7 @@ class AllotmentResultDisplayTest extends TestCase
         Livewire::test(AllotmentEntryPage::class)
             ->set('paste', "JQPPM7159J 12\nCWUPD7942L 24")
             ->call('applyPaste')
-            ->set('rows.'.IpoApplication::where('applicant_id', Applicant::where('name', 'Pratik')->value('id'))->value('id').'.result', 'refunded')
+            ->set('rows.'.IpoApplication::where('applicant_id', Applicant::where('name', 'Pratik')->value('id'))->value('id').'.result', 'not_allotted')
             ->call('save');
     }
 

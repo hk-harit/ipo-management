@@ -29,6 +29,10 @@ class ListIpoApplications extends ListRecords
                 ->badge(IpoApplication::where('status', 'applied')->count())
                 ->badgeColor('warning')
                 ->modifyQueryUsing(fn (Builder $query) => $query->where('status', 'applied')),
+            'refund_pending' => Tab::make('Refund baki')
+                ->badge(IpoApplication::where('status', 'not_allotted')->count())
+                ->badgeColor('danger')
+                ->modifyQueryUsing(fn (Builder $query) => $query->where('status', 'not_allotted')),
             'allotted' => Tab::make('Allotted')
                 ->badge(IpoApplication::whereIn('status', ['allotted', 'partial_allotted'])->count())
                 ->badgeColor('success')

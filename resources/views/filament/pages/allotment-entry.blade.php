@@ -33,7 +33,7 @@
                       class="w-full rounded-lg border-gray-300 bg-white font-mono text-sm shadow-sm dark:border-white/10 dark:bg-white/5 dark:text-white"></textarea>
             <div class="mt-3 flex flex-wrap gap-2">
                 <x-filament::button wire:click="applyPaste" icon="heroicon-o-check-circle" color="success">Allotted marks karo</x-filament::button>
-                <x-filament::button wire:click="markRestRefunded" icon="heroicon-o-arrow-uturn-left" color="gray">Baki badha "Not allotted" karo</x-filament::button>
+                <x-filament::button wire:click="markRestNotAllotted" icon="heroicon-o-arrow-uturn-left" color="gray">Baki badha "Not allotted" karo</x-filament::button>
             </div>
         </x-filament::section>
 
@@ -41,7 +41,7 @@
         <x-filament::section heading="2. Check karo ane save karo">
             <div class="mb-3 flex flex-wrap gap-2 text-sm">
                 <span class="rounded-full bg-success-50 px-3 py-1 font-semibold text-success-700 dark:bg-success-500/10 dark:text-success-400">Allotted {{ $tally['allotted'] }}</span>
-                <span class="rounded-full bg-gray-100 px-3 py-1 font-semibold text-gray-700 dark:bg-white/10 dark:text-gray-300">Not allotted {{ $tally['refunded'] }}</span>
+                <span class="rounded-full bg-gray-100 px-3 py-1 font-semibold text-gray-700 dark:bg-white/10 dark:text-gray-300">Not allotted {{ $tally['not_allotted'] }}</span>
                 <span class="rounded-full bg-warning-50 px-3 py-1 font-semibold text-warning-700 dark:bg-warning-500/10 dark:text-warning-400">Baki (pending) {{ $tally['pending'] }}</span>
                 <span class="px-1 py-1 text-gray-500">of {{ $tally['total'] }}</span>
             </div>
@@ -73,7 +73,8 @@
                                             :class="{ 'border-success-500': result === 'allotted' }">
                                         <option value="pending">Baki (pending)</option>
                                         <option value="allotted">Allotted ✔</option>
-                                        <option value="refunded">Not allotted</option>
+                                        <option value="not_allotted">Not allotted (refund baki)</option>
+                                        @if ($application->status === 'refunded')<option value="refunded">Refund aavi gayu ✔</option>@endif
                                     </select>
                                 </td>
                                 <td class="py-2">
@@ -89,7 +90,7 @@
 
             <div class="mt-4">
                 <x-filament::button wire:click="save" wire:loading.attr="disabled" icon="heroicon-o-check" size="lg">Save allotment</x-filament::button>
-                <span class="ml-3 text-xs text-gray-500 dark:text-gray-400">"Not allotted" = paisa account ma pacha (mandate unblock) — passbook ma refund aavse.</span>
+                <span class="ml-3 text-xs text-gray-500 dark:text-gray-400">"Not allotted" = refund aavvanu baki (paisa haju bank ma blocked). Refund aave tyare **Refunds** page par "Aavi gayu" karo.</span>
             </div>
         </x-filament::section>
     @endif
