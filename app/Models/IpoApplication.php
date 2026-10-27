@@ -55,6 +55,7 @@ class IpoApplication extends Model
         'return_amount',
         'return_date',
         'sold_date',
+        'sell_requested_at',
         'source_share_percent_override',
         'applicant_commission_percent',
         'notes',
@@ -71,6 +72,7 @@ class IpoApplication extends Model
             'applied_date' => 'date',
             'return_date' => 'date',
             'sold_date' => 'date',
+            'sell_requested_at' => 'datetime',
         ];
     }
 
