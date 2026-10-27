@@ -8,7 +8,7 @@ use Filament\Widgets\ChartWidget;
 
 class MonthlyExpenseChart extends ChartWidget
 {
-    protected static ?string $heading = 'Monthly Expenses & Udhar (Last 6 Months)';
+    protected static ?string $heading = 'Monthly Expenses & Loans (Last 6 Months)';
 
     protected static ?string $maxHeight = '240px';
 
@@ -45,7 +45,7 @@ class MonthlyExpenseChart extends ChartWidget
                     'borderRadius' => 6,
                 ],
                 [
-                    'label' => 'Udhar Given (₹)',
+                    'label' => 'Loans Given (₹)',
                     'data' => $udharData,
                     'backgroundColor' => '#f59e0b',
                     'borderRadius' => 6,

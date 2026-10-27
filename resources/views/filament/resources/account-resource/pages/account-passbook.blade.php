@@ -11,7 +11,7 @@
         <div class="flex items-center justify-between p-3.5 rounded-2xl bg-primary-50/60 dark:bg-primary-950/40 border border-primary-200 dark:border-primary-800/40 mb-2">
             <div class="flex items-center gap-2.5">
                 <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-primary-100 text-primary-800 dark:bg-primary-900/60 dark:text-primary-300">
-                    Sub-Account (સબ એકાઉન્ટ)
+                    Sub-Account
                 </span>
                 <span class="text-sm font-medium text-gray-700 dark:text-gray-300">
                     Parent Main Account: <strong>{{ $record->parent->name }}</strong>
@@ -31,7 +31,7 @@
                 <div class="flex items-center gap-2">
                     <x-heroicon-m-rectangle-stack class="w-5 h-5 text-primary-600" />
                     <h4 class="text-sm font-bold text-gray-950 dark:text-white">
-                        Sub-Accounts Under This Account (આ ખાતાના સબ એકાઉન્ટ્સ)
+                        Sub-Accounts Under This Account
                     </h4>
                     <span class="text-xs font-bold px-2 py-0.5 rounded-full bg-primary-50 text-primary-700 dark:bg-primary-950 dark:text-primary-300">
                         {{ $record->subAccounts->count() }} Sub-Accounts
@@ -69,7 +69,7 @@
         <div class="relative overflow-hidden rounded-2xl bg-white dark:bg-gray-900 border border-gray-200/80 dark:border-white/10 p-5 shadow-xs">
             <div class="flex items-center justify-between">
                 <span class="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
-                    Total Capital (કુલ રકમ)
+                    Total Capital
                 </span>
                 <div class="p-2 rounded-xl bg-primary-50 dark:bg-primary-950/50 text-primary-600 dark:text-primary-400">
                     <x-heroicon-m-banknotes class="w-5 h-5" />
@@ -87,7 +87,7 @@
         <div class="relative overflow-hidden rounded-2xl bg-white dark:bg-gray-900 border {{ $totalBlocked > 0 ? 'border-amber-300 dark:border-amber-500/40 bg-amber-50/20' : 'border-gray-200/80 dark:border-white/10' }} p-5 shadow-xs">
             <div class="flex items-center justify-between">
                 <span class="text-xs font-semibold uppercase tracking-wider {{ $totalBlocked > 0 ? 'text-amber-700 dark:text-amber-400' : 'text-gray-500 dark:text-gray-400' }}">
-                    Blocked in IPOs (IPO માં બ્લોક)
+                    Blocked in IPOs
                 </span>
                 <div class="p-2 rounded-xl {{ $totalBlocked > 0 ? 'bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300' : 'bg-gray-100 dark:bg-white/10 text-gray-500' }}">
                     <x-heroicon-m-lock-closed class="w-5 h-5" />
@@ -105,7 +105,7 @@
         <div class="relative overflow-hidden rounded-2xl bg-white dark:bg-gray-900 border border-gray-200/80 dark:border-white/10 p-5 shadow-xs">
             <div class="flex items-center justify-between">
                 <span class="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
-                    Available Free (હાલમાં ઉપલબ્ધ)
+                    Available Free
                 </span>
                 <div class="p-2 rounded-xl bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400">
                     <x-heroicon-m-check-badge class="w-5 h-5" />
@@ -123,7 +123,7 @@
         <div class="relative overflow-hidden rounded-2xl bg-white dark:bg-gray-900 border border-gray-200/80 dark:border-white/10 p-5 shadow-xs">
             <div class="flex items-center justify-between">
                 <span class="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
-                    Opening Balance (શરૂઆતનું)
+                    Opening Balance
                 </span>
                 <div class="p-2 rounded-xl bg-gray-100 dark:bg-white/10 text-gray-600 dark:text-gray-400">
                     <x-heroicon-m-building-library class="w-5 h-5" />
@@ -146,7 +146,7 @@
         <x-slot name="heading">
             <div class="flex items-center gap-2">
                 <x-heroicon-m-lock-closed class="w-5 h-5 text-amber-500" />
-                <span>Currently Blocked in IPOs (આ ખાતામાંથી હાલ બ્લોક થયેલા IPO)</span>
+                <span>Currently Blocked in IPOs</span>
                 @if ($blockedApps->isNotEmpty())
                     <span class="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300">
                         {{ $blockedApps->count() }} Pending
@@ -165,7 +165,7 @@
                         <tr>
                             <th class="py-3 px-4">Applied Date</th>
                             <th class="py-3 px-4">IPO Name</th>
-                            <th class="py-3 px-4">Applicant (કોના ડીમેટ માટે)</th>
+                            <th class="py-3 px-4">Applicant</th>
                             <th class="py-3 px-4 text-right">Blocked Amount</th>
                             <th class="py-3 px-4 text-center">Status</th>
                             <th class="py-3 px-4 text-right">Action</th>
@@ -248,7 +248,7 @@
                     <x-heroicon-m-check class="w-6 h-6" />
                 </div>
                 <h4 class="text-sm font-semibold text-gray-900 dark:text-white">
-                    કોઈ IPO માં રકમ બ્લોક નથી (No Blocked Funds)
+                    No Blocked Funds
                 </h4>
                 <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
                     There are no pending IPO applications blocking money in this account. All available balance is free.
@@ -262,7 +262,7 @@
         <x-slot name="heading">
             <div class="flex items-center gap-2">
                 <x-heroicon-m-book-open class="w-5 h-5 text-primary-600 dark:text-primary-400" />
-                <span>Account Passbook & Ledger (ખાતાની વિગતવાર પાસબુક)</span>
+                <span>Account Passbook & Ledger</span>
             </div>
         </x-slot>
         <x-slot name="description">

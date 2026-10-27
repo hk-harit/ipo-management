@@ -12,9 +12,9 @@ class AccountOverviewPage extends Page
 {
     protected static ?string $navigationIcon = 'heroicon-o-table-cells';
 
-    protected static ?string $navigationLabel = 'Account Overview (ખાતાવાર હિસાબ)';
+    protected static ?string $navigationLabel = 'Account Overview';
 
-    protected static ?string $title = 'Account Overview (ખાતાવાર હિસાબ)';
+    protected static ?string $title = 'Account Overview';
 
     protected static ?string $slug = 'account-overview';
 
@@ -32,7 +32,7 @@ class AccountOverviewPage extends Page
 
     public function getSubheading(): ?string
     {
-        return 'Darek account mathi ketli application bhari, kon source e ketla paisa apya, ane ketlu bacheyu.';
+        return 'For each account: how many applications were made, how much money each source gave, and what is left.';
     }
 
     public function overview(): array

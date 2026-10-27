@@ -36,23 +36,23 @@ class ApplicationsRelationManager extends RelationManager
     {
         return $form->schema([
             Select::make('applicant_id')
-                ->label('Applicant (કોના ડીમેટ/નામે)')
+                ->label('Applicant')
                 ->helperText('Demat account holder')
                 ->relationship('applicant', 'name')
                 ->required()
                 ->searchable()
                 ->preload(),
             Select::make('account_id')
-                ->label('Payment Account (મુખ્ય ખાતું)')
-                ->helperText('જે ખાતામાંથી UPI mandate અથવા પૈસા બ્લોક થાય')
+                ->label('Payment Account')
+                ->helperText('The account the UPI mandate or blocked money comes from')
                 ->relationship('account', 'name', fn ($query) => Account::hasSubAccountColumn() ? $query->where('is_sub_account', false) : $query)
                 ->required()
                 ->searchable()
                 ->preload()
                 ->live(),
             Select::make('sub_account_id')
-                ->label('Sub-Account (સબ એકાઉન્ટ - ઓપ્શનલ)')
-                ->helperText('જો ડાયરેક્ટ ખાતામાંથી ન ભરવું હોય તો સબ એકાઉન્ટ પસંદ કરો, ફંડ તેમાં બોલશે')
+                ->label('Sub-Account')
+                ->helperText('Pick a sub-account if it should not be paid from the main account. The money is taken from the sub-account only, so move funds into it from the main account first.')
                 ->options(function (Get $get) {
                     if (! Account::hasSubAccountColumn()) {
                         return [];
@@ -67,23 +67,23 @@ class ApplicationsRelationManager extends RelationManager
                         ->pluck('name', 'id');
                 })
                 ->visible(fn () => Account::hasSubAccountColumn())
-                ->placeholder('Direct (મુખ્ય ખાતામાંથી સીધા)')
+                ->placeholder('Direct')
                 ->searchable()
                 ->preload()
                 ->live(),
             Select::make('funding_type')
-                ->label('Payment Method (પૈસા કેવી રીતે કપાયા)')
+                ->label('Payment Method')
                 ->options([
-                    'direct' => 'Direct (આ જ ખાતામાંથી સીધા પૈસા બ્લોક)',
-                    'transferred' => 'Transferred from another account (બીજા ખાતામાંથી નાખીને)',
+                    'direct' => 'Direct',
+                    'transferred' => 'Transferred from another account',
                 ])
                 ->default('direct')
                 ->required()
                 ->live()
                 ->native(false),
             Select::make('funding_account_id')
-                ->label('Transferred From Account (કયા ખાતામાંથી મોકલ્યા)')
-                ->helperText('પસંદ કરશો એટલે ઓટોમેટિક ખાતા ટ્રાન્સફર (Account Transfer) પણ થઈ જશે')
+                ->label('Transferred From Account')
+                ->helperText('Picking an account here also records an automatic Account Transfer')
                 ->relationship('fundingAccount', 'name')
                 ->searchable()
                 ->preload()

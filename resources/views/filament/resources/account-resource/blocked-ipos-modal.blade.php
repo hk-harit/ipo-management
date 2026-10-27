@@ -3,7 +3,7 @@
     <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 p-3.5 rounded-xl bg-gray-50 dark:bg-white/[0.03] border border-gray-200 dark:border-white/10">
         <div>
             <div class="text-[11px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                Total Blocked (કુલ બ્લોક રકમ)
+                Total Blocked
             </div>
             <div class="mt-0.5 text-lg font-bold text-amber-600 dark:text-amber-400">
                 ₹{{ number_format($account->blocked_in_ipos, 2) }}
@@ -11,7 +11,7 @@
         </div>
         <div>
             <div class="text-[11px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                Available Free (ઉપલબ્ધ રકમ)
+                Available Free
             </div>
             <div class="mt-0.5 text-lg font-bold text-emerald-600 dark:text-emerald-400">
                 ₹{{ number_format($account->current_balance, 2) }}
@@ -19,7 +19,7 @@
         </div>
         <div>
             <div class="text-[11px] font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                Total Account Capital (કુલ રકમ)
+                Total Account Capital
             </div>
             <div class="mt-0.5 text-lg font-bold text-gray-900 dark:text-white">
                 ₹{{ number_format($account->total_balance, 2) }}
@@ -34,7 +34,7 @@
                 <thead class="bg-gray-50/80 dark:bg-white/[0.02] text-gray-500 dark:text-gray-400 font-semibold uppercase text-[10px] tracking-wider">
                     <tr>
                         <th class="py-2.5 px-3">IPO Name</th>
-                        <th class="py-2.5 px-3">Applicant (ડીમેટ ધારક)</th>
+                        <th class="py-2.5 px-3">Applicant</th>
                         <th class="py-2.5 px-3">Applied Date</th>
                         <th class="py-2.5 px-3 text-right">Blocked Amount</th>
                         <th class="py-2.5 px-3 text-center">Status</th>
@@ -98,7 +98,7 @@
     @else
         <div class="py-8 text-center rounded-xl border border-dashed border-gray-200 dark:border-white/10 bg-gray-50/50 dark:bg-white/[0.01]">
             <x-heroicon-o-check-badge class="w-10 h-10 mx-auto text-emerald-500 mb-2" />
-            <h4 class="text-sm font-semibold text-gray-900 dark:text-white">કોઈ IPO માં રકમ બ્લોક નથી</h4>
+            <h4 class="text-sm font-semibold text-gray-900 dark:text-white">No money is blocked in any IPO</h4>
             <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
                 All funds in "{{ $account->name }}" are currently free and available to use.
             </p>

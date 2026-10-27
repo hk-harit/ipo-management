@@ -24,9 +24,9 @@ class AllotmentEntryPage extends Page
 
     protected static ?string $navigationGroup = 'IPO Management';
 
-    protected static ?string $navigationLabel = 'Allotment Entry (એલોટમેન્ટ)';
+    protected static ?string $navigationLabel = 'Allotment Entry';
 
-    protected static ?string $title = 'Allotment Entry (એલોટમેન્ટ)';
+    protected static ?string $title = 'Allotment Entry';
 
     protected static ?string $slug = 'allotment-entry';
 
@@ -55,7 +55,7 @@ class AllotmentEntryPage extends Page
 
     public function getSubheading(): ?string
     {
-        return 'Registrar / NSE / BSE par result joi ne ahiya ek sathe nakho. Allotted PAN paste karo, baki "Not allotted".';
+        return 'Check the result on the registrar / NSE / BSE site, then enter it here in one go. Paste the allotted PANs and mark the rest as not allotted.';
     }
 
     public function ipoOptions(): Collection
@@ -131,7 +131,7 @@ class AllotmentEntryPage extends Page
         $pans = array_keys($sharesByPan);
 
         if ($pans === []) {
-            Notification::make()->warning()->title('Koi PAN malyo nahi')->body('PAN (jem ke ABCDE1234F) ek line ma ek, paste karo.')->send();
+            Notification::make()->warning()->title('No PAN found')->body('Paste PANs (like ABCDE1234F), one per line.')->send();
 
             return;
         }
@@ -151,8 +151,8 @@ class AllotmentEntryPage extends Page
 
         Notification::make()
             ->success()
-            ->title(count($found).' PAN allotted marks thaya')
-            ->body($unknown === [] ? 'Badha PAN ni application mali.' : 'Aa PAN ni koi application nathi: '.implode(', ', $unknown))
+            ->title(count($found).' PAN(s) marked allotted')
+            ->body($unknown === [] ? 'Every PAN had an application.' : 'No application for these PANs: '.implode(', ', $unknown))
             ->persistent($unknown !== [])
             ->send();
     }
@@ -180,12 +180,12 @@ class AllotmentEntryPage extends Page
             }
 
             if ($row['result'] === 'allotted' && (int) ($row['shares'] ?? 0) <= 0) {
-                $problems[] = $application->applicant?->name.': shares allotted lakho';
+                $problems[] = $application->applicant?->name.': enter the shares allotted';
             }
         }
 
         if ($problems !== []) {
-            Notification::make()->danger()->title('Pehla shares bharo')->body(implode("\n", array_slice($problems, 0, 6)))->persistent()->send();
+            Notification::make()->danger()->title('Enter the shares first')->body(implode("\n", array_slice($problems, 0, 6)))->persistent()->send();
 
             return;
         }
@@ -229,8 +229,8 @@ class AllotmentEntryPage extends Page
 
         Notification::make()
             ->success()
-            ->title('Allotment save thayu')
-            ->body("{$changed['allotted']} allotted · {$changed['not_allotted']} not allotted (refund aavvanu baki) · {$changed['pending']} pachha pending")
+            ->title('Allotment saved')
+            ->body("{$changed['allotted']} allotted · {$changed['not_allotted']} not allotted (refund pending) · {$changed['pending']} set back to pending")
             ->send();
     }
 

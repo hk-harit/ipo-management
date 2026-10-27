@@ -8,7 +8,7 @@ use Filament\Widgets\ChartWidget;
 
 class AllotmentOutcomeChart extends ChartWidget
 {
-    protected static ?string $heading = 'Application Status & Allotment Ratio (પરિણામ વિશ્લેષણ)';
+    protected static ?string $heading = 'Application Status & Allotment Ratio';
 
     protected static ?int $sort = 5;
 

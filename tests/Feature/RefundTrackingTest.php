@@ -200,7 +200,7 @@ class RefundTrackingTest extends TestCase
         $account = $page->instance()->report()['accounts']->first();
         $this->assertSame([2, 1, 1], [$account['not_allotted'], $account['refund_pending'], $account['refund_received']]);
 
-        $page->assertSee('Refund baki')->assertSee('Refund aavyu');
+        $page->assertSee('Refund pending')->assertSee('Refund received');
     }
 
     public function test_those_who_did_not_get_it_are_listed_last(): void
@@ -221,8 +221,8 @@ class RefundTrackingTest extends TestCase
         $share = $data['source_groups']->first()['share'];
         $this->assertSame(['D Allotted', 'C Waiting', 'B NotAllotted', 'A Refunded'], $share['focus_rows']->pluck('name')->all());
         $this->assertSame(2, $share['not_allotted']);
-        $this->assertMatchesRegularExpression('/B NotAllotted[^\n]*❌ ન લાગ્યા/u', $share['text']);
-        $this->assertMatchesRegularExpression('/A Refunded[^\n]*❌ ન લાગ્યા/u', $share['text']);
+        $this->assertMatchesRegularExpression('/B NotAllotted[^\n]*❌ Not allotted/u', $share['text']);
+        $this->assertMatchesRegularExpression('/A Refunded[^\n]*❌ Not allotted/u', $share['text']);
     }
 
     public function test_the_auto_allotment_check_now_leaves_the_refund_to_come(): void
@@ -264,7 +264,7 @@ class RefundTrackingTest extends TestCase
         $this->assertSame(1, IpoApplication::where('status', 'not_allotted')->count());
 
         Livewire::test(ListIpoApplications::class)
-            ->assertSee('Refund baki')
+            ->assertSee('Refund pending')
             ->set('activeTab', 'refund_pending')
             ->assertCountTableRecords(1);
     }
@@ -273,7 +273,7 @@ class RefundTrackingTest extends TestCase
     {
         $this->app('Ved', $this->pilo, 'not_allotted');
 
-        Livewire::test(OverviewStats::class)->assertSee('refund baki');
-        Livewire::test(AccountBalancesTable::class)->assertSee('refund baki');
+        Livewire::test(OverviewStats::class)->assertSee('refund pending');
+        Livewire::test(AccountBalancesTable::class)->assertSee('refund pending');
     }
 }

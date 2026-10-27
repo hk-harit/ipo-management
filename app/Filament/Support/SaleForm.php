@@ -25,12 +25,12 @@ class SaleForm
 
         return [
             DatePicker::make('sale_date')
-                ->label('Sale Date (વેચાણ તારીખ)')
+                ->label('Sale Date')
                 ->required()
                 ->default(now()),
 
             TextInput::make('shares_sold')
-                ->label('Shares Sold (વેચેલા શેર)')
+                ->label('Shares Sold')
                 ->numeric()
                 ->integer()
                 ->minValue(1)
@@ -41,7 +41,7 @@ class SaleForm
                 ->live(onBlur: true),
 
             TextInput::make('price_per_share')
-                ->label('Sale Price / Share (ભાવ)')
+                ->label('Sale Price / Share')
                 ->numeric()
                 ->minValue(0.01)
                 ->prefix('₹')
@@ -49,7 +49,7 @@ class SaleForm
                 ->live(onBlur: true),
 
             TextInput::make('charges')
-                ->label('Charges (બ્રોકરેજ/DP/STT)')
+                ->label('Charges')
                 ->numeric()
                 ->minValue(0)
                 ->default(0)

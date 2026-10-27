@@ -7,7 +7,7 @@
  * always come from the network. The cache holds only the offline notice and static files
  * (css / js / fonts / images), used when the network is down.
  */
-const VERSION = 'v1';
+const VERSION = 'v2';
 const CACHE = 'ipo-manage-' + VERSION;
 const OFFLINE_URL = '/offline.html';
 

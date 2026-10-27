@@ -11,15 +11,15 @@ use Livewire\Attributes\Url;
 
 /**
  * Every IPO that was applied to, as a list. Click one to see how many applications went in,
- * how many got shares (લાગ્યા), in which accounts they landed, and under which source.
+ * how many got shares, in which accounts they landed, and under which source.
  */
 class IpoDashboardPage extends Page
 {
     protected static ?string $navigationIcon = 'heroicon-o-presentation-chart-line';
 
-    protected static ?string $navigationLabel = 'IPO Dashboard (IPO નો હિસાબ)';
+    protected static ?string $navigationLabel = 'IPO Dashboard';
 
-    protected static ?string $title = 'IPO Dashboard (IPO નો હિસાબ)';
+    protected static ?string $title = 'IPO Dashboard';
 
     protected static ?string $slug = 'ipo-dashboard';
 
@@ -46,7 +46,7 @@ class IpoDashboardPage extends Page
     public function getSubheading(): ?string
     {
         return $this->ipo === ''
-            ? 'Je IPO ma apply karyu te badha. IPO par click karo — ketla bharya, ketla લાગ્યા, kaya account ma.'
+            ? 'Every IPO you applied to. Click one to see how many applied, how many got shares, and in which accounts.'
             : null;
     }
 

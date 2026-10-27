@@ -15,7 +15,7 @@ trait RemembersByDefault
     protected function getRememberFormComponent(): Component
     {
         return Checkbox::make('remember')
-            ->label('Keep me signed in (મને લૉગિન રાખો)')
+            ->label('Keep me signed in')
             ->default(true);
     }
 }

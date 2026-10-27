@@ -17,7 +17,7 @@ class AllottedAwaitingSaleWidget extends BaseWidget
 
     protected int|string|array $columnSpan = 'full';
 
-    protected static ?string $heading = 'Allotted — Awaiting Sale (વેચવાના બાકી)';
+    protected static ?string $heading = 'Allotted — Awaiting Sale';
 
     public static function canView(): bool
     {

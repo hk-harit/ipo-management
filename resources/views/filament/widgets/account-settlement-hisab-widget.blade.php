@@ -14,15 +14,15 @@
                 </div>
                 <div>
                     <h3 class="text-base font-bold text-gray-950 dark:text-white flex items-center gap-2">
-                        <span>Inter-Account Transfer Hisab (ખાતાવાર લેતી-દેતી અને બાકી હિસાબ)</span>
+                        <span>Inter-Account Transfers</span>
                         @if ($activePendingCount > 0)
                             <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300">
-                                {{ $activePendingCount }} ખાતામાં બાકી
+                                {{ $activePendingCount }} account(s) pending
                             </span>
                         @endif
                     </h3>
                     <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                        કયા ખાતામાંથી કોને કેટલા આપ્યા, કેટલા પાછા આવ્યા અને હજી કયા ખાતામાં કેટલા નાખવાના બાકી છે તે લાઈવ હિસાબ.
+                        Live balance: how much each account sent to which, how much came back, and how much is still to be put back.
                     </p>
                 </div>
             </div>
@@ -31,7 +31,7 @@
                 <div class="flex items-center gap-3 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/50 px-4 py-2.5 rounded-xl">
                     <div>
                         <div class="text-[10px] uppercase font-semibold text-amber-700 dark:text-amber-400">
-                            કુલ પરત નાખવાના બાકી (Total Due to Transfer Back)
+                            Total Due to Transfer Back
                         </div>
                         <div class="text-lg font-black text-amber-700 dark:text-amber-300 font-mono">
                             ₹{{ number_format($totalPending, 2) }}
@@ -93,7 +93,7 @@
                                     class="w-full inline-flex items-center justify-center gap-2 py-2 px-3 rounded-xl text-xs font-bold bg-amber-500 text-white hover:bg-amber-600 active:scale-95 transition shadow-xs cursor-pointer"
                                 >
                                     <x-heroicon-m-arrow-uturn-left class="w-4 h-4" />
-                                    <span>{{ $row['receiver']->name }} માંથી પાછા નાખો (Settle)</span>
+                                    <span>Settle: pay back from {{ $row['receiver']->name }}</span>
                                 </button>
                             </div>
                         @endif
@@ -106,11 +106,11 @@
                 <table class="w-full text-left text-sm divide-y divide-gray-200 dark:divide-white/10">
                     <thead class="bg-gray-50/80 dark:bg-white/[0.02] text-gray-600 dark:text-gray-400 font-semibold uppercase text-[11px] tracking-wider">
                         <tr>
-                            <th class="py-3 px-4">Giver Account (જે ખાતામાંથી આપ્યા)</th>
-                            <th class="py-3 px-4">Receiver Account (જે ખાતામાં મોકલ્યા)</th>
-                            <th class="py-3 px-4 text-right">Total Sent (મોકલેલા)</th>
-                            <th class="py-3 px-4 text-right">Total Returned (પાછા આવેલા)</th>
-                            <th class="py-3 px-4 text-center">Status / બાકી હિસાબ</th>
+                            <th class="py-3 px-4">Giver Account</th>
+                            <th class="py-3 px-4">Receiver Account</th>
+                            <th class="py-3 px-4 text-right">Total Sent</th>
+                            <th class="py-3 px-4 text-right">Total Returned</th>
+                            <th class="py-3 px-4 text-center">Status</th>
                             <th class="py-3 px-4 text-right">Action</th>
                         </tr>
                     </thead>
@@ -152,16 +152,16 @@
                                     @if ($row['is_settled'])
                                         <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/40">
                                             <x-heroicon-m-check-circle class="w-4 h-4 text-emerald-500" />
-                                            <span>Settled (હિસાબ ક્લિયર)</span>
+                                            <span>Settled</span>
                                         </span>
                                     @else
                                         <div class="inline-flex flex-col items-center">
                                             <span class="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-extrabold bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 border border-amber-300 dark:border-amber-700/60 font-mono shadow-2xs">
                                                 <span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
-                                                ₹{{ number_format($row['due_amount'], 2) }} બાકી
+                                                ₹{{ number_format($row['due_amount'], 2) }} pending
                                             </span>
                                             <span class="text-[10px] text-amber-700 dark:text-amber-400 mt-0.5 font-medium">
-                                                {{ $row['receiver']->name }} માંથી પાછા નાખવાના
+                                                to be paid back from {{ $row['receiver']->name }}
                                             </span>
                                         </div>
                                     @endif
@@ -177,7 +177,7 @@
                                             title="Record transfer back from {{ $row['receiver']->name }} to {{ $row['giver']->name }}"
                                         >
                                             <x-heroicon-m-arrow-uturn-left class="w-3.5 h-3.5" />
-                                            <span>પાછા નાખો (Settle)</span>
+                                            <span>Settle</span>
                                         </button>
                                     @else
                                         <a
@@ -199,7 +199,7 @@
                     <x-heroicon-m-check class="w-6 h-6" />
                 </div>
                 <h4 class="text-sm font-semibold text-gray-900 dark:text-white">
-                    કોઈ ખાતા વચ્ચે રકમ બાકી નથી (No Pending Inter-Account Dues)
+                    No Pending Inter-Account Dues
                 </h4>
                 <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
                     All inter-account transfers are fully settled.
@@ -221,7 +221,7 @@
                                 <x-heroicon-m-arrow-uturn-left class="w-5 h-5" />
                             </div>
                             <h3 class="text-base font-bold text-gray-950 dark:text-white">
-                                રકમ પાછી જમા કરો (Settle Balance)
+                                Settle Balance
                             </h3>
                         </div>
                         <button
@@ -237,11 +237,11 @@
                         {{-- From & To Overview --}}
                         <div class="p-3 rounded-xl bg-gray-50 dark:bg-white/[0.03] border border-gray-200/70 dark:border-white/5 space-y-2 text-xs">
                             <div class="flex items-center justify-between">
-                                <span class="text-gray-500">From (કયા ખાતામાંથી પાછા નીકળશે):</span>
+                                <span class="text-gray-500">From:</span>
                                 <span class="font-bold text-gray-900 dark:text-white">{{ $modalFrom?->name }}</span>
                             </div>
                             <div class="flex items-center justify-between">
-                                <span class="text-gray-500">To (કયા ખાતામાં જમા થશે):</span>
+                                <span class="text-gray-500">To:</span>
                                 <span class="font-bold text-emerald-600 dark:text-emerald-400">{{ $modalTo?->name }}</span>
                             </div>
                         </div>
@@ -249,7 +249,7 @@
                         {{-- Amount Input --}}
                         <div>
                             <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">
-                                Transfer Amount (રકમ ₹)
+                                Transfer Amount
                             </label>
                             <input
                                 type="number"
@@ -262,7 +262,7 @@
                         {{-- Notes Input --}}
                         <div>
                             <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">
-                                Notes (નોંધ)
+                                Notes
                             </label>
                             <input
                                 type="text"
@@ -286,7 +286,7 @@
                             wire:click="confirmSettle"
                             class="px-4 py-2 rounded-xl text-xs font-bold bg-primary-600 text-white hover:bg-primary-700 active:scale-95 transition shadow-xs"
                         >
-                            Confirm Transfer (ટ્રાન્સફર નોંધો)
+                            Confirm Transfer
                         </button>
                     </div>
                 </div>

@@ -42,7 +42,7 @@ class ProfitPayoutResource extends Resource
                 ->description('Profit share (or commission) you paid out. The money leaves the account you pick, and it is deducted from what is still pending for that person.')
                 ->schema([
                     Select::make('payee_type')
-                        ->label('Paying (કોને ચૂકવ્યા)')
+                        ->label('Paying')
                         ->options(['source' => 'Source (profit share)', 'applicant' => 'Applicant (commission)'])
                         ->default(fn () => request()->query('applicant_id') ? 'applicant' : 'source')
                         ->afterStateHydrated(function (Select $component, ?ProfitPayout $record) {
@@ -73,7 +73,7 @@ class ProfitPayoutResource extends Resource
                         ->visible(fn (Get $get) => $get('payee_type') === 'applicant')
                         ->required(fn (Get $get) => $get('payee_type') === 'applicant'),
                     Select::make('account_id')
-                        ->label('Paid From Account (કયા ખાતામાંથી)')
+                        ->label('Paid From Account')
                         ->relationship('account', 'name')
                         ->required()
                         ->searchable()

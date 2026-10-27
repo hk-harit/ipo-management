@@ -161,7 +161,7 @@ class AccountSettlementHisabWidget extends Widget
 
         Notification::make()
             ->title('Transfer Recorded & Settled!')
-            ->body("₹{$amountFormatted} transferred from '{$fromAcc?->name}' back to '{$toAcc?->name}'. Hisab updated!")
+            ->body("₹{$amountFormatted} transferred from '{$fromAcc?->name}' back to '{$toAcc?->name}'. Balances updated!")
             ->success()
             ->send();
 

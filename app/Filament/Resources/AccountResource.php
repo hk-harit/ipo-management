@@ -65,12 +65,12 @@ class AccountResource extends Resource
                     ->required()
                     ->default(0),
                 Toggle::make('is_sub_account')
-                    ->label('This is a Sub-Account (આ સબ એકાઉન્ટ છે)')
-                    ->helperText('જો આ કોઈ મુખ્ય ખાતાનું સબ એકાઉન્ટ હોય તો ઓન કરો')
+                    ->label('This is a Sub-Account')
+                    ->helperText('Turn on if this is a sub-account of a main account')
                     ->visible(fn () => Account::hasSubAccountColumn())
                     ->live(),
                 Select::make('parent_id')
-                    ->label('Parent / Main Account (કયા મુખ્ય ખાતા નીચે છે)')
+                    ->label('Parent / Main Account')
                     ->relationship('parent', 'name', fn ($query) => Account::hasSubAccountColumn() ? $query->where('is_sub_account', false) : $query)
                     ->searchable()
                     ->preload()
@@ -112,13 +112,13 @@ class AccountResource extends Resource
                 TextColumn::make('type')->badge()
                     ->color(fn (string $state) => $state === 'bank' ? 'info' : 'gray'),
                 TextColumn::make('total_balance')
-                    ->label('Total Capital (કુલ)')
+                    ->label('Total Capital')
                     ->state(fn (Account $record) => $record->total_balance)
                     ->money('INR')
                     ->weight('bold')
                     ->description('Liquid + Blocked'),
                 TextColumn::make('blocked_in_ipos')
-                    ->label('Blocked in IPOs (બ્લોક)')
+                    ->label('Blocked in IPOs')
                     ->state(fn (Account $record) => $record->blocked_in_ipos)
                     ->money('INR')
                     ->weight('bold')
@@ -127,7 +127,7 @@ class AccountResource extends Resource
                         ? $record->blockedIpoApplications()->count().' app(s) pending'
                         : 'None blocked'),
                 TextColumn::make('current_balance')
-                    ->label('Available Free (ઉપલબ્ધ)')
+                    ->label('Available Free')
                     ->state(fn (Account $record) => $record->current_balance)
                     ->money('INR')
                     ->weight('bold')

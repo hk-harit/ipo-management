@@ -17,7 +17,7 @@ class SalesRelationManager extends RelationManager
 {
     protected static string $relationship = 'sales';
 
-    protected static ?string $title = 'Sales (વેચાણ)';
+    protected static ?string $title = 'Sales';
 
     public static function canViewForRecord(Model $ownerRecord, string $pageClass): bool
     {

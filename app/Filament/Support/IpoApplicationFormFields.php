@@ -91,7 +91,7 @@ class IpoApplicationFormFields
                 ->visible(fn (Get $get) => in_array($get('status'), ['allotted', 'partial_allotted', 'sold'])),
 
             Placeholder::make('sales_hint')
-                ->label('Sales (વેચાણ)')
+                ->label('Sales')
                 ->content('Record each sale — date, shares, price and charges — in the Sales tab below. Status, shares sold and profit update from those.')
                 ->visible(fn (Get $get, ?Model $record) => $get('status') === 'sold' && (bool) $record?->sales()->exists()),
             TextInput::make('shares_sold')

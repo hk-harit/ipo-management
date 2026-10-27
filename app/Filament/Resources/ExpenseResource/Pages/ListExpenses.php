@@ -18,7 +18,7 @@ class ListExpenses extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
-            Actions\CreateAction::make()->label('New Expense / Udhar'),
+            Actions\CreateAction::make()->label('New Expense / Loan'),
         ];
     }
 
@@ -47,12 +47,12 @@ class ListExpenses extends ListRecords
             'expenses' => Tab::make('Regular Expenses')
                 ->modifyQueryUsing(fn (Builder $query) => $query->where('type', 'expense')),
 
-            'udhar_pending' => Tab::make('Udhar Pending (લેવાના બાકી)')
+            'udhar_pending' => Tab::make('Loans Pending')
                 ->modifyQueryUsing(fn (Builder $query) => $query->where('type', 'udhar_given')->where('status', 'pending'))
                 ->badge($pendingCount > 0 ? (string) $pendingCount : null)
                 ->badgeColor('danger'),
 
-            'udhar_settled' => Tab::make('Udhar Settled')
+            'udhar_settled' => Tab::make('Loans Settled')
                 ->modifyQueryUsing(fn (Builder $query) => $query->where('type', 'udhar_received')->orWhere(fn ($q) => $q->where('type', 'udhar_given')->where('status', 'settled'))),
         ];
     }

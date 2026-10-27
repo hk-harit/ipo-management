@@ -26,12 +26,12 @@
 
         <div class="mt-4 grid grid-cols-2 gap-3 md:grid-cols-4">
             @foreach ([
-                ['You Gave (આપ્યા)', $summary['given'], ''],
-                ['Paid Back (પાછા આપ્યા)', $summary['returned'], ''],
-                ['Still With Us (બાકી)', $summary['due'], $summary['due'] > 0 ? 'text-warning-600 dark:text-warning-400' : ''],
-                ['Profit Earned (નફાનો ભાગ)', $summary['earned'], 'text-info-600 dark:text-info-400'],
-                ['Profit Paid (ચૂકવ્યા)', $summary['paid'], ''],
-                ['Profit Pending (બાકી)', $summary['pending'], $summary['pending'] > 0 ? 'text-warning-600 dark:text-warning-400' : ''],
+                ['You Gave', $summary['given'], ''],
+                ['Paid Back', $summary['returned'], ''],
+                ['Still With Us', $summary['due'], $summary['due'] > 0 ? 'text-warning-600 dark:text-warning-400' : ''],
+                ['Profit Earned', $summary['earned'], 'text-info-600 dark:text-info-400'],
+                ['Profit Paid', $summary['paid'], ''],
+                ['Profit Pending', $summary['pending'], $summary['pending'] > 0 ? 'text-warning-600 dark:text-warning-400' : ''],
             ] as [$label, $value, $class])
                 <div class="rounded-lg border border-gray-200 p-3 dark:border-white/10">
                     <div class="text-xs uppercase text-gray-500 dark:text-gray-400">{{ $label }}</div>
@@ -39,14 +39,14 @@
                 </div>
             @endforeach
             <div class="col-span-2 rounded-lg border-2 border-primary-500 p-3 md:col-span-2">
-                <div class="text-xs uppercase text-gray-500 dark:text-gray-400">Total Payable To You (કુલ ચૂકવવાના)</div>
+                <div class="text-xs uppercase text-gray-500 dark:text-gray-400">Total Payable To You</div>
                 <div class="text-2xl font-bold text-primary-600 dark:text-primary-400">{{ $money($summary['payable']) }}</div>
                 <div class="text-xs text-gray-500 dark:text-gray-400">Money still with us + profit share not yet paid</div>
             </div>
         </div>
     </x-filament::section>
 
-    <x-filament::section heading="Money Given & Returned (પાસબુક)" collapsible>
+    <x-filament::section heading="Money Given & Returned" collapsible>
         <div class="overflow-x-auto">
             <table class="w-full text-sm">
                 <thead>
@@ -75,7 +75,7 @@
         </div>
     </x-filament::section>
 
-    <x-filament::section heading="Applications Made With Your Money (અરજીઓ)" collapsible>
+    <x-filament::section heading="Applications Made With Your Money" collapsible>
         <div class="overflow-x-auto">
             <table class="w-full text-sm">
                 <thead>
@@ -127,7 +127,7 @@
         </div>
     </x-filament::section>
 
-    <x-filament::section heading="Profit Share Paid (ચૂકવેલ નફો)" collapsible>
+    <x-filament::section heading="Profit Share Paid" collapsible>
         <table class="w-full text-sm">
             <tbody class="divide-y divide-gray-100 dark:divide-white/5">
                 @forelse ($this->payouts() as $payout)

@@ -72,7 +72,7 @@ class SourceShare
         ];
 
         $data['text'] = static::text($data);
-        $data['filename'] = 'ipo-hisab-'.str($source->name)->slug().'-'.now()->format('Y-m-d').'.png';
+        $data['filename'] = 'ipo-statement-'.str($source->name)->slug().'-'.now()->format('Y-m-d').'.png';
 
         return $data;
     }
@@ -85,12 +85,12 @@ class SourceShare
         return strlen($digits) === 10 ? '91'.$digits : null;
     }
 
-    /** A result that is in: "✅ લાગ્યા (12 શેર)" or "❌ ન લાગ્યા"; nothing while it is still awaited. */
+    /** A result that is in: "✅ Allotted (12 shares)" or "❌ Not allotted"; nothing while it is still awaited. */
     public static function resultMark(string $status, ?int $shares): string
     {
         return match ($status) {
-            'allotted', 'partial_allotted', 'sold' => '✅ લાગ્યા'.($shares ? ' ('.$shares.' શેર)' : ''),
-            'not_allotted', 'refunded' => '❌ ન લાગ્યા',
+            'allotted', 'partial_allotted', 'sold' => '✅ Allotted'.($shares ? ' ('.$shares.' '.($shares === 1 ? 'share' : 'shares').')' : ''),
+            'not_allotted', 'refunded' => '❌ Not allotted',
             default => '',
         };
     }
@@ -112,56 +112,56 @@ class SourceShare
         return static::inr($value);
     }
 
-    /** The WhatsApp message: short sections, *bold* headings, Gujarati labels. */
+    /** The WhatsApp message: short sections with *bold* headings, in plain English. */
     public static function text(array $d): string
     {
         $lines = [
-            '*IPO હિસાબ — '.$d['name'].'*',
+            '*IPO statement — '.$d['name'].'*',
             $d['date'],
             '',
-            '*પૈસા (Money)*',
-            'તમે આપ્યા: '.static::money($d['given']),
+            '*Money*',
+            'You gave: '.static::money($d['given']),
         ];
 
         if ($d['returned'] > 0) {
-            $lines[] = 'પાછા આપ્યા: '.static::money($d['returned']);
+            $lines[] = 'Paid back: '.static::money($d['returned']);
         }
 
-        $lines[] = 'હજી અમારી પાસે: '.static::money($d['due']);
+        $lines[] = 'Still with us: '.static::money($d['due']);
 
         if ($d['profit_earned'] != 0.0) {
-            $lines[] = 'નફાનો તમારો ભાગ: '.static::money($d['profit_earned']).' (બાકી '.static::money($d['profit_pending']).')';
+            $lines[] = 'Your profit share: '.static::money($d['profit_earned']).' (pending '.static::money($d['profit_pending']).')';
         }
 
         $lines[] = '';
 
         if ($d['focus_name']) {
             // One IPO: its total and who it was applied for.
-            $lines[] = '*'.$d['focus_name'].' — IPO માં ભર્યા*';
-            $lines[] = 'કુલ '.$d['apps_total'].' અરજી · '.static::money($d['amount_total']);
+            $lines[] = '*'.$d['focus_name'].' — applied*';
+            $lines[] = 'Total '.$d['apps_total'].' '.($d['apps_total'] === 1 ? 'application' : 'applications').' · '.static::money($d['amount_total']);
         } else {
-            $lines[] = '*IPO માં ભર્યા*';
-            $lines[] = 'કુલ '.$d['ipo_count'].' IPO · '.$d['apps_total'].' અરજી · '.static::money($d['amount_total']);
+            $lines[] = '*Applied in IPOs*';
+            $lines[] = 'Total '.$d['ipo_count'].' '.($d['ipo_count'] === 1 ? 'IPO' : 'IPOs').' · '.$d['apps_total'].' applications · '.static::money($d['amount_total']);
 
             foreach ($d['ipos'] as $ipo) {
-                $lines[] = '• '.$ipo['name'].' — '.$ipo['apps'].' અરજી · '.static::money($ipo['amount']);
+                $lines[] = '• '.$ipo['name'].' — '.$ipo['apps'].' '.($ipo['apps'] === 1 ? 'application' : 'applications').' · '.static::money($ipo['amount']);
             }
         }
 
         if ($d['focus_name'] && $d['focus_rows']->isNotEmpty()) {
             $lines[] = '';
-            $lines[] = '*કોના નામે ભર્યું*';
+            $lines[] = '*Applied in whose name*';
 
             if ($d['allotted'] + $d['not_allotted'] > 0) {
-                $lines[] = 'લાગ્યા: '.$d['allotted'].' · ન લાગ્યા: '.$d['not_allotted'].($d['waiting'] ? ' · બાકી: '.$d['waiting'] : '');
+                $lines[] = 'Allotted: '.$d['allotted'].' · Not allotted: '.$d['not_allotted'].($d['waiting'] ? ' · Pending: '.$d['waiting'] : '');
             }
 
             foreach ($d['focus_rows'] as $i => $row) {
                 $mark = static::resultMark($row['status'], $row['shares']);
-                $lines[] = ($i + 1).'. '.$row['name'].($row['lots'] ? ' — '.$row['lots'].' લોટ' : '').' — '.static::money($row['amount']).($mark !== '' ? ' '.$mark : '');
+                $lines[] = ($i + 1).'. '.$row['name'].($row['lots'] ? ' — '.$row['lots'].($row['lots'] === 1 ? ' lot' : ' lots') : '').' — '.static::money($row['amount']).($mark !== '' ? ' '.$mark : '');
             }
 
-            $lines[] = 'કુલ: '.static::money($d['focus_amount']);
+            $lines[] = 'Total: '.static::money($d['focus_amount']);
         }
 
         return implode("\n", $lines);

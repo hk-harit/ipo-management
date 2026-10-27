@@ -17,10 +17,10 @@
 
     {{-- IPO picker --}}
     <div class="flex flex-wrap items-center gap-3">
-        <label for="ipo-picker" class="text-sm font-medium text-gray-700 dark:text-gray-300">IPO (કયો IPO જોવો છે)</label>
+        <label for="ipo-picker" class="text-sm font-medium text-gray-700 dark:text-gray-300">IPO</label>
         <select id="ipo-picker" wire:model.live="ipo"
                 class="rounded-lg border-gray-300 bg-white text-sm shadow-sm dark:border-white/10 dark:bg-white/5 dark:text-white">
-            <option value="all">All IPOs (બધા)</option>
+            <option value="all">All IPOs</option>
             @foreach ($this->ipoOptions() as $option)
                 <option value="{{ $option['id'] }}">{{ $option['name'] }} — {{ $option['apps'] }} apps · ₹{{ number_format($option['total'], 0) }}</option>
             @endforeach
@@ -30,7 +30,7 @@
     {{-- Headline numbers --}}
     <div class="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <div class="rounded-xl border border-gray-200 p-4 dark:border-white/10">
-            <div class="text-xs uppercase text-gray-500 dark:text-gray-400">Sources e apya (આપેલા)</div>
+            <div class="text-xs uppercase text-gray-500 dark:text-gray-400">Money from sources</div>
             <div class="text-xl font-bold text-gray-950 dark:text-white">{{ $money($t['given'] - $t['returned']) }}</div>
             <div class="text-xs text-gray-500 dark:text-gray-400">Gave {{ $money($t['given']) }} · paid back {{ $money($t['returned']) }}</div>
         </div>
@@ -45,7 +45,7 @@
             <div class="text-xs text-gray-500 dark:text-gray-400">Blocked {{ $money($t['blocked']) }} · Demat {{ $money($t['invested']) }}</div>
         </div>
         <div class="rounded-xl border p-4 {{ $t['short_accounts'] > 0 ? 'border-danger-500/60' : 'border-gray-200 dark:border-white/10' }}">
-            <div class="text-xs uppercase text-gray-500 dark:text-gray-400">Available (બાકી)</div>
+            <div class="text-xs uppercase text-gray-500 dark:text-gray-400">Available</div>
             <div class="text-xl font-bold {{ $t['balance'] < 0 ? 'text-danger-600 dark:text-danger-400' : 'text-success-600 dark:text-success-400' }}">{{ $money($t['balance']) }}</div>
             <div class="text-xs {{ $t['short_accounts'] > 0 ? 'text-danger-600 dark:text-danger-400' : 'text-gray-500 dark:text-gray-400' }}">
                 {{ $t['short_accounts'] > 0 ? $t['short_accounts'].' account(s) negative' : 'No account is negative' }}
@@ -54,7 +54,7 @@
     </div>
 
     {{-- Source-wise --}}
-    <x-filament::section heading="Source-wise (કોના કેટલા પૈસા)" description="Darek source e ketla apya, ketla baki, ane {{ $focusName }} ma teni ketli application bhari." collapsible>
+    <x-filament::section heading="Source-wise" description="How much each source gave, how much is still with you, and how many applications were made in {{ $focusName }}." collapsible>
         <div class="overflow-x-auto">
             <table class="w-full text-sm">
                 <thead>
@@ -108,7 +108,7 @@
 
                 <div class="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
                     <div class="rounded-lg bg-gray-50 p-3 dark:bg-white/5">
-                        <div class="mb-1 text-xs font-semibold uppercase text-gray-500 dark:text-gray-400">Paisa kon e apya (આવ્યા)</div>
+                        <div class="mb-1 text-xs font-semibold uppercase text-gray-500 dark:text-gray-400">Money given by</div>
                         @forelse ($row['received'] as $line)
                             <div class="flex justify-between text-sm">
                                 <span>{{ $line['source'] }}</span>
@@ -126,7 +126,7 @@
                     </div>
 
                     <div class="rounded-lg bg-primary-50 p-3 dark:bg-primary-500/10">
-                        <div class="mb-1 text-xs font-semibold uppercase text-gray-500 dark:text-gray-400">Applied — {{ $focusName }} (ભર્યા)</div>
+                        <div class="mb-1 text-xs font-semibold uppercase text-gray-500 dark:text-gray-400">Applied — {{ $focusName }}</div>
                         <div class="text-lg font-bold text-primary-600 dark:text-primary-400">{{ $money($row['focus_amount']) }}</div>
                         <div class="text-xs text-gray-600 dark:text-gray-300">{{ $row['focus_count'] }} application(s)</div>
                         @foreach ($row['focus_by_source'] as $line)

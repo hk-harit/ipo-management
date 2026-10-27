@@ -28,7 +28,7 @@ class ExpenseResource extends Resource
 
     protected static ?string $navigationGroup = 'Expenses';
 
-    protected static ?string $navigationLabel = 'Expenses & Udhar';
+    protected static ?string $navigationLabel = 'Expenses & Loans';
 
     protected static ?int $navigationSort = 4;
 
@@ -37,60 +37,60 @@ class ExpenseResource extends Resource
         return $form->schema([
             Section::make()->schema([
                 Select::make('type')
-                    ->label('Type (પ્રકાર)')
+                    ->label('Type')
                     ->options([
-                        'expense' => 'Regular Expense (સામાન્ય ખર્ચ)',
-                        'udhar_given' => 'Udhar Given / Lent (કોઈને ઉધાર આપ્યા - લેવાના છે)',
-                        'udhar_received' => 'Udhar Received (ઉધાર પાછા મળ્યા / જમા)',
+                        'expense' => 'Regular Expense',
+                        'udhar_given' => 'Loan Given / Lent',
+                        'udhar_received' => 'Loan Received',
                     ])
                     ->default('expense')
                     ->required()
                     ->live(),
 
                 TextInput::make('person_name')
-                    ->label('Person Name (વ્યક્તિનું નામ)')
+                    ->label('Person Name')
                     ->placeholder('e.g. Ramesh, Rahul, Friend')
                     ->visible(fn ($get) => in_array($get('type'), ['udhar_given', 'udhar_received']))
                     ->required(fn ($get) => in_array($get('type'), ['udhar_given', 'udhar_received'])),
 
                 Select::make('status')
-                    ->label('Status (સ્થિતિ)')
+                    ->label('Status')
                     ->options([
-                        'pending' => 'Pending (લેવાના બાકી છે)',
-                        'settled' => 'Settled (ચૂકતે થઈ ગયા)',
+                        'pending' => 'Pending',
+                        'settled' => 'Settled',
                     ])
                     ->default('pending')
                     ->visible(fn ($get) => $get('type') === 'udhar_given')
                     ->required(fn ($get) => $get('type') === 'udhar_given'),
 
                 TextInput::make('category')
-                    ->label('Category (કેટેગરી)')
+                    ->label('Category')
                     ->placeholder('e.g. Brokerage, Food, Travel, Office, Personal')
                     ->visible(fn ($get) => $get('type') === 'expense'),
 
                 TextInput::make('amount')
                     ->minValue(0.01)
-                    ->label('Amount (રકમ)')
+                    ->label('Amount')
                     ->numeric()
                     ->prefix('₹')
                     ->required(),
 
                 Select::make('account_id')
                     ->label(fn ($get) => $get('type') === 'udhar_received'
-                        ? 'Deposit Into Account (કયા ખાતામાં જમા થયા)'
-                        : 'Paid From Account (કયા ખાતામાંથી ચૂકવ્યા)')
+                        ? 'Deposit Into Account'
+                        : 'Paid From Account')
                     ->relationship('account', 'name')
                     ->required()
                     ->searchable()
                     ->preload(),
 
                 DatePicker::make('expense_date')
-                    ->label('Date (તારીખ)')
+                    ->label('Date')
                     ->required()
                     ->default(now()),
 
                 DatePicker::make('due_date')
-                    ->label('Expected Return Date (પાછા મળવાની તારીખ)')
+                    ->label('Expected Return Date')
                     ->visible(fn ($get) => $get('type') === 'udhar_given'),
 
                 Textarea::make('notes')
@@ -117,8 +117,8 @@ class ExpenseResource extends Resource
                     ->badge()
                     ->formatStateUsing(fn (string $state) => match ($state) {
                         'expense' => 'Expense',
-                        'udhar_given' => 'Udhar Given',
-                        'udhar_received' => 'Udhar Received',
+                        'udhar_given' => 'Loan Given',
+                        'udhar_received' => 'Loan Received',
                         default => ucfirst($state),
                     })
                     ->color(fn (string $state) => match ($state) {
@@ -161,8 +161,8 @@ class ExpenseResource extends Resource
                     ->label('Status')
                     ->badge()
                     ->formatStateUsing(fn (?string $state) => match ($state) {
-                        'pending' => 'Pending (બાકી)',
-                        'settled' => 'Settled (ચૂકતે)',
+                        'pending' => 'Pending',
+                        'settled' => 'Settled',
                         default => 'Completed',
                     })
                     ->color(fn (?string $state) => match ($state) {
@@ -187,8 +187,8 @@ class ExpenseResource extends Resource
                     ->label('Filter by Type')
                     ->options([
                         'expense' => 'Regular Expense',
-                        'udhar_given' => 'Udhar Given',
-                        'udhar_received' => 'Udhar Received',
+                        'udhar_given' => 'Loan Given',
+                        'udhar_received' => 'Loan Received',
                     ]),
                 SelectFilter::make('status')
                     ->label('Filter by Status')
@@ -209,12 +209,12 @@ class ExpenseResource extends Resource
                     ->visible(fn (Expense $record) => $record->type === 'udhar_given' && $record->status === 'pending')
                     ->form([
                         Select::make('received_account_id')
-                            ->label('Deposit Into Account (કયા ખાતામાં પૈસા જમા થયા?)')
+                            ->label('Deposit Into Account')
                             ->relationship('account', 'name')
                             ->required()
                             ->default(fn (Expense $record) => $record->account_id),
                         DatePicker::make('received_date')
-                            ->label('Received Date (તારીખ)')
+                            ->label('Received Date')
                             ->default(now())
                             ->required(),
                     ])
@@ -229,11 +229,11 @@ class ExpenseResource extends Resource
                             'amount' => $record->amount,
                             'expense_date' => $data['received_date'],
                             'status' => 'completed',
-                            'notes' => 'Settlement for udhar given to '.($record->person_name ?: 'person').' on '.$record->expense_date->format('d M Y'),
+                            'notes' => 'Settlement for loan given to '.($record->person_name ?: 'person').' on '.$record->expense_date->format('d M Y'),
                         ]);
 
                         Notification::make()
-                            ->title('Udhar Marked as Settled!')
+                            ->title('Loan Marked as Settled!')
                             ->body('Money deposited back into account successfully.')
                             ->success()
                             ->send();

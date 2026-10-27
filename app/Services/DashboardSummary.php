@@ -29,10 +29,10 @@ class DashboardSummary
     private ?Collection $figures = null;
 
     public const PERIODS = [
-        'all' => 'All time (બધું)',
-        'today' => 'Today (આજે)',
-        '7d' => 'Last 7 days (૭ દિવસ)',
-        '30d' => 'Last 30 days (૩૦ દિવસ)',
+        'all' => 'All time',
+        'today' => 'Today',
+        '7d' => 'Last 7 days',
+        '30d' => 'Last 30 days',
     ];
 
     /** @return array{0: ?CarbonInterface, 1: CarbonInterface} */

@@ -121,7 +121,7 @@ class IpoDashboardTest extends TestCase
             ->call('openIpo', $this->jio->id)
             ->assertOk()
             ->assertSee('Jio Platforms')
-            ->assertSee('Badha IPO')
+            ->assertSee('All IPOs')
             ->assertSee('Account-wise')
             ->assertSee('pilo')
             ->assertSee('Om Indus')
@@ -158,6 +158,6 @@ class IpoDashboardTest extends TestCase
 
         Livewire::test(IpoDashboardPage::class)
             ->assertOk()
-            ->assertSee('Haju koi IPO ma application nathi');
+            ->assertSee('No application has been made to any IPO yet');
     }
 }

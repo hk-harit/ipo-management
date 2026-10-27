@@ -25,11 +25,11 @@ class RefundIpoApplicationAction
             ->modalDescription(fn (IpoApplication $record) => 'This will mark the application as refunded and credit ₹'.number_format($record->amount, 2)." back to '".($record->account?->name ?? 'the account')."'. A refund entry will be added to the account's passbook.")
             ->form([
                 DatePicker::make('return_date')
-                    ->label('Refund Date (મેન્ડેટ છૂટ્યાની તારીખ)')
+                    ->label('Refund Date')
                     ->default(now())
                     ->required(),
                 TextInput::make('return_amount')
-                    ->label('Refund Amount (પરત જમા રકમ)')
+                    ->label('Refund Amount')
                     ->numeric()
                     ->prefix('₹')
                     ->default(fn (IpoApplication $record) => $record->amount)

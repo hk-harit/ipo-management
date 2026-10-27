@@ -18,7 +18,7 @@ class ExpensesRelationManager extends RelationManager
 {
     protected static string $relationship = 'expenses';
 
-    protected static ?string $title = 'Expenses & Udhar';
+    protected static ?string $title = 'Expenses & Loans';
 
     public function form(Form $form): Form
     {
@@ -27,8 +27,8 @@ class ExpensesRelationManager extends RelationManager
                 ->label('Type')
                 ->options([
                     'expense' => 'Regular Expense',
-                    'udhar_given' => 'Udhar Given',
-                    'udhar_received' => 'Udhar Received',
+                    'udhar_given' => 'Loan Given',
+                    'udhar_received' => 'Loan Received',
                 ])
                 ->default('expense')
                 ->required()
@@ -43,8 +43,8 @@ class ExpensesRelationManager extends RelationManager
             Select::make('status')
                 ->label('Status')
                 ->options([
-                    'pending' => 'Pending (બાકી)',
-                    'settled' => 'Settled (ચૂકતે)',
+                    'pending' => 'Pending',
+                    'settled' => 'Settled',
                 ])
                 ->default('pending')
                 ->visible(fn ($get) => $get('type') === 'udhar_given'),

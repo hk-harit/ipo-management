@@ -23,7 +23,7 @@ class ApplicantCommissionWidget extends BaseWidget
 
     protected int|string|array $columnSpan = 'full';
 
-    protected static ?string $heading = 'Applicant Commission (અરજદારનું કમિશન)';
+    protected static ?string $heading = 'Applicant Commission';
 
     public static function canView(): bool
     {
@@ -58,17 +58,17 @@ class ApplicantCommissionWidget extends BaseWidget
                     ->label('Sold in period')
                     ->state(fn (Applicant $record) => $commission[$record->id]['sold'] ?? 0),
                 TextColumn::make('earned')
-                    ->label('Commission Earned in Period (કમિશન)')
+                    ->label('Commission Earned in Period')
                     ->state(fn (Applicant $record) => (float) ($commission[$record->id]['earned'] ?? 0))
                     ->money('INR')
                     ->weight('bold')
                     ->color('info'),
                 TextColumn::make('commission_paid')
-                    ->label('Paid (ચૂકવ્યા)')
+                    ->label('Paid')
                     ->state(fn (Applicant $record) => $record->commission_paid)
                     ->money('INR'),
                 TextColumn::make('commission_pending')
-                    ->label('Pending (બાકી)')
+                    ->label('Pending')
                     ->state(fn (Applicant $record) => $record->commission_pending)
                     ->money('INR')
                     ->weight('bold')

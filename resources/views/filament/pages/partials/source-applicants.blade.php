@@ -1,5 +1,5 @@
     {{-- Source -> applicants -> commission --}}
-    <x-filament::section heading="Source → Applicants & Commission (કોણે કોના પૈસાથી ભર્યું, કમિશન)" description="{{ $focusName }}: darek source na paisathi kone, kya account thi, ketlu bhariyu ane kone ketlu % malshe." collapsible>
+    <x-filament::section heading="Source → Applicants & Commission" description="{{ $focusName }}: for each source's money, who applied, from which account, how much, and each person's share." collapsible>
         <div class="space-y-4">
             @forelse ($data['source_groups'] as $group)
                 @php($showProfit = $group['rows']->contains(fn ($r) => $r['profit'] !== null))
@@ -11,7 +11,7 @@
                             @if ($group['source'] !== 'No source') · source gets {{ rtrim(rtrim(number_format($group['source_pct'], 2), '0'), '.') }}% @endif
                             · applicants: {{ $group['applicant_pct_summary'] }}
                             @if ($group['allotted'] + $group['not_allotted'] > 0)
-                                · <strong style="color:#047857;">લાગ્યા {{ $group['allotted'] }}</strong> · <strong style="color:#b91c1c;">ન લાગ્યા {{ $group['not_allotted'] }}</strong>@if ($group['waiting']) · બાકી {{ $group['waiting'] }}@endif
+                                · <strong style="color:#047857;">Allotted {{ $group['allotted'] }}</strong> · <strong style="color:#b91c1c;">Not allotted {{ $group['not_allotted'] }}</strong>@if ($group['waiting']) · pending {{ $group['waiting'] }}@endif
                             @endif
                         </span>
                     </summary>
@@ -29,7 +29,7 @@
                                     <th class="py-2 pr-3 text-right">Source %</th>
                                     <th class="py-2 pr-3 text-right">Applicant %</th>
                                     <th class="py-2 pr-3 text-right">You %</th>
-                                    <th class="py-2 pr-3">Result (લાગ્યા?)</th>
+                                    <th class="py-2 pr-3">Result</th>
                                     @if ($showProfit)
                                         <th class="py-2 pr-3 text-right">Profit</th>
                                         <th class="py-2 text-right">Applicant gets</th>

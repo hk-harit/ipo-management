@@ -64,8 +64,8 @@ class Expense extends Model
     public function getDisplayDescriptionAttribute(): string
     {
         return match ($this->type) {
-            'udhar_given' => 'Udhar Given to '.($this->person_name ?: 'Person'),
-            'udhar_received' => 'Udhar Received from '.($this->person_name ?: 'Person'),
+            'udhar_given' => 'Loan Given to '.($this->person_name ?: 'Person'),
+            'udhar_received' => 'Loan Received from '.($this->person_name ?: 'Person'),
             default => 'Expense: '.($this->category ?: 'General'),
         };
     }

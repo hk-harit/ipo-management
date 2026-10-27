@@ -33,28 +33,28 @@ class OverviewStats extends BaseWidget
         $demat = IpoApplication::whereIn('status', ['allotted', 'partial_allotted'])->count();
 
         return [
-            Stat::make('Total Funds (કુલ મૂડી)', $this->money($totals['total_funds']))
+            Stat::make('Total Funds', $this->money($totals['total_funds']))
                 ->description('Available + Blocked + In Demat')
                 ->color($totals['total_funds'] >= 0 ? 'success' : 'danger')
                 ->icon('heroicon-o-scale'),
 
-            Stat::make('Available (ઉપલબ્ધ)', $this->money($totals['available']))
+            Stat::make('Available', $this->money($totals['available']))
                 ->description('Free to use across bank & cash')
                 ->color($totals['available'] >= 0 ? 'success' : 'danger')
                 ->icon('heroicon-o-wallet'),
 
-            Stat::make('Blocked in IPOs (IPO માં બ્લોક)', $this->money($totals['blocked']))
-                ->description("{$pending} awaiting result".($totals['refund_pending'] > 0 ? ' · refund baki '.$this->money($totals['refund_pending'], 0) : ''))
+            Stat::make('Blocked in IPOs', $this->money($totals['blocked']))
+                ->description("{$pending} awaiting result".($totals['refund_pending'] > 0 ? ' · refund pending '.$this->money($totals['refund_pending'], 0) : ''))
                 ->color('primary')
                 ->icon('heroicon-o-lock-closed'),
 
-            Stat::make('In Demat (ડીમેટમાં, cost)', $this->money($totals['invested']))
+            Stat::make('In Demat', $this->money($totals['invested']))
                 ->description("{$demat} allotted, awaiting sale")
                 ->color('warning')
                 ->icon('heroicon-o-rectangle-stack'),
 
-            Stat::make('Net Position (ચોખ્ખી સ્થિતિ)', $this->money($totals['net_position']))
-                ->description('Funds + udhar '.$this->money($totals['udhar_receivable'], 0).' − sources '.$this->money($totals['owed_to_sources'], 0).' − unpaid profit '.$this->money($totals['profit_owed'], 0))
+            Stat::make('Net Position', $this->money($totals['net_position']))
+                ->description('Funds + loans '.$this->money($totals['udhar_receivable'], 0).' − sources '.$this->money($totals['owed_to_sources'], 0).' − unpaid profit '.$this->money($totals['profit_owed'], 0))
                 ->color($totals['net_position'] >= 0 ? 'success' : 'danger')
                 ->icon('heroicon-o-banknotes'),
 

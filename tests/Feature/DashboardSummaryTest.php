@@ -170,7 +170,7 @@ class DashboardSummaryTest extends TestCase
             Livewire::test(ApplicantCommissionWidget::class, ['filters' => ['period' => $period]])->assertOk();
         }
 
-        Livewire::test(AccountBalancesTable::class)->assertOk()->assertSee('Available (ઉપલબ્ધ)');
+        Livewire::test(AccountBalancesTable::class)->assertOk()->assertSee('Available');
         Livewire::test(PendingUdharWidget::class)->assertOk()->assertSee('Ramesh');
     }
 

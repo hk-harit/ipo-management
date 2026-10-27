@@ -85,7 +85,7 @@ class AuditLogResource extends Resource
                         ApplicationSale::class => 'Sales',
                         FundTransaction::class => 'Fund Transactions',
                         AccountTransfer::class => 'Account Transfers',
-                        Expense::class => 'Expenses & Udhar',
+                        Expense::class => 'Expenses & Loans',
                         ProfitPayout::class => 'Profit Payouts',
                         Account::class => 'Accounts',
                         Source::class => 'Sources',

@@ -80,7 +80,7 @@ class AllotmentResultDisplayTest extends TestCase
 
         Livewire::test(IpoDashboardPage::class)
             ->call('openIpo', $this->jio->id)
-            ->assertSee('લાગ્યા')
+            ->assertSee('Allotted')
             ->assertSee('36 shares')
             ->assertSee('Ved')
             ->assertSee('Isha');
@@ -97,10 +97,10 @@ class AllotmentResultDisplayTest extends TestCase
         $this->assertSame(1, $share['waiting']);
 
         $text = $share['text'];
-        $this->assertStringContainsString('લાગ્યા: 2 · ન લાગ્યા: 1 · બાકી: 1', $text);
-        $this->assertMatchesRegularExpression('/Ved — 1 લોટ — ₹13,428 ✅ લાગ્યા \(12 શેર\)/u', $text);
-        $this->assertMatchesRegularExpression('/Isha — 1 લોટ — ₹13,428 ✅ લાગ્યા \(24 શેર\)/u', $text);
-        $this->assertMatchesRegularExpression('/Pratik — 1 લોટ — ₹13,428 ❌ ન લાગ્યા/u', $text);
+        $this->assertStringContainsString('Allotted: 2 · Not allotted: 1 · Pending: 1', $text);
+        $this->assertMatchesRegularExpression('/Ved — 1 lot — ₹13,428 ✅ Allotted \(12 shares\)/u', $text);
+        $this->assertMatchesRegularExpression('/Isha — 1 lot — ₹13,428 ✅ Allotted \(24 shares\)/u', $text);
+        $this->assertMatchesRegularExpression('/Pratik — 1 lot — ₹13,428 ❌ Not allotted/u', $text);
         $this->assertDoesNotMatchRegularExpression('/Nihar[^\n]*(✅|❌)/u', $text, 'a result that is not in yet gets no mark');
     }
 
@@ -111,10 +111,10 @@ class AllotmentResultDisplayTest extends TestCase
 
         $html = view('filament.pages.partials.source-share', ['share' => $share])->render();
 
-        $this->assertStringContainsString('લાગ્યા: 2', $html);
-        $this->assertStringContainsString('ન લાગ્યા: 1', $html);
-        $this->assertStringContainsString('✅ લાગ્યા (12 શેર)', $html);
-        $this->assertStringContainsString('❌ ન લાગ્યા', $html);
+        $this->assertStringContainsString('Allotted: 2', $html);
+        $this->assertStringContainsString('Not allotted: 1', $html);
+        $this->assertStringContainsString('✅ Allotted (12 shares)', $html);
+        $this->assertStringContainsString('❌ Not allotted', $html);
     }
 
     public function test_the_source_table_on_the_page_shows_each_applicants_result_and_the_counts(): void
@@ -129,11 +129,11 @@ class AllotmentResultDisplayTest extends TestCase
 
         Livewire::test(IpoDashboardPage::class)
             ->call('openIpo', $this->jio->id)
-            ->assertSee('Result (લાગ્યા?)')
-            ->assertSee('લાગ્યા 2')
-            ->assertSee('ન લાગ્યા 1')
-            ->assertSee('✅ લાગ્યા (24 શેર)')
-            ->assertSee('❌ ન લાગ્યા');
+            ->assertSee('Result')
+            ->assertSee('Allotted 2')
+            ->assertSee('Not allotted 1')
+            ->assertSee('✅ Allotted (24 shares)')
+            ->assertSee('❌ Not allotted');
     }
 
     public function test_the_whatsapp_buttons_have_their_own_background_colour(): void
@@ -148,9 +148,9 @@ class AllotmentResultDisplayTest extends TestCase
 
     public function test_the_result_marks_follow_the_status(): void
     {
-        $this->assertSame('✅ લાગ્યા (12 શેર)', SourceShare::resultMark('allotted', 12));
-        $this->assertSame('✅ લાગ્યા', SourceShare::resultMark('sold', null));
-        $this->assertSame('❌ ન લાગ્યા', SourceShare::resultMark('refunded', null));
+        $this->assertSame('✅ Allotted (12 shares)', SourceShare::resultMark('allotted', 12));
+        $this->assertSame('✅ Allotted', SourceShare::resultMark('sold', null));
+        $this->assertSame('❌ Not allotted', SourceShare::resultMark('refunded', null));
         $this->assertSame('', SourceShare::resultMark('applied', null));
     }
 }

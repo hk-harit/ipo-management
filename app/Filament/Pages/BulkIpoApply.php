@@ -60,12 +60,12 @@ class BulkIpoApply extends Page implements HasForms
                     ->label('Applications')
                     ->schema([
                         Select::make('applicant_id')
-                            ->label('Applicant (ડીમેટ)')
+                            ->label('Applicant')
                             ->options(fn () => Applicant::query()->orderBy('name')->pluck('name', 'id'))
                             ->required()
                             ->searchable(),
                         Select::make('account_id')
-                            ->label('Payment Account (બ્લોક)')
+                            ->label('Payment Account')
                             ->options(fn () => Account::hasSubAccountColumn() ? Account::query()->where('is_sub_account', false)->orderBy('name')->pluck('name', 'id') : Account::query()->orderBy('name')->pluck('name', 'id'))
                             ->required()
                             ->searchable()
@@ -89,8 +89,8 @@ class BulkIpoApply extends Page implements HasForms
                         Select::make('funding_type')
                             ->label('Funding')
                             ->options([
-                                'direct' => 'Direct (સીધા)',
-                                'transferred' => 'Transfer (મોકલીને)',
+                                'direct' => 'Direct',
+                                'transferred' => 'Transfer',
                             ])
                             ->default('direct')
                             ->live(),

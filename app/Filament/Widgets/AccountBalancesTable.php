@@ -17,7 +17,7 @@ class AccountBalancesTable extends BaseWidget
 
     protected int|string|array $columnSpan = 'full';
 
-    protected static ?string $heading = 'Account Balances — Bank & Cash (ખાતાવાર બેલેન્સ)';
+    protected static ?string $heading = 'Account Balances — Bank & Cash';
 
     public function table(Table $table): Table
     {
@@ -46,7 +46,7 @@ class AccountBalancesTable extends BaseWidget
             ->query(Account::query()->with('parent')->withCount('subAccounts')->where('is_active', true))
             ->columns([
                 TextColumn::make('name')
-                    ->label('Account (ખાતું)')
+                    ->label('Account')
                     ->weight('bold')
                     ->searchable()
                     ->description(function (Account $record) {
@@ -74,33 +74,33 @@ class AccountBalancesTable extends BaseWidget
                     ->color(fn (string $state) => $state === 'bank' ? 'info' : 'gray')
                     ->formatStateUsing(fn (string $state) => ucfirst($state)),
                 TextColumn::make('available')
-                    ->label('Available (ઉપલબ્ધ)')
+                    ->label('Available')
                     ->state(fn (Account $record) => $figures($record)['balance'])
                     ->money('INR')
                     ->weight('bold')
                     ->color(fn ($state) => $state < 0 ? 'danger' : 'success')
                     ->description('Free balance for new IPOs'),
                 TextColumn::make('in_sub_accounts')
-                    ->label('In Sub-accounts (સબ ખાતામાં)')
+                    ->label('In Sub-accounts')
                     ->state(fn (Account $record) => $record->is_sub_account ? null : $figures($record)['in_sub_accounts'])
                     ->money('INR')
                     ->color('info')
                     ->placeholder('—')
                     ->description(fn (Account $record) => ! $record->is_sub_account && $figures($record)['in_sub_accounts'] != 0.0 ? 'to bring back to this account' : null),
                 TextColumn::make('blocked')
-                    ->label('Blocked in IPOs (IPO માં બ્લોક)')
+                    ->label('Blocked in IPOs')
                     ->state(fn (Account $record) => $figures($record)['blocked'])
                     ->money('INR')
                     ->weight('semibold')
                     ->color('primary')
-                    ->description(fn (Account $record) => ($figures($record)['refund_pending'] ?? 0) > 0 ? 'refund baki ₹'.number_format($figures($record)['refund_pending'], 0) : null),
+                    ->description(fn (Account $record) => ($figures($record)['refund_pending'] ?? 0) > 0 ? 'refund pending ₹'.number_format($figures($record)['refund_pending'], 0) : null),
                 TextColumn::make('invested')
-                    ->label('In Demat (ડીમેટમાં)')
+                    ->label('In Demat')
                     ->state(fn (Account $record) => $figures($record)['invested'])
                     ->money('INR')
                     ->color('warning'),
                 TextColumn::make('total')
-                    ->label('Total Capital (કુલ)')
+                    ->label('Total Capital')
                     ->state(function (Account $record) use ($figures) {
                         $f = $figures($record);
 
@@ -114,8 +114,8 @@ class AccountBalancesTable extends BaseWidget
                 SelectFilter::make('view_type')
                     ->label('Filter Accounts')
                     ->options([
-                        'main' => 'Main Bank & Cash Accounts (મુખ્ય ખાતાઓ)',
-                        'all' => 'All Accounts including Sub-Accounts (તમામ ખાતાઓ)',
+                        'main' => 'Main Bank & Cash Accounts',
+                        'all' => 'All Accounts including Sub-Accounts',
                     ])
                     ->default('main')
                     ->query(function ($query, array $data) {

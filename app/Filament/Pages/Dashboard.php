@@ -26,7 +26,7 @@ class Dashboard extends BaseDashboard
             Section::make()
                 ->schema([
                     ToggleButtons::make('period')
-                        ->label('Profit period (નફાનો સમયગાળો)')
+                        ->label('Profit period')
                         ->options(DashboardSummary::PERIODS)
                         ->default('all')
                         ->inline()
@@ -40,11 +40,11 @@ class Dashboard extends BaseDashboard
     {
         return [
             Action::make('ipoDashboard')
-                ->label('IPO Dashboard (IPO નો હિસાબ)')
+                ->label('IPO Dashboard')
                 ->icon('heroicon-o-presentation-chart-line')
                 ->url(IpoDashboardPage::getUrl()),
             Action::make('accountOverview')
-                ->label('Account Overview (ખાતાવાર હિસાબ)')
+                ->label('Account Overview')
                 ->icon('heroicon-o-table-cells')
                 ->url(AccountOverviewPage::getUrl()),
         ];

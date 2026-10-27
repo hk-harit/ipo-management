@@ -50,23 +50,23 @@ class IpoApplicationResource extends Resource
                 IpoPicker::select(),
                 IpoPicker::summary(),
                 Select::make('applicant_id')
-                    ->label('Applicant (કોના ડીમેટ/નામે)')
+                    ->label('Applicant')
                     ->helperText('Demat account holder whose name the IPO is applied in')
                     ->relationship('applicant', 'name')
                     ->required()
                     ->searchable()
                     ->preload(),
                 Select::make('account_id')
-                    ->label('Payment Account (મુખ્ય ખાતું)')
-                    ->helperText('જે ખાતામાંથી UPI mandate અથવા પૈસા બ્લોક થાય')
+                    ->label('Payment Account')
+                    ->helperText('The account the UPI mandate or blocked money comes from')
                     ->relationship('account', 'name', fn ($query) => Account::hasSubAccountColumn() ? $query->where('is_sub_account', false) : $query)
                     ->required()
                     ->searchable()
                     ->preload()
                     ->live(),
                 Select::make('sub_account_id')
-                    ->label('Sub-Account (સબ એકાઉન્ટ - ઓપ્શનલ)')
-                    ->helperText('જો ડાયરેક્ટ ખાતામાંથી ન ભરવું હોય તો સબ એકાઉન્ટ પસંદ કરો. પૈસા ફક્ત સબ એકાઉન્ટમાંથી કપાશે, મુખ્ય ખાતામાંથી નહીં (પહેલા મુખ્ય ખાતામાંથી સબ ખાતામાં ટ્રાન્સફર કરો)')
+                    ->label('Sub-Account')
+                    ->helperText('Pick a sub-account if it should not be paid from the main account. The money is taken from the sub-account only, so move funds into it from the main account first.')
                     ->options(function (Get $get) {
                         if (! Account::hasSubAccountColumn()) {
                             return [];
@@ -80,23 +80,23 @@ class IpoApplicationResource extends Resource
                             ->where('parent_id', $accId)
                             ->pluck('name', 'id');
                     })
-                    ->placeholder('Direct (મુખ્ય ખાતામાંથી સીધા)')
+                    ->placeholder('Direct')
                     ->searchable()
                     ->preload()
                     ->live(),
                 Select::make('funding_type')
-                    ->label('Payment Method (પૈસા કેવી રીતે કપાયા)')
+                    ->label('Payment Method')
                     ->options([
-                        'direct' => 'Direct (આ જ ખાતામાંથી સીધા પૈસા બ્લોક)',
-                        'transferred' => 'Transferred from another account (બીજા ખાતામાંથી નાખીને)',
+                        'direct' => 'Direct',
+                        'transferred' => 'Transferred from another account',
                     ])
                     ->default('direct')
                     ->required()
                     ->live()
                     ->native(false),
                 Select::make('funding_account_id')
-                    ->label('Transferred From Account (કયા ખાતામાંથી મોકલ્યા)')
-                    ->helperText('પસંદ કરશો એટલે ઓટોમેટિક ખાતા ટ્રાન્સફર (Account Transfer) પણ થઈ જશે')
+                    ->label('Transferred From Account')
+                    ->helperText('Picking an account here also records an automatic Account Transfer')
                     ->relationship('fundingAccount', 'name')
                     ->searchable()
                     ->preload()
@@ -183,11 +183,11 @@ class IpoApplicationResource extends Resource
             ->defaultGroup('ipo.name')
             ->filters([
                 SelectFilter::make('ipo_id')
-                    ->label('Select IPO (IPO પસંદ કરો)')
+                    ->label('Select IPO')
                     ->relationship('ipo', 'name', fn (Builder $query) => $query->whereHas('applications')->orderByDesc('id'))
                     ->searchable()
                     ->preload()
-                    ->placeholder('All IPOs (બધા જ IPO)'),
+                    ->placeholder('All IPOs'),
                 SelectFilter::make('status')
                     ->label('Status')
                     ->options([

@@ -84,7 +84,7 @@ class AllotmentEntryTest extends TestCase
             ->assertSet('rows.'.$this->apps['Ved']->id.'.shares', 12)
             ->assertSet('rows.'.$this->apps['Isha']->id.'.result', 'allotted')
             ->assertSet('rows.'.$this->apps['Pratik']->id.'.result', 'pending')
-            ->assertNotified('2 PAN allotted marks thaya');
+            ->assertNotified('2 PAN(s) marked allotted');
     }
 
     public function test_the_rest_can_be_marked_not_allotted_in_one_click(): void
@@ -107,7 +107,7 @@ class AllotmentEntryTest extends TestCase
             ->call('applyPaste')
             ->call('markRestNotAllotted')
             ->call('save')
-            ->assertNotified('Allotment save thayu');
+            ->assertNotified('Allotment saved');
 
         $ved = $this->apps['Ved']->fresh();
         $this->assertSame('allotted', $ved->status);
@@ -138,7 +138,7 @@ class AllotmentEntryTest extends TestCase
             ->set('rows.'.$this->apps['Ved']->id.'.result', 'allotted')
             ->set('rows.'.$this->apps['Ved']->id.'.shares', null)
             ->call('save')
-            ->assertNotified('Pehla shares bharo');
+            ->assertNotified('Enter the shares first');
 
         $this->assertSame('applied', $this->apps['Ved']->fresh()->status, 'nothing was saved');
         $this->assertNotNull($page);
@@ -166,6 +166,6 @@ class AllotmentEntryTest extends TestCase
         $this->page()->assertDontSee('Isha')->assertSee('Ved');
 
         $this->actingAs(User::factory()->create(['role' => 'admin']));
-        $this->page()->assertSet('ipo', '')->assertSee('Aa IPO ma result nakhva jevi koi application nathi');
+        $this->page()->assertSet('ipo', '')->assertSee('There is no application in this IPO to enter a result for');
     }
 }

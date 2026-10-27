@@ -8,7 +8,7 @@ use Filament\Widgets\ChartWidget;
 
 class IpoCapitalDistributionChart extends ChartWidget
 {
-    protected static ?string $heading = 'Capital Distribution by IPO (રોકાણ ક્યાં કેટલું છે)';
+    protected static ?string $heading = 'Capital Distribution by IPO';
 
     protected static ?int $sort = 4;
 

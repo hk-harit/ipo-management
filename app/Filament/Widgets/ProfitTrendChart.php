@@ -11,7 +11,7 @@ class ProfitTrendChart extends ChartWidget
 {
     use InteractsWithPageFilters;
 
-    protected static ?string $heading = 'Realised Profit (નફો)';
+    protected static ?string $heading = 'Realised Profit';
 
     protected static ?int $sort = 3;
 

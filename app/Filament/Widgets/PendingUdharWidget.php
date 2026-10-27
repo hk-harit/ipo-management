@@ -9,14 +9,14 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Filament\Widgets\TableWidget as BaseWidget;
 
-/** Udhar given that has not come back yet, soonest due first. */
+/** Loan given that has not come back yet, soonest due first. */
 class PendingUdharWidget extends BaseWidget
 {
     protected static ?int $sort = 10;
 
     protected int|string|array $columnSpan = 'full';
 
-    protected static ?string $heading = 'Udhar to Receive (લેવાના બાકી ઉધાર)';
+    protected static ?string $heading = 'Loan to Receive';
 
     public static function canView(): bool
     {

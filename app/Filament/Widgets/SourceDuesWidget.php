@@ -26,7 +26,7 @@ class SourceDuesWidget extends BaseWidget
 
     protected int|string|array $columnSpan = 'full';
 
-    protected static ?string $heading = 'Sources — Money & Profit Share (સોર્સનો હિસાબ)';
+    protected static ?string $heading = 'Sources — Money & Profit Share';
 
     public static function canView(): bool
     {
@@ -52,36 +52,36 @@ class SourceDuesWidget extends BaseWidget
             ->columns([
                 TextColumn::make('name')->weight('bold')->description(fn (Source $record) => $record->relation),
                 TextColumn::make('total_given')
-                    ->label('Given (આપ્યા)')
+                    ->label('Given')
                     ->state(fn (Source $record) => $record->total_given)
                     ->money('INR'),
                 TextColumn::make('total_returned')
-                    ->label('Returned (પાછા આપ્યા)')
+                    ->label('Returned')
                     ->state(fn (Source $record) => $record->total_returned)
                     ->money('INR'),
                 TextColumn::make('balance_due')
-                    ->label('Still With You (બાકી)')
+                    ->label('Still With You')
                     ->state(fn (Source $record) => $record->balance_due)
                     ->money('INR')
                     ->weight('bold')
                     ->color(fn ($state) => $state > 0 ? 'warning' : 'success'),
                 TextColumn::make('profit_share')
-                    ->label('Profit Share Earned (નફાનો ભાગ)')
+                    ->label('Profit Share Earned')
                     ->state(fn (Source $record) => (float) ($shares[$record->id] ?? 0))
                     ->money('INR')
                     ->color('info')
                     ->description(fn (Source $record) => $record->profit_share_percent.'% default'),
                 TextColumn::make('profit_share_paid')
-                    ->label('Profit Paid (ચૂકવ્યા)')
+                    ->label('Profit Paid')
                     ->state(fn (Source $record) => $record->profit_share_paid)
                     ->money('INR'),
                 TextColumn::make('profit_share_pending')
-                    ->label('Profit Pending (બાકી)')
+                    ->label('Profit Pending')
                     ->state(fn (Source $record) => $record->profit_share_pending)
                     ->money('INR')
                     ->color(fn ($state) => $state > 0 ? 'warning' : 'success'),
                 TextColumn::make('total_payable')
-                    ->label('Total You Owe (કુલ દેવું)')
+                    ->label('Total You Owe')
                     ->state(fn (Source $record) => $record->total_payable)
                     ->money('INR')
                     ->weight('bold')

@@ -75,15 +75,15 @@ class SourceShareTest extends TestCase
     {
         $text = $this->share()['text'];
 
-        $this->assertStringContainsString('*IPO હિસાબ — Utsav bhai*', $text);
-        $this->assertStringContainsString('તમે આપ્યા: ₹4,00,000', $text);
-        $this->assertStringContainsString('પાછા આપ્યા: ₹25,000', $text);
-        $this->assertStringContainsString('હજી અમારી પાસે: ₹3,75,000', $text);
-        $this->assertStringContainsString('*Jio Platforms — IPO માં ભર્યા*', $text);
-        $this->assertStringContainsString('કુલ 2 અરજી · ₹2,01,420', $text);
-        $this->assertStringContainsString('1. Namasvu — 14 લોટ — ₹1,87,992', $text);
-        $this->assertStringContainsString('2. Ved Mordiya — 1 લોટ — ₹13,428', $text);
-        $this->assertStringContainsString('કુલ: ₹2,01,420', $text);
+        $this->assertStringContainsString('*IPO statement — Utsav bhai*', $text);
+        $this->assertStringContainsString('You gave: ₹4,00,000', $text);
+        $this->assertStringContainsString('Paid back: ₹25,000', $text);
+        $this->assertStringContainsString('Still with us: ₹3,75,000', $text);
+        $this->assertStringContainsString('*Jio Platforms — applied*', $text);
+        $this->assertStringContainsString('Total 2 applications · ₹2,01,420', $text);
+        $this->assertStringContainsString('1. Namasvu — 14 lots — ₹1,87,992', $text);
+        $this->assertStringContainsString('2. Ved Mordiya — 1 lot — ₹13,428', $text);
+        $this->assertStringContainsString('Total: ₹2,01,420', $text);
 
         $this->assertStringNotContainsString('Paras', $text, 'the other IPO must not leak into a Jio statement');
         $this->assertStringNotContainsString('Old Friend', $text);
@@ -99,9 +99,9 @@ class SourceShareTest extends TestCase
 
         $this->assertSame(2, $share['ipo_count']);
         $this->assertSame(215973.0, $share['amount_total']);
-        $this->assertStringContainsString('કુલ 2 IPO · 3 અરજી · ₹2,15,973', $share['text']);
-        $this->assertStringContainsString('• Jio Platforms — 2 અરજી · ₹2,01,420', $share['text']);
-        $this->assertStringContainsString('• Paras Healthcare — 1 અરજી · ₹14,553', $share['text']);
+        $this->assertStringContainsString('Total 2 IPOs · 3 applications · ₹2,15,973', $share['text']);
+        $this->assertStringContainsString('• Jio Platforms — 2 applications · ₹2,01,420', $share['text']);
+        $this->assertStringContainsString('• Paras Healthcare — 1 application · ₹14,553', $share['text']);
     }
 
     public function test_pan_is_on_the_image_but_not_in_the_text_and_commission_is_never_shared(): void
@@ -116,7 +116,7 @@ class SourceShareTest extends TestCase
 
         $html = view('filament.pages.partials.source-share', ['share' => $share])->render();
         $this->assertStringContainsString('ABCDE1234F', $html);
-        $this->assertStringContainsString('PAN સાથે', $html);
+        $this->assertStringContainsString('with PAN', $html);
         $this->assertStringNotContainsString('25%', $html);
         $this->assertStringNotContainsString('Paras Healthcare', $html, 'the image is for the selected IPO only');
     }

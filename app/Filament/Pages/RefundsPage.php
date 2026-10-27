@@ -25,9 +25,9 @@ class RefundsPage extends Page
 
     protected static ?string $navigationGroup = 'IPO Management';
 
-    protected static ?string $navigationLabel = 'Refunds (રિફંડ)';
+    protected static ?string $navigationLabel = 'Refunds';
 
-    protected static ?string $title = 'Refunds (રિફંડ)';
+    protected static ?string $title = 'Refunds';
 
     protected static ?string $slug = 'refunds';
 
@@ -51,7 +51,7 @@ class RefundsPage extends Page
 
     public function getSubheading(): ?string
     {
-        return 'Je application ma "ન લાગ્યા" aavyu tenu refund kya account ma aavshe, ane aavi gayu ke nahi.';
+        return 'For applications that did not get shares: which account the refund will land in, and whether it has arrived.';
     }
 
     public function ipoOptions(): Collection
@@ -158,13 +158,13 @@ class RefundsPage extends Page
         $application = $this->base()->where('status', 'not_allotted')->find($id);
 
         if (! $application || ! $this->markArrived($application)) {
-            Notification::make()->warning()->title('Refund mark na thayu')->body('Amount sachi nathi, ke aa pehla thi mark thai gayu chhe.')->send();
+            Notification::make()->warning()->title('Could not mark the refund')->body('The amount is not valid, or it was already marked.')->send();
 
             return;
         }
 
         Notification::make()->success()
-            ->title(SourceShare::inr((float) $application->fresh()->return_amount).' '.$this->effectiveAccountName($application).' ma aavi gayu')
+            ->title(SourceShare::inr((float) $application->fresh()->return_amount).' '.$this->effectiveAccountName($application).' arrived')
             ->body($application->applicant?->name)
             ->send();
     }
@@ -187,8 +187,8 @@ class RefundsPage extends Page
         $name = Account::find($accountId)?->name ?? 'account';
 
         Notification::make()->success()
-            ->title("{$name}: {$count} refund aavi gaya")
-            ->body(SourceShare::inr($total).' account ma jama thayu.')
+            ->title("{$name}: {$count} refund(s) arrived")
+            ->body(SourceShare::inr($total).' credited to the account.')
             ->send();
     }
 
@@ -203,7 +203,7 @@ class RefundsPage extends Page
 
         $application->update(['status' => 'not_allotted', 'return_amount' => null, 'return_date' => null]);
 
-        Notification::make()->warning()->title('Pachu "refund baki" kari didhu')->body($application->applicant?->name)->send();
+        Notification::make()->warning()->title('Set back to "refund pending"')->body($application->applicant?->name)->send();
     }
 
     /** Totals for the cards. */

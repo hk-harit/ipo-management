@@ -50,12 +50,12 @@ class ExpenseOverviewStats extends BaseWidget
                 ->color($diff > 0 ? 'danger' : 'success')
                 ->icon('heroicon-o-calendar-days'),
 
-            Stat::make('Udhar Given (Pending)', '₹'.number_format($pendingUdhar, 2))
+            Stat::make('Loan Given (Pending)', '₹'.number_format($pendingUdhar, 2))
                 ->description($pendingPeopleCount > 0 ? "Pending from {$pendingPeopleCount} person(s)" : 'No pending loans')
                 ->color($pendingUdhar > 0 ? 'warning' : 'success')
                 ->icon('heroicon-o-arrow-up-right'),
 
-            Stat::make('Udhar Recovered', '₹'.number_format($udharReceived, 2))
+            Stat::make('Loans Recovered', '₹'.number_format($udharReceived, 2))
                 ->description('Total money received back')
                 ->color('info')
                 ->icon('heroicon-o-arrow-down-left'),

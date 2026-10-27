@@ -20,7 +20,7 @@ class IpoInvestmentsWidget extends BaseWidget
 
     protected int|string|array $columnSpan = 'full';
 
-    protected static ?string $heading = 'IPO-wise Investments & Status (કયા IPO માં કેટલા રોક્યા છે)';
+    protected static ?string $heading = 'IPO-wise Investments & Status';
 
     public function table(Table $table): Table
     {
@@ -70,14 +70,14 @@ class IpoInvestmentsWidget extends BaseWidget
                     }),
 
                 TextColumn::make('total_invested')
-                    ->label('Total Invested (રોકેલી રકમ)')
+                    ->label('Total Invested')
                     ->state(fn (Ipo $record) => (float) $record->applications->sum('amount'))
                     ->money('INR')
                     ->weight('bold')
                     ->color('primary'),
 
                 TextColumn::make('total_returned')
-                    ->label('Returned (પાછા મળ્યા)')
+                    ->label('Returned')
                     ->state(function (Ipo $record) {
                         $ret = (float) $record->applications->sum('return_amount');
 
@@ -87,7 +87,7 @@ class IpoInvestmentsWidget extends BaseWidget
                     ->placeholder('—'),
 
                 TextColumn::make('profit')
-                    ->label('Profit (નફો)')
+                    ->label('Profit')
                     ->state(function (Ipo $record) {
                         $sold = $record->applications->where('status', 'sold');
                         if ($sold->isEmpty()) {
